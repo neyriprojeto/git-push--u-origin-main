@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/card";
 import { Users, UserPlus, ShieldCheck, UserCheck } from "lucide-react";
 import { members } from "@/data/members";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 export default function DashboardPage() {
   const totalMembers = members.length;
@@ -22,6 +23,9 @@ export default function DashboardPage() {
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+         <div className="md:hidden">
+            <SidebarTrigger />
+        </div>
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
@@ -41,7 +45,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{activeMembers}</div>
-            <p className="text-xs text-muted-foreground">{((activeMembers / totalMembers) * 100).toFixed(0)}% de participação</p>
+            <p className="text-xs text-muted-foreground">{totalMembers > 0 ? ((activeMembers / totalMembers) * 100).toFixed(0) : 0}% de participação</p>
           </CardContent>
         </Card>
         <Card>

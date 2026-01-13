@@ -32,6 +32,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 export default function MemberProfilePage({
   params,
@@ -75,52 +76,57 @@ export default function MemberProfilePage({
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">Perfil do Membro</h2>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button variant="outline">
-              <Edit className="mr-2 h-4 w-4" />
-              Editar Perfil
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Editar Perfil</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleSaveChanges} className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">
-                  Nome
-                </Label>
-                <Input id="name" name="name" defaultValue={member.name} className="col-span-3" />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="email" className="text-right">
-                  Email
-                </Label>
-                <Input id="email" name="email" defaultValue={member.email} className="col-span-3" />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="phone" className="text-right">
-                  Telefone
-                </Label>
-                <Input id="phone" name="phone" defaultValue={member.phone} className="col-span-3" />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="address" className="text-right">
-                  Endereço
-                </Label>
-                <Textarea id="address" name="address" defaultValue={member.address} className="col-span-3" />
-              </div>
-              <DialogFooter>
-                <DialogClose asChild>
-                  <Button type="button" variant="secondary">Cancelar</Button>
-                </DialogClose>
-                <Button type="submit">Salvar Alterações</Button>
-              </DialogFooter>
-               <DialogClose id="close-dialog" className="hidden"/>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <div className="flex items-center gap-2">
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <Edit className="mr-2 h-4 w-4" />
+                Editar Perfil
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Editar Perfil</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSaveChanges} className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="name" className="text-right">
+                    Nome
+                  </Label>
+                  <Input id="name" name="name" defaultValue={member.name} className="col-span-3" />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="email" className="text-right">
+                    Email
+                  </Label>
+                  <Input id="email" name="email" defaultValue={member.email} className="col-span-3" />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="phone" className="text-right">
+                    Telefone
+                  </Label>
+                  <Input id="phone" name="phone" defaultValue={member.phone} className="col-span-3" />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="address" className="text-right">
+                    Endereço
+                  </Label>
+                  <Textarea id="address" name="address" defaultValue={member.address} className="col-span-3" />
+                </div>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button type="button" variant="secondary">Cancelar</Button>
+                  </DialogClose>
+                  <Button type="submit">Salvar Alterações</Button>
+                </DialogFooter>
+                 <DialogClose id="close-dialog" className="hidden"/>
+              </form>
+            </DialogContent>
+          </Dialog>
+           <div className="md:hidden">
+              <SidebarTrigger />
+          </div>
+        </div>
       </div>
       
       {/* Verse of the day */}

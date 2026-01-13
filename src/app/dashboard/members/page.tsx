@@ -20,12 +20,16 @@ import {
 import { members, Member } from "@/data/members";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Eye } from "lucide-react";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 export default function MembersPage() {
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">Gerenciamento de Membros</h2>
+         <div className="md:hidden">
+            <SidebarTrigger />
+        </div>
       </div>
       <Card>
         <CardHeader>

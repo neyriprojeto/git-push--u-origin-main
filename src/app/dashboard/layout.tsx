@@ -11,9 +11,11 @@ import {
   SidebarInset,
   SidebarGroup,
   SidebarGroupLabel,
+  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Home, MessageSquare, Users, UserCog, Settings, CreditCard, LayoutGrid, Radio, Share2, Mail, Youtube, Instagram, Globe } from "lucide-react";
 import { AppLogo } from "@/components/icons";
+import { Button } from "@/components/ui/button";
 
 export default function DashboardLayout({
   children,
@@ -24,12 +26,16 @@ export default function DashboardLayout({
     <SidebarProvider>
       <Sidebar>
         <SidebarHeader>
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <AppLogo className="size-6 text-sidebar-primary" />
-            <span className="text-lg font-semibold text-sidebar-foreground">
-              A.D.KAIROS CONNECT
-            </span>
-          </Link>
+          <div className="flex items-center justify-between">
+            <Link href="/dashboard" className="flex items-center gap-2">
+              <AppLogo className="size-6 text-sidebar-primary" />
+              <span className="text-lg font-semibold text-sidebar-foreground">
+                A.D.KAIROS
+              </span>
+            </Link>
+            <SidebarTrigger className="md:hidden"/>
+          </div>
+
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>

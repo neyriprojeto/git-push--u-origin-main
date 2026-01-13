@@ -182,26 +182,17 @@ export default function CardStudioPage() {
         </Avatar>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Painel de Ajuste */}
-        <div className="lg:col-span-1">
-            <Card className="bg-muted/40">
-                <CardHeader>
-                    <CardTitle>Elementos</CardTitle>
-                </CardHeader>
-                <CardContent>
-                   <p className="text-sm">
-                    Ajustando: <span className={cn("font-bold", { "text-primary": selectedElement })}>{selectedElement || "Nenhum"}</span>
-                   </p>
-                </CardContent>
-            </Card>
-        </div>
-
+      <div className="grid grid-cols-1 gap-8">
+        
         {/* Preview da Carteirinha */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className="space-y-4">
              <Card className='overflow-hidden'>
                 <CardContent className='p-2 bg-muted/30'>
                     <div className='flex items-center justify-center flex-wrap gap-2 p-2 rounded-md bg-background border mb-2'>
+                        <p className="text-sm font-medium mr-2">
+                            Ajustando: <span className={cn("font-bold", { "text-primary": selectedElement })}>{selectedElement || "Nenhum"}</span>
+                        </p>
+                        <Separator orientation='vertical' className='h-6 mx-2'/>
                         <p className="text-sm font-medium mr-2">Posição:</p>
                         <Button variant="outline" size="icon" onClick={() => handleStyleChange('position', 1, 'up')}><ArrowUp className="w-4 h-4" /></Button>
                         <Button variant="outline" size="icon" onClick={() => handleStyleChange('position', 1, 'down')}><ArrowDown className="w-4 h-4" /></Button>
@@ -367,3 +358,5 @@ export default function CardStudioPage() {
     </div>
   );
 }
+
+    

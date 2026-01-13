@@ -12,6 +12,7 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 export default function CardStudioPage() {
     const [selectedElement, setSelectedElement] = useState('NOME');
@@ -19,6 +20,10 @@ export default function CardStudioPage() {
     const avatar = PlaceHolderImages.find((p) => p.id === member.avatar);
     const qrCodePlaceholder = PlaceHolderImages.find((p) => p.id === 'qr-code-placeholder');
     const [isFront, setIsFront] = useState(true);
+
+    const [title1, setTitle1] = useState('ASSEMBLEIA DE DEUS');
+    const [title2, setTitle2] = useState('MINISTÉRIO KAIRÓS');
+    const [address, setAddress] = useState('Rua Presidente Prudente, N°28, Eldorado, Diadema-SP');
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -59,17 +64,6 @@ export default function CardStudioPage() {
                              <Button variant="outline" size="icon"><Plus className="w-4 h-4" /></Button>
                         </div>
                     </div>
-                     <div className="space-y-4">
-                        <p className="text-sm font-medium">Imagens</p>
-                        <div className="grid grid-cols-2 gap-2">
-                             <Button variant="outline"><Upload className="mr-2 h-4 w-4"/> Fundo (Frente)</Button>
-                             <Button variant="outline"><Upload className="mr-2 h-4 w-4"/> Fundo (Verso)</Button>
-                             <Button variant="outline"><Upload className="mr-2 h-4 w-4"/> Logo Igreja</Button>
-                             <Button variant="outline"><Upload className="mr-2 h-4 w-4"/> Logo Conv. 1</Button>
-                             <Button variant="outline"><Upload className="mr-2 h-4 w-4"/> Logo Conv. 2</Button>
-                             <Button variant="outline"><Upload className="mr-2 h-4 w-4"/> Assinatura</Button>
-                        </div>
-                    </div>
                 </CardContent>
             </Card>
         </div>
@@ -83,9 +77,9 @@ export default function CardStudioPage() {
                             // Frente da Carteirinha
                             <div className='p-4 h-full flex flex-col'>
                                 <div className="text-center mb-2">
-                                    <input type="text" defaultValue="ASSEMBLEIA DE DEUS" className="font-serif text-xl font-bold bg-transparent text-center w-full" onClick={() => setSelectedElement('Título 1')} />
-                                    <input type="text" defaultValue="MINISTÉRIO KAIRÓS" className="font-serif text-lg font-semibold bg-transparent text-center w-full" onClick={() => setSelectedElement('Título 2')} />
-                                     <input type="text" defaultValue="Rua Presidente Prudente, N°28, Eldorado, Diadema-SP" className="text-xs bg-transparent text-center w-full" onClick={() => setSelectedElement('Endereço')} />
+                                    <input type="text" value={title1} onChange={(e) => setTitle1(e.target.value)} className="font-serif text-xl font-bold bg-transparent text-center w-full" onClick={() => setSelectedElement('Título 1')} />
+                                    <input type="text" value={title2} onChange={(e) => setTitle2(e.target.value)} className="font-serif text-lg font-semibold bg-transparent text-center w-full" onClick={() => setSelectedElement('Título 2')} />
+                                     <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} className="text-xs bg-transparent text-center w-full" onClick={() => setSelectedElement('Endereço')} />
                                 </div>
                                 <div className='flex-1'></div>
                                 <div className="flex items-end gap-4">
@@ -149,9 +143,83 @@ export default function CardStudioPage() {
             <div className='flex flex-wrap gap-2 justify-center'>
                 <Button variant={isFront ? 'default' : 'outline'} onClick={() => setIsFront(true)}>Frente</Button>
                 <Button variant={!isFront ? 'default' : 'outline'} onClick={() => setIsFront(false)}>Verso</Button>
-                <Button variant="outline"><Type className="mr-2 h-4 w-4"/> Texto</Button>
-                <Button variant="outline"><Palette className="mr-2 h-4 w-4"/> Cores</Button>
-                <Button variant="outline"><ImageIcon className="mr-2 h-4 w-4"/> Imagens</Button>
+                
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <Button variant="outline"><Type className="mr-2 h-4 w-4"/> Texto</Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80">
+                        <div className="grid gap-4">
+                            <div className="space-y-2">
+                                <h4 className="font-medium leading-none">Editar Textos</h4>
+                                <p className="text-sm text-muted-foreground">
+                                Altere os textos principais da carteirinha.
+                                </p>
+                            </div>
+                            <div className="grid gap-2">
+                                <div className="grid grid-cols-3 items-center gap-4">
+                                    <Label htmlFor="title1">Título 1</Label>
+                                    <Input id="title1" value={title1} onChange={(e) => setTitle1(e.target.value)} className="col-span-2 h-8" />
+                                </div>
+                                <div className="grid grid-cols-3 items-center gap-4">
+                                    <Label htmlFor="title2">Título 2</Label>
+                                    <Input id="title2" value={title2} onChange={(e) => setTitle2(e.target.value)} className="col-span-2 h-8" />
+                                </div>
+                                 <div className="grid grid-cols-3 items-center gap-4">
+                                    <Label htmlFor="address">Endereço</Label>
+                                    <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} className="col-span-2 h-8" />
+                                </div>
+                            </div>
+                        </div>
+                    </PopoverContent>
+                </Popover>
+
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <Button variant="outline"><Palette className="mr-2 h-4 w-4"/> Cores</Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80">
+                         <div className="grid gap-4">
+                            <div className="space-y-2">
+                                <h4 className="font-medium leading-none">Editar Cores</h4>
+                                <p className="text-sm text-muted-foreground">
+                                Escolha as cores dos elementos.
+                                </p>
+                            </div>
+                             <div className="grid gap-2">
+                                <div className="grid grid-cols-3 items-center gap-4">
+                                    <Label htmlFor="color-title">Cor do Título</Label>
+                                    <Input id="color-title" type="color" defaultValue="#000000" className="col-span-2 h-8 p-1" />
+                                </div>
+                                 <div className="grid grid-cols-3 items-center gap-4">
+                                    <Label htmlFor="color-text">Cor do Texto</Label>
+                                    <Input id="color-text" type="color" defaultValue="#333333" className="col-span-2 h-8 p-1" />
+                                </div>
+                                <div className="grid grid-cols-3 items-center gap-4">
+                                    <Label htmlFor="color-bg">Cor do Fundo</Label>
+                                    <Input id="color-bg" type="color" defaultValue="#F3F4F6" className="col-span-2 h-8 p-1" />
+                                </div>
+                            </div>
+                         </div>
+                    </PopoverContent>
+                </Popover>
+
+                <Popover>
+                    <PopoverTrigger asChild>
+                         <Button variant="outline"><ImageIcon className="mr-2 h-4 w-4"/> Imagens</Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-2">
+                        <div className="flex flex-col gap-2">
+                             <Button variant="outline" size="sm"><Upload className="mr-2 h-4 w-4"/> Fundo (Frente)</Button>
+                             <Button variant="outline" size="sm"><Upload className="mr-2 h-4 w-4"/> Fundo (Verso)</Button>
+                             <Button variant="outline" size="sm"><Upload className="mr-2 h-4 w-4"/> Logo Igreja</Button>
+                             <Button variant="outline" size="sm"><Upload className="mr-2 h-4 w-4"/> Logo Conv. 1</Button>
+                             <Button variant="outline" size="sm"><Upload className="mr-2 h-4 w-4"/> Logo Conv. 2</Button>
+                             <Button variant="outline" size="sm"><Upload className="mr-2 h-4 w-4"/> Assinatura</Button>
+                        </div>
+                    </PopoverContent>
+                </Popover>
+
                 <Button variant="secondary"><Eye className="mr-2 h-4 w-4"/> Preview</Button>
                 <Button variant="secondary"><MessageSquare className="mr-2 h-4 w-4"/> Chat</Button>
             </div>

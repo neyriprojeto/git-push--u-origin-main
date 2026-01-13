@@ -21,9 +21,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { AppLogo } from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
-import { User, CreditCard, FileText, MessageSquare, BookOpen } from "lucide-react";
+import { User, CreditCard, FileText, MessageSquare, BookOpen, RefreshCw } from "lucide-react";
 import { bibleVerses } from "@/data/bible-verses";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 type Verse = {
   book: string;
@@ -40,11 +40,15 @@ export default function MemberProfilePage({
   const member = members.find((m) => m.id === params.id);
   const [verse, setVerse] = useState<Verse | null>(null);
 
-  useEffect(() => {
-    // Select a random verse on client side to avoid hydration errors
+  const selectRandomVerse = useCallback(() => {
     const randomVerse = bibleVerses[Math.floor(Math.random() * bibleVerses.length)];
     setVerse(randomVerse);
   }, []);
+
+  useEffect(() => {
+    // Select a random verse on client side to avoid hydration errors
+    selectRandomVerse();
+  }, [selectRandomVerse]);
 
   if (!member) {
     notFound();
@@ -55,11 +59,11 @@ export default function MemberProfilePage({
 
   return (
     <div className="flex-1 space-y-4 bg-secondary">
-      <div className="bg-background p-4 shadow-sm">
+      <div className="bg-card p-4 shadow-sm border-b">
         <div className="container mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
             <SidebarTrigger className="md:hidden" />
-            <h1 className="text-xl font-semibold">Meu Perfil</h1>
+            <h1 className="text-xl font-semibold text-primary">AD Kairós</h1>
           </div>
           <Avatar>
              {avatar && <AvatarImage src={avatar.imageUrl} />}
@@ -68,38 +72,26 @@ export default function MemberProfilePage({
         </div>
       </div>
 
-      <div className="container mx-auto space-y-4 pb-8">
-        <Card>
-          <CardContent className="p-4 flex items-center gap-4">
-            <Avatar className="h-16 w-16">
-              {avatar && <AvatarImage src={avatar.imageUrl} alt={avatar.description} data-ai-hint={avatar.imageHint} />}
-              <AvatarFallback className="text-2xl">
-                {member.name.charAt(0)}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <h2 className="text-xl font-bold">{member.name}</h2>
-              <div className="flex gap-2 mt-1">
-                <Badge variant="secondary">{member.role}</Badge>
-                <Badge variant={member.status === "Ativo" ? "default" : "destructive"}>{member.status}</Badge>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
+      <div className="container mx-auto space-y-6 pb-8">
         {verse && (
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <BookOpen className="h-5 w-5 text-primary" />
-                Palavra do Dia
+              <CardTitle className="flex items-center justify-between text-lg">
+                <div className="flex items-center gap-2">
+                  <BookOpen className="h-5 w-5 text-primary" />
+                  Promessa do Dia
+                </div>
+                 <Button variant="ghost" size="icon" onClick={selectRandomVerse} className="h-8 w-8">
+                    <RefreshCw className="h-4 w-4" />
+                    <span className="sr-only">Nova Promessa</span>
+                </Button>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <blockquote className="border-l-4 border-primary pl-4 italic">
                 <p className="mb-2">"{verse.text}"</p>
                 <footer className="text-sm font-semibold not-italic">
-                  {verse.book} {verse.chapter}:{verse.verse}
+                  - {verse.book} {verse.chapter}:{verse.verse}
                 </footer>
               </blockquote>
             </CardContent>
@@ -124,12 +116,18 @@ export default function MemberProfilePage({
           
           <TabsContent value="inicio">
             <Card>
-                <CardHeader>
-                    <CardTitle>Bem-vindo(a)!</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <p>Esta é a sua área de membro. Use as abas para navegar.</p>
-                </CardContent>
+              <CardHeader>
+                <CardTitle>Bem-vindo(a), {member.name.split(' ')[0]}!</CardTitle>
+                <CardDescription>
+                    Este é o seu espaço central para interagir com as funcionalidades da igreja. Use o menu de navegação para explorar.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                  <div className="flex gap-2 mt-1">
+                    <Badge variant="secondary">{member.role}</Badge>
+                    <Badge variant={member.status === "Ativo" ? "default" : "destructive"}>{member.status}</Badge>
+                  </div>
+              </CardContent>
             </Card>
           </TabsContent>
 
@@ -161,9 +159,17 @@ export default function MemberProfilePage({
                      <p className="text-center text-xs opacity-80 mt-2">Rua Presidente Prudente, 28, Eldorado, Diadema - SP, 09972-300</p>
                   </div>
                   <div className="bg-white text-gray-800 p-4 space-y-3">
-                      <div className="border-b pb-1">
-                          <Label className="text-xs text-muted-foreground">NOME</Label>
-                          <p className="font-bold text-sm">{member.name}</p>
+                      <div className="flex items-center gap-4">
+                        <Avatar className="h-16 w-16 border">
+                            {avatar && <AvatarImage src={avatar.imageUrl} alt={avatar.description} data-ai-hint={avatar.imageHint} />}
+                            <AvatarFallback className="text-2xl">
+                                {member.name.charAt(0)}
+                            </AvatarFallback>
+                        </Avatar>
+                        <div className="border-b pb-1 flex-1">
+                            <Label className="text-xs text-muted-foreground">NOME</Label>
+                            <p className="font-bold text-sm">{member.name}</p>
+                        </div>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                           <div className="border-b pb-1">
@@ -171,18 +177,18 @@ export default function MemberProfilePage({
                             <p className="font-bold text-sm">{member.rg || 'N/A'}</p>
                           </div>
                           <div className="border-b pb-1">
-                            <Label className="text-xs text-muted-foreground">CPF</Label>
-                            <p className="font-bold text-sm">{member.cpf || 'N/A'}</p>
+                            <Label className="text-xs text-muted-foreground">DATA NASC.</Label>
+                            <p className="font-bold text-sm">{new Date(member.birthDate).toLocaleDateString()}</p>
                           </div>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                            <div className="border-b pb-1">
-                            <Label className="text-xs text-muted-foreground">DATA NASC.</Label>
-                            <p className="font-bold text-sm">{new Date(member.birthDate).toLocaleDateString()}</p>
-                          </div>
-                          <div className="border-b pb-1">
                             <Label className="text-xs text-muted-foreground">CARGO</Label>
                             <p className="font-bold text-sm">{member.role}</p>
+                          </div>
+                          <div className="border-b pb-1">
+                            <Label className="text-xs text-muted-foreground">MEMBRO DESDE</Label>
+                            <p className="font-bold text-sm">{new Date(member.memberSince).toLocaleDateString()}</p>
                           </div>
                       </div>
                   </div>

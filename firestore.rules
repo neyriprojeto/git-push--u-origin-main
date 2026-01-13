@@ -12,5 +12,13 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow write: if false; // Admin-only writes, handled via console or a trusted backend
     }
+
+    match /cardTemplates/{templateId} {
+      // Allow authenticated users to read templates (e.g., for rendering cards)
+      allow read: if request.auth != null;
+      // Allow only admins to write/update templates.
+      // This assumes an 'admin' custom claim is set on the user's token.
+      allow write: if request.auth != null && request.auth.token.admin == true;
+    }
   }
 }

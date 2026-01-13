@@ -20,7 +20,10 @@
         },
         "tipo": {
           "type": "string",
-          "enum": ["obreiro", "membro"],
+          "enum": [
+            "obreiro",
+            "membro"
+          ],
           "description": "The type of member."
         },
         "fotoUrl": {
@@ -42,7 +45,14 @@
           "description": "The timestamp when the user was created."
         }
       },
-      "required": ["nome", "email", "igrejaId", "ativo", "criadoEm", "tipo"]
+      "required": [
+        "nome",
+        "email",
+        "igrejaId",
+        "ativo",
+        "criadoEm",
+        "tipo"
+      ]
     },
     "igreja": {
       "title": "Igreja",
@@ -64,11 +74,40 @@
           "description": "The timestamp when the church was created."
         }
       },
-      "required": ["nome", "criadaEm"]
+      "required": [
+        "nome",
+        "criadaEm"
+      ]
+    },
+    "cardTemplate": {
+      "title": "Card Template",
+      "description": "Stores the customization settings for the member ID card.",
+      "type": "object",
+      "properties": {
+        "elements": {
+          "type": "object",
+          "description": "Position, size, and content of each element on the card."
+        },
+        "cardStyles": {
+          "type": "object",
+          "description": "Background colors and images for the card."
+        },
+        "textColors": {
+          "type": "object",
+          "description": "Colors for different text groups on the card."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of the last update."
+        }
+      }
     }
   },
   "auth": {
-    "providers": ["password"]
+    "providers": [
+      "password"
+    ]
   },
   "firestore": {
     "/users/{userId}": {
@@ -82,6 +121,12 @@
         "$ref": "#/entities/igreja"
       },
       "description": "Stores information about different churches."
+    },
+    "/cardTemplates/{templateId}": {
+      "schema": {
+        "$ref": "#/entities/cardTemplate"
+      },
+      "description": "Stores the member ID card design template."
     }
   }
 }

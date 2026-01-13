@@ -21,6 +21,8 @@ import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-cr
 import 'react-image-crop/dist/ReactCrop.css';
 import { uploadArquivo } from '@/lib/cloudinary';
 import { useToast } from '@/hooks/use-toast';
+import { doc, setDoc } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
 
 
 type ElementStyle = {
@@ -61,6 +63,7 @@ function centerAspectCrop(
 export default function CardStudioPage() {
     const member = members[0]; // Using a sample member
     const { toast } = useToast();
+    const firestore = useFirestore();
     const avatarPlaceholder = PlaceHolderImages.find((p) => p.id === member.avatar);
     const qrCodePlaceholder = PlaceHolderImages.find((p) => p.id === 'qr-code-placeholder');
     const [isFront, setIsFront] = useState(true);
@@ -73,6 +76,7 @@ export default function CardStudioPage() {
     const [imageToCrop, setImageToCrop] = useState('');
     const [croppingId, setCroppingId] = useState('');
     const [isCropping, setIsCropping] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const imgRef = useRef<HTMLImageElement>(null);
     const previewCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -131,6 +135,42 @@ export default function CardStudioPage() {
     const cardRef = useRef<HTMLDivElement>(null);
     const dragInfo = useRef({ isDragging: false, elementId: '', initialMousePos: { x: 0, y: 0 }, initialElementPos: { top: 0, left: 0 } });
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+    const handleSaveTemplate = async () => {
+        if (!firestore) {
+            toast({
+                variant: 'destructive',
+                title: 'Erro de Conexão',
+                description: 'Não foi possível conectar ao banco de dados. Tente novamente.',
+            });
+            return;
+        }
+        setIsSaving(true);
+        try {
+            const templateData = {
+                elements,
+                cardStyles,
+                textColors,
+                updatedAt: new Date().toISOString(),
+            };
+            // Usamos um ID fixo 'default' para sempre sobrescrever o mesmo template
+            const templateRef = doc(firestore, 'cardTemplates', 'default');
+            await setDoc(templateRef, templateData);
+            toast({
+                title: 'Sucesso!',
+                description: 'O template da carteirinha foi salvo com sucesso.',
+            });
+        } catch (error) {
+            console.error("Error saving template: ", error);
+            toast({
+                variant: 'destructive',
+                title: 'Erro ao Salvar',
+                description: 'Não foi possível salvar o template. Verifique sua conexão e tente novamente.',
+            });
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     const handleColorChange = (target: keyof typeof textColors | 'bg', value: string) => {
         if (target === 'bg') {
@@ -494,7 +534,10 @@ export default function CardStudioPage() {
               <h2 className="text-3xl font-bold tracking-tight">Estúdio de Carteirinha</h2>
           </div>
           <div className="flex items-center gap-2">
-            <Button><Save className="mr-2 h-4 w-4" />Salvar Alterações</Button>
+            <Button onClick={handleSaveTemplate} disabled={isSaving}>
+                <Save className="mr-2 h-4 w-4" />
+                {isSaving ? 'Salvando...' : 'Salvar Alterações'}
+            </Button>
             <Avatar>
                 <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
                 <AvatarFallback>A</AvatarFallback>
@@ -737,5 +780,3 @@ export default function CardStudioPage() {
     </>
   );
 }
-
-    

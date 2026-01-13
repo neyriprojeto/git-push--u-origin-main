@@ -64,7 +64,7 @@ export default function CardStudioPage() {
     const { toast } = useToast();
     const avatarPlaceholder = PlaceHolderImages.find((p) => p.id === member.avatar);
     const qrCodePlaceholder = PlaceHolderImages.find((p) => p.id === 'qr-code-placeholder');
-    const [isFront, setIsFront] = useState(isFront);
+    const [isFront, setIsFront] = useState(true);
 
     const [crop, setCrop] = useState<Crop>();
     const [completedCrop, setCompletedCrop] = useState<Crop>();
@@ -712,5 +712,3 @@ export default function CardStudioPage() {
     </>
   );
 }
-
-    

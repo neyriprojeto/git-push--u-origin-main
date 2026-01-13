@@ -161,13 +161,15 @@ export default function CardStudioPage() {
                 setCroppingId(id);
                 setIsCropping(true);
 
-                const elSize = elements[id]?.size;
                 if (id.startsWith('Fundo')) {
                     setAspect(85.6 / 54);
-                } else if (elSize?.width && elSize?.height) {
-                    setAspect(elSize.width / elSize.height);
                 } else {
-                    setAspect(undefined); // Free crop
+                    const elSize = elements[id]?.size;
+                    if (elSize?.width && elSize?.height) {
+                        setAspect(elSize.width / elSize.height);
+                    } else {
+                        setAspect(undefined); // Free crop
+                    }
                 }
             })
             reader.readAsDataURL(file)
@@ -404,6 +406,9 @@ export default function CardStudioPage() {
             style.color = el.color;
             style.fontWeight = el.fontWeight;
             style.textAlign = 'center';
+            if (id.includes('Título')) {
+                style.whiteSpace = 'nowrap';
+            }
             if (id === 'Endereço') {
                 style.whiteSpace = 'pre-wrap';
             }

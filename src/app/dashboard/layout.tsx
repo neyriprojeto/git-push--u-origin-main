@@ -12,7 +12,7 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
 } from "@/components/ui/sidebar";
-import { Home, MessageSquare, Users, UserCog, Settings, CreditCard, LayoutGrid, Radio, Share2 } from "lucide-react";
+import { Home, MessageSquare, Users, UserCog, Settings, CreditCard, LayoutGrid, Radio, Share2, Mail } from "lucide-react";
 import { AppLogo } from "@/components/icons";
 
 export default function DashboardLayout({
@@ -73,7 +73,7 @@ export default function DashboardLayout({
                <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip={{ children: "Mensagens" }}>
                   <Link href="#">
-                    <MessageSquare />
+                    <Mail />
                     <span>Mensagens</span>
                   </Link>
                 </SidebarMenuButton>

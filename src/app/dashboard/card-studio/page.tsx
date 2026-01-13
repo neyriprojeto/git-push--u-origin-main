@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Minus, Plus, Palette, Image as ImageIcon, Type, Upload } from 'lucide-react';
@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 
 export default function CardStudioPage() {
     const [selectedElement, setSelectedElement] = useState<string | null>(null);
@@ -25,6 +26,11 @@ export default function CardStudioPage() {
     const [title1, setTitle1] = useState('ASSEMBLEIA DE DEUS');
     const [title2, setTitle2] = useState('MINISTÉRIO KAIRÓS');
     const [address, setAddress] = useState('Rua Presidente Prudente, N°28, Eldorado, Diadema-SP');
+
+    const handleSelectElement = (elementId: string) => {
+        setSelectedElement(elementId);
+    };
+
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -73,29 +79,60 @@ export default function CardStudioPage() {
                             // Frente da Carteirinha
                             <div className='p-4 h-full flex flex-col'>
                                 <div className="text-center mb-2">
-                                    <input type="text" value={title1} onChange={(e) => setTitle1(e.target.value)} className="font-serif text-xl font-bold bg-transparent text-center w-full" onClick={() => setSelectedElement('Título 1')} />
-                                    <input type="text" value={title2} onChange={(e) => setTitle2(e.target.value)} className="font-serif text-lg font-semibold bg-transparent text-center w-full" onClick={() => setSelectedElement('Título 2')} />
-                                     <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} className="text-xs bg-transparent text-center w-full" onClick={() => setSelectedElement('Endereço')} />
+                                    <input 
+                                        type="text" 
+                                        value={title1} 
+                                        onChange={(e) => setTitle1(e.target.value)} 
+                                        className={cn(
+                                            "font-serif text-xl font-bold bg-transparent text-center w-full outline-none ring-0 focus:ring-2 focus:ring-blue-500 rounded cursor-pointer",
+                                            selectedElement === 'Título 1' && "ring-2 ring-blue-500"
+                                        )}
+                                        onClick={() => handleSelectElement('Título 1')} 
+                                    />
+                                    <input 
+                                        type="text" 
+                                        value={title2} 
+                                        onChange={(e) => setTitle2(e.target.value)} 
+                                        className={cn(
+                                            "font-serif text-lg font-semibold bg-transparent text-center w-full outline-none ring-0 focus:ring-2 focus:ring-blue-500 rounded cursor-pointer",
+                                            selectedElement === 'Título 2' && "ring-2 ring-blue-500"
+                                        )}
+                                        onClick={() => handleSelectElement('Título 2')} 
+                                    />
+                                     <input 
+                                        type="text" 
+                                        value={address} 
+                                        onChange={(e) => setAddress(e.target.value)} 
+                                        className={cn(
+                                            "text-xs bg-transparent text-center w-full outline-none ring-0 focus:ring-2 focus:ring-blue-500 rounded cursor-pointer",
+                                            selectedElement === 'Endereço' && "ring-2 ring-blue-500"
+                                        )}
+                                        onClick={() => handleSelectElement('Endereço')} 
+                                    />
                                 </div>
                                 <div className='flex-1'></div>
                                 <div className="flex items-end gap-4">
                                      {avatar && (
-                                        <Image
-                                            src={avatar.imageUrl}
-                                            alt="Foto do Membro"
-                                            width={80}
-                                            height={100}
-                                            className="rounded-md border-2 border-gray-300 object-cover"
-                                            onClick={() => setSelectedElement('Foto do Membro')}
-                                        />
+                                        <div 
+                                            className={cn("relative cursor-pointer", selectedElement === 'Foto do Membro' && 'ring-2 ring-blue-500 rounded-md')}
+                                            onClick={() => handleSelectElement('Foto do Membro')}
+                                        >
+                                            <Image
+                                                src={avatar.imageUrl}
+                                                alt="Foto do Membro"
+                                                width={80}
+                                                height={100}
+                                                className="rounded-md border-2 border-gray-300 object-cover"
+                                            />
+                                        </div>
                                      )}
                                      <div className='flex-1 grid gap-1 text-xs'>
-                                        <p className='font-bold' onClick={() => setSelectedElement('Nome')}>{member.name}</p>
+                                        <p className={cn("font-bold cursor-pointer p-1 rounded", selectedElement === 'Nome' && 'ring-2 ring-blue-500')} onClick={() => handleSelectElement('Nome')}>{member.name}</p>
                                         <div className='flex gap-4'>
-                                            <p onClick={() => setSelectedElement('RG')}>RG: {member.rg}</p>
-                                            <p onClick={() => setSelectedElement('CPF')}>CPF: {member.cpf}</p>
+                                            <p className={cn("cursor-pointer p-1 rounded", selectedElement === 'RG' && 'ring-2 ring-blue-500')} onClick={() => handleSelectElement('RG')}>RG: {member.rg}</p>
+                                            <p className={cn("cursor-pointer p-1 rounded", selectedElement === 'CPF' && 'ring-2 ring-blue-500')} onClick={() => handleSelectElement('CPF')}>CPF: {member.cpf}</p>
                                         </div>
-                                         <p onClick={() => setSelectedElement('Cargo')}>Cargo: {member.role}</p>
+                                         <p className={cn("cursor-pointer p-1 rounded", selectedElement === 'Cargo' && 'ring-2 ring-blue-500')} onClick={() => handleSelectElement('Cargo')}>Cargo: {member.role}</p>
                                      </div>
                                 </div>
                             </div>
@@ -103,30 +140,43 @@ export default function CardStudioPage() {
                             // Verso da Carteirinha
                             <div className='p-4 h-full flex flex-col justify-between'>
                                 <div className='flex justify-between items-start'>
-                                    <div className='w-20 h-20 bg-gray-200 flex items-center justify-center' onClick={() => setSelectedElement('Logo Convenção 1')}>
+                                    <div 
+                                        className={cn("w-20 h-20 bg-gray-200 flex items-center justify-center cursor-pointer", selectedElement === 'Logo Convenção 1' && 'ring-2 ring-blue-500')}
+                                        onClick={() => handleSelectElement('Logo Convenção 1')}
+                                    >
                                         <span className='text-xs text-gray-500'>Conv. 1</span>
                                     </div>
-                                    <div className='w-20 h-20 bg-gray-200 flex items-center justify-center' onClick={() => setSelectedElement('Logo Convenção 2')}>
+                                    <div 
+                                        className={cn("w-20 h-20 bg-gray-200 flex items-center justify-center cursor-pointer", selectedElement === 'Logo Convenção 2' && 'ring-2 ring-blue-500')}
+                                        onClick={() => handleSelectElement('Logo Convenção 2')}
+                                    >
                                         <span className='text-xs text-gray-500'>Conv. 2</span>
                                     </div>
                                 </div>
 
                                 <div className='flex items-end gap-4'>
                                      {qrCodePlaceholder && (
-                                        <Image
-                                            src={qrCodePlaceholder.imageUrl}
-                                            alt="QR Code"
-                                            width={80}
-                                            height={80}
-                                            className="rounded-md"
-                                            onClick={() => setSelectedElement('QR Code')}
-                                        />
+                                        <div 
+                                            className={cn("relative cursor-pointer", selectedElement === 'QR Code' && 'ring-2 ring-blue-500 rounded-md')}
+                                            onClick={() => handleSelectElement('QR Code')}
+                                        >
+                                            <Image
+                                                src={qrCodePlaceholder.imageUrl}
+                                                alt="QR Code"
+                                                width={80}
+                                                height={80}
+                                                className="rounded-md"
+                                            />
+                                        </div>
                                      )}
                                      <div className='flex-1 space-y-2 text-xs'>
-                                        <div className='border-t border-gray-500 pt-1 text-center' onClick={() => setSelectedElement('Assinatura Pastor')}>Assinatura Pastor Presidente</div>
+                                        <div 
+                                            className={cn("border-t border-gray-500 pt-1 text-center cursor-pointer p-1 rounded", selectedElement === 'Assinatura Pastor' && 'ring-2 ring-blue-500')}
+                                            onClick={() => handleSelectElement('Assinatura Pastor')}
+                                        >Assinatura Pastor Presidente</div>
                                         <div className='flex justify-between'>
-                                            <p>Validade: <span className='font-semibold'>01/01/2026</span></p>
-                                            <p>Membro desde: <span className='font-semibold'>{new Date(member.memberSince).toLocaleDateString()}</span></p>
+                                            <p className={cn("cursor-pointer p-1 rounded", selectedElement === 'Validade' && 'ring-2 ring-blue-500')} onClick={() => handleSelectElement('Validade')}>Validade: <span className='font-semibold'>01/01/2026</span></p>
+                                            <p className={cn("cursor-pointer p-1 rounded", selectedElement === 'Membro Desde' && 'ring-2 ring-blue-500')} onClick={() => handleSelectElement('Membro Desde')}>Membro desde: <span className='font-semibold'>{new Date(member.memberSince).toLocaleDateString()}</span></p>
                                         </div>
                                      </div>
                                 </div>
@@ -226,4 +276,3 @@ export default function CardStudioPage() {
   );
 }
 
-    

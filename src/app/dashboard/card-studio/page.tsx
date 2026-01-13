@@ -495,7 +495,7 @@ export default function CardStudioPage() {
                                           position: 'absolute', 
                                           borderTop: '1px solid black', 
                                           width: '40%', 
-                                          top: `calc(${elements['Assinatura Pastor'].position.top}% + ${elements['Assinatura Pastor'].size.fontSize}px + 2px)`,
+                                          top: `calc(${elements['Assinatura Pastor'].position.top}% + 2px)`,
                                           left: `${elements['Assinatura Pastor'].position.left}%`,
                                           transform: 'translateX(-50%)'
                                       }}
@@ -681,3 +681,5 @@ export default function CardStudioPage() {
     </>
   );
 }
+
+    

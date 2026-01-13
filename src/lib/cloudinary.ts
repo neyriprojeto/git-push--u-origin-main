@@ -1,5 +1,5 @@
 // Substitua 'SEU_CLOUD_NAME' pelo seu Cloud Name real do Cloudinary.
-const CLOUD_NAME = "SEU_CLOUD_NAME"; 
+const CLOUD_NAME = "dar0zviw2"; 
 const UPLOAD_PRESET = "public_upload";
 
 /**

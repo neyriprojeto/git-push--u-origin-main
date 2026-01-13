@@ -1,0 +1,87 @@
+{
+  "entities": {
+    "user": {
+      "title": "User",
+      "description": "Represents a user in the system.",
+      "type": "object",
+      "properties": {
+        "nome": {
+          "type": "string",
+          "description": "The user's full name."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "The user's email address."
+        },
+        "cargo": {
+          "type": "string",
+          "description": "The user's role in the church (e.g., 'diacono', 'membro')."
+        },
+        "tipo": {
+          "type": "string",
+          "enum": ["obreiro", "membro"],
+          "description": "The type of member."
+        },
+        "fotoUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL of the user's profile picture from Cloudinary."
+        },
+        "igrejaId": {
+          "type": "string",
+          "description": "The ID of the church the user belongs to."
+        },
+        "ativo": {
+          "type": "boolean",
+          "description": "Whether the user account is active."
+        },
+        "criadoEm": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the user was created."
+        }
+      },
+      "required": ["nome", "email", "igrejaId", "ativo", "criadoEm", "tipo"]
+    },
+    "igreja": {
+      "title": "Igreja",
+      "description": "Represents a church.",
+      "type": "object",
+      "properties": {
+        "nome": {
+          "type": "string",
+          "description": "The name of the church."
+        },
+        "logoUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL of the church's logo from Cloudinary."
+        },
+        "criadaEm": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the church was created."
+        }
+      },
+      "required": ["nome", "criadaEm"]
+    }
+  },
+  "auth": {
+    "providers": ["password"]
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/user"
+      },
+      "description": "Stores individual user profiles."
+    },
+    "/igrejas/{igrejaId}": {
+      "schema": {
+        "$ref": "#/entities/igreja"
+      },
+      "description": "Stores information about different churches."
+    }
+  }
+}

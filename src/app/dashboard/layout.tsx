@@ -101,35 +101,27 @@ export default function DashboardLayout({
                 </SidebarMenuButton>
               </SidebarMenuItem>
                <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip={{ children: "Instagram" }}>
-                  <Link href="#">
+                <SidebarMenuButton tooltip={{ children: "Instagram" }}>
                     <Instagram />
                     <span>Instagram</span>
-                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip={{ children: "YouTube" }}>
-                  <Link href="#">
+                <SidebarMenuButton tooltip={{ children: "YouTube" }}>
                     <Youtube />
                     <span>YouTube</span>
-                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
                <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip={{ children: "Site" }}>
-                  <Link href="#">
+                <SidebarMenuButton tooltip={{ children: "Site" }}>
                     <Globe />
                     <span>Site</span>
-                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
                <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip={{ children: "Rádio" }}>
-                  <Link href="#">
+                <SidebarMenuButton tooltip={{ children: "Rádio" }}>
                     <Radio />
                     <span>Rádio</span>
-                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>

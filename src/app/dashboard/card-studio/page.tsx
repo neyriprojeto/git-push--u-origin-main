@@ -27,7 +27,6 @@ type ElementStyle = {
     position: { top: number; left: number };
     size: { width?: number; height?: number; fontSize?: number };
     text?: string;
-    color?: string;
     fontWeight?: 'normal' | 'bold';
     src?: string; // Para imagens
 };
@@ -96,19 +95,26 @@ export default function CardStudioPage() {
         backBackgroundImage: '',
     });
 
+     const [textColors, setTextColors] = useState({
+        title: '#000000',
+        personalData: '#333333',
+        backText: '#333333',
+    });
+
+
     const [elements, setElements] = useState<CardElements>({
         // --- Frente ---
-        'Título 1': { position: { top: 5, left: 50 }, size: { fontSize: 20 }, text: 'ASSEMBLEIA DE DEUS', color: '#000000', fontWeight: 'bold' },
-        'Título 2': { position: { top: 12, left: 50 }, size: { fontSize: 16 }, text: 'MINISTÉRIO KAIRÓS', color: '#000000', fontWeight: 'bold' },
-        'Congregação': { position: { top: 18, left: 50 }, size: { fontSize: 14 }, text: 'SEDE', color: '#000000', fontWeight: 'normal' },
-        'Endereço': { position: { top: 23, left: 50 }, size: { fontSize: 8 }, text: 'Rua Presidente Prudente, N°28\nEldorado, Diadema-SP', color: '#000000' },
+        'Título 1': { position: { top: 5, left: 50 }, size: { fontSize: 20 }, text: 'ASSEMBLEIA DE DEUS', fontWeight: 'bold' },
+        'Título 2': { position: { top: 12, left: 50 }, size: { fontSize: 16 }, text: 'MINISTÉRIO KAIRÓS', fontWeight: 'bold' },
+        'Congregação': { position: { top: 18, left: 50 }, size: { fontSize: 14 }, text: 'SEDE', fontWeight: 'normal' },
+        'Endereço': { position: { top: 23, left: 50 }, size: { fontSize: 8 }, text: 'Rua Presidente Prudente, N°28\nEldorado, Diadema-SP' },
         'Foto do Membro': { position: { top: 40, left: 15 }, size: { width: 80, height: 100 }, src: avatarPlaceholder?.imageUrl },
-        'Nome': { position: { top: 60, left: 50 }, size: { fontSize: 11 }, text: `Nome: ${member.name}`, color: '#333333', fontWeight: 'bold' },
-        'RG': { position: { top: 68, left: 50 }, size: { fontSize: 10 }, text: `RG: ${member.rg}`, color: '#333333' },
-        'CPF': { position: { top: 74, left: 50 }, size: { fontSize: 10 }, text: `CPF: ${member.cpf}`, color: '#333333' },
-        'Cargo': { position: { top: 80, left: 50 }, size: { fontSize: 10 }, text: `Cargo: ${member.role}`, color: '#333333' },
-        'Data de Nascimento': { position: { top: 85, left: 30 }, size: { fontSize: 10 }, text: `Nasc: ${new Date(member.birthDate).toLocaleDateString('pt-BR')}`, color: '#333333' },
-        'Data de Batismo': { position: { top: 85, left: 65 }, size: { fontSize: 10 }, text: `Batismo: ${new Date().toLocaleDateString('pt-BR')}`, color: '#333333' },
+        'Nome': { position: { top: 60, left: 50 }, size: { fontSize: 11 }, text: `Nome: ${member.name}`, fontWeight: 'bold' },
+        'RG': { position: { top: 68, left: 50 }, size: { fontSize: 10 }, text: `RG: ${member.rg}` },
+        'CPF': { position: { top: 74, left: 50 }, size: { fontSize: 10 }, text: `CPF: ${member.cpf}` },
+        'Cargo': { position: { top: 80, left: 50 }, size: { fontSize: 10 }, text: `Cargo: ${member.role}` },
+        'Data de Nascimento': { position: { top: 85, left: 30 }, size: { fontSize: 10 }, text: `Nasc: ${new Date(member.birthDate).toLocaleDateString('pt-BR')}` },
+        'Data de Batismo': { position: { top: 85, left: 65 }, size: { fontSize: 10 }, text: `Batismo: ${new Date().toLocaleDateString('pt-BR')}` },
         'Logo Igreja': { position: { top: 40, left: 80 }, size: { width: 60, height: 60 }, src: '' },
         
         // --- Verso ---
@@ -116,9 +122,9 @@ export default function CardStudioPage() {
         'Logo Convenção 2': { position: { top: 15, left: 75 }, size: { width: 60, height: 60 }, src: '' },
         'QR Code': { position: { top: 45, left: 25 }, size: { width: 80, height: 80 }, src: qrCodePlaceholder?.imageUrl },
         'Assinatura': { position: { top: 70, left: 65 }, size: { width: 120, height: 40 }, src: '' },
-        'Assinatura Pastor': { position: { top: 82, left: 50 }, size: { fontSize: 10 }, text: 'Assinatura Pastor Presidente', color: '#333333' },
-        'Validade': { position: { top: 88, left: 50 }, size: { fontSize: 10 }, text: 'Validade: 01/01/2026', color: '#333333', fontWeight: 'bold' },
-        'Membro Desde': { position: { top: 93, left: 50 }, size: { fontSize: 10 }, text: `Membro desde: ${new Date(member.memberSince).toLocaleDateString('pt-BR')}`, color: '#333333', fontWeight: 'bold' },
+        'Assinatura Pastor': { position: { top: 82, left: 50 }, size: { fontSize: 10 }, text: 'Assinatura Pastor Presidente' },
+        'Validade': { position: { top: 88, left: 50 }, size: { fontSize: 10 }, text: 'Validade: 01/01/2026', fontWeight: 'bold' },
+        'Membro Desde': { position: { top: 93, left: 50 }, size: { fontSize: 10 }, text: `Membro desde: ${new Date(member.memberSince).toLocaleDateString('pt-BR')}`, fontWeight: 'bold' },
     });
     
     const [selectedElement, setSelectedElement] = useState<string | null>(null);
@@ -126,7 +132,7 @@ export default function CardStudioPage() {
     const dragInfo = useRef({ isDragging: false, elementId: '', initialMousePos: { x: 0, y: 0 }, initialElementPos: { top: 0, left: 0 } });
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-    const handleColorChange = (target: 'title' | 'text' | 'bg', value: string) => {
+    const handleColorChange = (target: keyof typeof textColors | 'bg', value: string) => {
         if (target === 'bg') {
              if (isFront) {
                 setCardStyles(prev => ({ ...prev, frontBackground: value }));
@@ -134,17 +140,7 @@ export default function CardStudioPage() {
                 setCardStyles(prev => ({ ...prev, backBackground: value }));
             }
         } else {
-            const elementsToUpdate = Object.keys(elements).filter(id => elements[id].text);
-
-            setElements(prev => {
-                const newElements = { ...prev };
-                elementsToUpdate.forEach(id => {
-                    if (newElements[id]) {
-                        newElements[id] = { ...newElements[id], color: value };
-                    }
-                });
-                return newElements;
-            });
+            setTextColors(prev => ({ ...prev, [target]: value }));
         }
     };
     
@@ -393,6 +389,21 @@ export default function CardStudioPage() {
         const isImage = 'src' in el;
         const isText = 'text' in el;
 
+        let color = '#000000';
+        if (isText) {
+            const isTitle = id.includes('Título') || id === 'Congregação' || id === 'Endereço';
+            const isBackText = id.includes('Assinatura') || id.includes('Validade') || id.includes('Membro Desde');
+            
+            if (isTitle) {
+                color = textColors.title;
+            } else if (isBackText) {
+                color = textColors.backText;
+            } else {
+                color = textColors.personalData;
+            }
+        }
+
+
         const style: React.CSSProperties = {
             position: 'absolute',
             top: `${el.position.top}%`,
@@ -403,14 +414,14 @@ export default function CardStudioPage() {
         
         if (isText) {
             style.fontSize = el.size.fontSize ? `${el.size.fontSize}px` : undefined;
-            style.color = el.color;
+            style.color = color;
             style.fontWeight = el.fontWeight;
             style.textAlign = 'center';
             if (id.includes('Título')) {
                 style.whiteSpace = 'nowrap';
             }
-            if (id === 'Endereço') {
-                style.whiteSpace = 'pre-wrap';
+            if (id === 'Endereço' || id.includes('Título')) {
+                style.whiteSpace = id === 'Endereço' ? 'pre-wrap' : 'nowrap';
             }
         } else { // isImage
              style.width = el.size.width ? `${el.size.width}px` : 'auto';
@@ -615,16 +626,25 @@ export default function CardStudioPage() {
                                   Escolha as cores dos elementos.
                                   </p>
                               </div>
-                                  <div className="grid gap-2">
-                                  <div className="grid grid-cols-3 items-center gap-4">
-                                      <Label htmlFor="color-title">Cor dos Textos</Label>
-                                      <Input id="color-title" type="color" defaultValue={elements['Título 1'].color} onChange={(e) => handleColorChange('text', e.target.value)} className="col-span-2 h-8 p-1" />
+                                  <div className="grid gap-4">
+                                      <div className="grid grid-cols-3 items-center gap-4">
+                                          <Label htmlFor="color-title">Títulos e Endereço</Label>
+                                          <Input id="color-title" type="color" value={textColors.title} onChange={(e) => handleColorChange('title', e.target.value)} className="col-span-2 h-8 p-1" />
+                                      </div>
+                                      <div className="grid grid-cols-3 items-center gap-4">
+                                          <Label htmlFor="color-personal">Dados Pessoais (Frente)</Label>
+                                          <Input id="color-personal" type="color" value={textColors.personalData} onChange={(e) => handleColorChange('personalData', e.target.value)} className="col-span-2 h-8 p-1" />
+                                      </div>
+                                      <div className="grid grid-cols-3 items-center gap-4">
+                                          <Label htmlFor="color-back">Textos (Verso)</Label>
+                                          <Input id="color-back" type="color" value={textColors.backText} onChange={(e) => handleColorChange('backText', e.target.value)} className="col-span-2 h-8 p-1" />
+                                      </div>
+                                      <Separator />
+                                      <div className="grid grid-cols-3 items-center gap-4">
+                                          <Label htmlFor="color-bg">Cor do Fundo</Label>
+                                          <Input id="color-bg" type="color" value={isFront ? cardStyles.frontBackground : cardStyles.backBackground} onChange={(e) => handleColorChange('bg', e.target.value)} className="col-span-2 h-8 p-1" />
+                                      </div>
                                   </div>
-                                  <div className="grid grid-cols-3 items-center gap-4">
-                                      <Label htmlFor="color-bg">Cor do Fundo</Label>
-                                      <Input id="color-bg" type="color" value={isFront ? cardStyles.frontBackground : cardStyles.backBackground} onChange={(e) => handleColorChange('bg', e.target.value)} className="col-span-2 h-8 p-1" />
-                                  </div>
-                              </div>
                               </div>
                       </PopoverContent>
                   </Popover>
@@ -717,3 +737,5 @@ export default function CardStudioPage() {
     </>
   );
 }
+
+    

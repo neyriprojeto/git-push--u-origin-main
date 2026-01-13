@@ -1,12 +1,12 @@
 
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Minus, Plus, Palette, Image as ImageIcon, Type, Upload } from 'lucide-react';
+import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Minus, Plus, Palette, Image as ImageIcon, Type, Upload, GripVertical } from 'lucide-react';
 import { members } from '@/data/members';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
@@ -35,7 +35,6 @@ export default function CardStudioPage() {
     const qrCodePlaceholder = PlaceHolderImages.find((p) => p.id === 'qr-code-placeholder');
     const [isFront, setIsFront] = useState(true);
 
-    // Refs para os inputs de arquivo
     const fileInputRefs = {
         'Fundo (Frente)': useRef<HTMLInputElement>(null),
         'Fundo (Verso)': useRef<HTMLInputElement>(null),
@@ -52,13 +51,12 @@ export default function CardStudioPage() {
         backBackgroundImage: '',
     });
 
-
     const [elements, setElements] = useState<CardElements>({
         // --- Frente ---
-        'Título 1': { position: { top: 5, left: 0 }, size: { fontSize: 20 }, text: 'ASSEMBLEIA DE DEUS', color: '#000000', fontWeight: 'bold' },
-        'Título 2': { position: { top: 12, left: 0 }, size: { fontSize: 16 }, text: 'MINISTÉRIO KAIRÓS', color: '#000000', fontWeight: 'bold' },
-        'Congregação': { position: { top: 18, left: 0 }, size: { fontSize: 14 }, text: 'SEDE', color: '#000000', fontWeight: 'normal' },
-        'Endereço': { position: { top: 23, left: 0 }, size: { fontSize: 8 }, text: 'Rua Presidente Prudente, N°28\nEldorado, Diadema-SP', color: '#000000' },
+        'Título 1': { position: { top: 5, left: 50 }, size: { fontSize: 20 }, text: 'ASSEMBLEIA DE DEUS', color: '#000000', fontWeight: 'bold' },
+        'Título 2': { position: { top: 12, left: 50 }, size: { fontSize: 16 }, text: 'MINISTÉRIO KAIRÓS', color: '#000000', fontWeight: 'bold' },
+        'Congregação': { position: { top: 18, left: 50 }, size: { fontSize: 14 }, text: 'SEDE', color: '#000000', fontWeight: 'normal' },
+        'Endereço': { position: { top: 23, left: 50 }, size: { fontSize: 8 }, text: 'Rua Presidente Prudente, N°28\nEldorado, Diadema-SP', color: '#000000' },
         'Foto do Membro': { position: { top: 30, left: 5 }, size: { width: 80, height: 100 }, src: avatarPlaceholder?.imageUrl },
         'Nome': { position: { top: 60, left: 30 }, size: { fontSize: 11 }, text: member.name, color: '#333333', fontWeight: 'bold' },
         'RG': { position: { top: 70, left: 30 }, size: { fontSize: 10 }, text: `RG: ${member.rg}`, color: '#333333', fontWeight: 'bold' },
@@ -67,18 +65,20 @@ export default function CardStudioPage() {
         'Logo Igreja': { position: { top: 25, left: 75 }, size: { width: 60, height: 60 }, src: '' },
         
         // --- Verso ---
-        'Logo Convenção 1': { position: { top: 5, left: 15 }, size: { width: 60, height: 60 }, src: '' },
-        'Logo Convenção 2': { position: { top: 5, left: 85 }, size: { width: 60, height: 60 }, src: '' },
+        'Logo Convenção 1': { position: { top: 5, left: 25 }, size: { width: 60, height: 60 }, src: '' },
+        'Logo Convenção 2': { position: { top: 5, left: 75 }, size: { width: 60, height: 60 }, src: '' },
         'QR Code': { position: { top: 30, left: 15 }, size: { width: 70, height: 70 }, src: qrCodePlaceholder?.imageUrl },
         'Assinatura': { position: { top: 65, left: 50 }, size: { width: 120, height: 40 }, src: '' },
-        'Assinatura Pastor': { position: { top: 78, left: 50 }, size: { fontSize: 10 }, text: 'Assinatura Pastor Presidente', color: '#333333' },
-        'Validade': { position: { top: 85, left: 50 }, size: { fontSize: 10 }, text: 'Validade: 01/01/2026', color: '#333333', fontWeight: 'bold' },
-        'Membro Desde': { position: { top: 90, left: 50 }, size: { fontSize: 10 }, text: `Membro desde: ${new Date(member.memberSince).toLocaleDateString()}`, color: '#333333', fontWeight: 'bold' },
+        'Assinatura Pastor': { position: { top: 82, left: 50 }, size: { fontSize: 10 }, text: 'Assinatura Pastor Presidente', color: '#333333' },
+        'Validade': { position: { top: 88, left: 50 }, size: { fontSize: 10 }, text: 'Validade: 01/01/2026', color: '#333333', fontWeight: 'bold' },
+        'Membro Desde': { position: { top: 93, left: 50 }, size: { fontSize: 10 }, text: `Membro desde: ${new Date(member.memberSince).toLocaleDateString()}`, color: '#333333', fontWeight: 'bold' },
     });
     
     const [selectedElement, setSelectedElement] = useState<string | null>(null);
+    const cardRef = useRef<HTMLDivElement>(null);
+    const dragInfo = useRef({ isDragging: false, elementId: '', initialMousePos: { x: 0, y: 0 }, initialElementPos: { top: 0, left: 0 } });
+    const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Handlers para as cores
     const handleColorChange = (target: 'title' | 'text' | 'bg', value: string) => {
         if (target === 'bg') {
              if (isFront) {
@@ -88,8 +88,8 @@ export default function CardStudioPage() {
             }
         } else {
             const elementsToUpdate = target === 'title' 
-                ? ['Título 1', 'Título 2', 'Congregação', 'Endereço'] 
-                : ['Nome', 'RG', 'CPF', 'Cargo', 'Assinatura Pastor', 'Validade', 'Membro Desde'];
+                ? ['Título 1', 'Título 2', 'Congregação', 'Endereço', 'Assinatura Pastor', 'Validade', 'Membro Desde'] 
+                : ['Nome', 'RG', 'CPF', 'Cargo'];
             
             setElements(prev => {
                 const newElements = { ...prev };
@@ -103,7 +103,6 @@ export default function CardStudioPage() {
         }
     };
     
-    // Handler para upload de imagem
     const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>, id: string) => {
         const file = event.target.files?.[0];
         if (file) {
@@ -136,39 +135,109 @@ export default function CardStudioPage() {
         }));
     };
     
-    const handleStyleChange = (property: 'position' | 'size', step: number, direction: 'up' | 'down' | 'left' | 'right' | 'increase' | 'decrease') => {
+    const handleStyleChange = useCallback((property: 'position' | 'size', step: number, direction: 'up' | 'down' | 'left' | 'right' | 'increase' | 'decrease') => {
         if (!selectedElement) return;
 
         setElements(prev => {
             const currentElement = prev[selectedElement];
+            if (!currentElement) return prev;
+
             const newElements = { ...prev };
+            const newElementStyle = { ...currentElement };
 
             if (property === 'position') {
-                const newPosition = { ...currentElement.position };
+                const newPosition = { ...newElementStyle.position };
                 if (direction === 'up') newPosition.top -= step;
                 if (direction === 'down') newPosition.top += step;
                 if (direction === 'left') newPosition.left -= step;
                 if (direction === 'right') newPosition.left += step;
-                newElements[selectedElement] = { ...currentElement, position: newPosition };
+                newElementStyle.position = newPosition;
             } else if (property === 'size') {
-                const newSize = { ...currentElement.size };
+                const newSize = { ...newElementStyle.size };
                 const change = direction === 'increase' ? step : -step;
                 
-                if (newSize.fontSize) {
-                   newSize.fontSize = Math.max(1, newSize.fontSize + change);
-                }
-                if (newSize.width) {
-                   newSize.width = Math.max(10, newSize.width + (change * 5));
-                }
-                if (newSize.height) {
-                    newSize.height = Math.max(10, newSize.height + (change * 5));
-                }
-                newElements[selectedElement] = { ...currentElement, size: newSize };
+                if (newSize.fontSize) newSize.fontSize = Math.max(1, newSize.fontSize + change);
+                if (newSize.width) newSize.width = Math.max(10, newSize.width + (change * 5));
+                if (newSize.height) newSize.height = Math.max(10, newSize.height + (change * 5));
+                newElementStyle.size = newSize;
             }
-
+            
+            newElements[selectedElement] = newElementStyle;
             return newElements;
         });
+    }, [selectedElement]);
+
+    const handleMouseDownOnElement = (e: React.MouseEvent, id: string) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setSelectedElement(id);
+
+        if (cardRef.current) {
+            dragInfo.current = {
+                isDragging: true,
+                elementId: id,
+                initialMousePos: { x: e.clientX, y: e.clientY },
+                initialElementPos: { ...elements[id].position },
+            };
+        }
     };
+
+    const handleMouseMove = useCallback((e: MouseEvent) => {
+        if (!dragInfo.current.isDragging || !cardRef.current) return;
+
+        const { elementId, initialMousePos, initialElementPos } = dragInfo.current;
+        const cardRect = cardRef.current.getBoundingClientRect();
+
+        const deltaX = e.clientX - initialMousePos.x;
+        const deltaY = e.clientY - initialMousePos.y;
+
+        const deltaTop = (deltaY / cardRect.height) * 100;
+        const deltaLeft = (deltaX / cardRect.width) * 100;
+
+        setElements(prev => {
+            const newElements = { ...prev };
+            const currentElement = newElements[elementId];
+            if (!currentElement) return prev;
+
+            const newPosition = {
+                top: initialElementPos.top + deltaTop,
+                left: initialElementPos.left + deltaLeft,
+            };
+
+            newElements[elementId] = { ...currentElement, position: newPosition };
+            return newElements;
+        });
+    }, []);
+
+    const handleMouseUp = useCallback(() => {
+        dragInfo.current.isDragging = false;
+    }, []);
+
+    useEffect(() => {
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mouseup', handleMouseUp);
+
+        return () => {
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [handleMouseMove, handleMouseUp]);
+
+
+    const startMoving = (property: 'position' | 'size', step: number, direction: 'up' | 'down' | 'left' | 'right' | 'increase' | 'decrease') => {
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        intervalRef.current = setInterval(() => {
+            handleStyleChange(property, step, direction);
+        }, 100);
+    };
+
+    const stopMoving = () => {
+        if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+        }
+    };
+
 
     const renderElement = (id: string) => {
         const el = elements[id];
@@ -184,6 +253,7 @@ export default function CardStudioPage() {
             width: el.size.width ? `${el.size.width}px` : 'auto',
             height: el.size.height ? `${el.size.height}px` : 'auto',
             transform: 'translateX(-50%)',
+            userSelect: 'none', // Prevent text selection while dragging
         };
         
         if (id.includes('Título') || id.includes('Congregação') || id.includes('Endereço') || id.includes('Assinatura Pastor') || id.includes('Validade') || id.includes('Membro Desde')) {
@@ -201,21 +271,22 @@ export default function CardStudioPage() {
             }
             if (id.startsWith('Nome') || id.startsWith('RG') || id.startsWith('CPF') || id.startsWith('Cargo')) {
                  style.transform = 'none';
+                 style.left = `${el.position.left}%`
             }
         }
         
         const className = cn(
-            "cursor-pointer",
+            "cursor-grab active:cursor-grabbing",
             { "ring-2 ring-blue-500 rounded p-0.5": selectedElement === id },
         );
 
         if (isImage) {
-            // Renderiza placeholder se não houver src
              if (!el.src) {
                 return (
                     <div
                         style={style}
-                        onClick={() => setSelectedElement(id)}
+                        onMouseDown={(e) => handleMouseDownOnElement(e, id)}
+                        draggable={false}
                         className={cn(className, "border-2 border-dashed bg-gray-200/50 flex items-center justify-center")}
                     >
                        <span className='text-xs text-gray-500 text-center p-1'>{id}</span>
@@ -225,7 +296,8 @@ export default function CardStudioPage() {
             return (
                  <div
                     style={style}
-                    onClick={() => setSelectedElement(id)}
+                    onMouseDown={(e) => handleMouseDownOnElement(e, id)}
+                    draggable={false}
                     className={cn(className, "relative")}
                 >
                     <Image
@@ -234,6 +306,7 @@ export default function CardStudioPage() {
                         layout="fill"
                         objectFit={id === 'Foto do Membro' ? "cover" : "contain"}
                         className={cn({ 'rounded-md': id !== 'Assinatura'})}
+                        draggable={false}
                     />
                 </div>
             )
@@ -241,7 +314,8 @@ export default function CardStudioPage() {
 
         return (
             <p
-                onClick={() => setSelectedElement(id)}
+                onMouseDown={(e) => handleMouseDownOnElement(e, id)}
+                draggable={false}
                 style={style}
                 className={className}
             >
@@ -254,7 +328,7 @@ export default function CardStudioPage() {
         if (!selectedElement) return 'N/A';
         const size = elements[selectedElement]?.size.fontSize || elements[selectedElement]?.size.width;
         if (!size) return 'auto';
-        return `${size} ${elements[selectedElement]?.size.fontSize ? 'px' : 'px'}`
+        return `${size.toFixed(0)} ${elements[selectedElement]?.size.fontSize ? 'px' : 'px'}`
     }
 
 
@@ -274,70 +348,78 @@ export default function CardStudioPage() {
       <div className="space-y-4">
         <Card className='overflow-hidden'>
             <CardContent className='p-2 bg-muted/30'>
-                <div className='flex items-center justify-center flex-wrap gap-2 p-2 rounded-md bg-background border mb-2'>
-                    <p className="text-sm font-medium mr-2">
-                        Ajustando: <span className={cn("font-bold", { "text-primary": selectedElement })}>{selectedElement || "Nenhum"}</span>
-                    </p>
-                    <Separator orientation='vertical' className='h-6 mx-2'/>
-                    <p className="text-sm font-medium mr-2">Posição:</p>
-                    <Button variant="outline" size="icon" onClick={() => handleStyleChange('position', 1, 'up')} disabled={!selectedElement}><ArrowUp className="w-4 h-4" /></Button>
-                    <Button variant="outline" size="icon" onClick={() => handleStyleChange('position', 1, 'down')} disabled={!selectedElement}><ArrowDown className="w-4 h-4" /></Button>
-                    <Button variant="outline" size="icon" onClick={() => handleStyleChange('position', 1, 'left')} disabled={!selectedElement}><ArrowLeft className="w-4 h-4" /></Button>
-                    <Button variant="outline" size="icon" onClick={() => handleStyleChange('position', 1, 'right')} disabled={!selectedElement}><ArrowRight className="w-4 h-4" /></Button>
-                    <Separator orientation='vertical' className='h-6 mx-2'/>
-                        <p className="text-sm font-medium mr-2">Tamanho:</p>
-                        <Button variant="outline" size="icon" onClick={() => handleStyleChange('size', 1, 'decrease')} disabled={!selectedElement}><Minus className="w-4 h-4" /></Button>
-                        <span className="text-sm font-semibold w-16 text-center">{getSelectedElementSize()}</span>
-                        <Button variant="outline" size="icon" onClick={() => handleStyleChange('size', 1, 'increase')} disabled={!selectedElement}><Plus className="w-4 h-4" /></Button>
-                </div>
+                <div className='grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4'>
                     <div 
-                    className="aspect-[85.6/54] w-full max-w-lg mx-auto rounded-lg shadow-md relative"
+                        ref={cardRef}
+                        className="aspect-[85.6/54] w-full max-w-lg mx-auto rounded-lg shadow-md relative"
                         style={{ 
-                        backgroundColor: isFront ? cardStyles.frontBackground : cardStyles.backBackground,
-                        backgroundImage: `url(${isFront ? cardStyles.frontBackgroundImage : cardStyles.backBackgroundImage})`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
+                            backgroundColor: isFront ? cardStyles.frontBackground : cardStyles.backBackground,
+                            backgroundImage: `url(${isFront ? cardStyles.frontBackgroundImage : cardStyles.backBackgroundImage})`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
                         }}
-                >
-                    {isFront ? (
-                        // Frente da Carteirinha
-                        <div className='relative h-full w-full'>
-                            {renderElement('Título 1')}
-                            {renderElement('Título 2')}
-                            {renderElement('Congregação')}
-                            {renderElement('Endereço')}
-                            {renderElement('Foto do Membro')}
-                            {renderElement('Logo Igreja')}
-                            <div style={{ position: 'absolute', top: `${elements['Nome'].position.top}%`, left: `${elements['Nome'].position.left}%`, width: '65%'}}>
-                                    {renderElement('Nome')}
-                                    {renderElement('RG')}
-                                    {renderElement('CPF')}
-                                    {renderElement('Cargo')}
+                        onMouseDown={() => setSelectedElement(null)} // Deselect when clicking on the card background
+                    >
+                        {isFront ? (
+                            // Frente da Carteirinha
+                            <div className='relative h-full w-full'>
+                                {renderElement('Título 1')}
+                                {renderElement('Título 2')}
+                                {renderElement('Congregação')}
+                                {renderElement('Endereço')}
+                                {renderElement('Foto do Membro')}
+                                {renderElement('Logo Igreja')}
+                                <div style={{ position: 'absolute', top: `${elements['Nome'].position.top}%`, left: `${elements['Nome'].position.left}%`, width: '65%'}}>
+                                        {renderElement('Nome')}
+                                        {renderElement('RG')}
+                                        {renderElement('CPF')}
+                                        {renderElement('Cargo')}
+                                </div>
                             </div>
-                        </div>
-                    ) : (
-                        // Verso da Carteirinha
-                        <div className='relative h-full w-full'>
-                            {renderElement('Logo Convenção 1')}
-                            {renderElement('Logo Convenção 2')}
-                            {renderElement('QR Code')}
-                            {renderElement('Assinatura')}
-                            {renderElement('Assinatura Pastor')}
-                            {renderElement('Validade')}
-                            {renderElement('Membro Desde')}
-                            <div 
-                                style={{
-                                    position: 'absolute', 
-                                    borderTop: '1px solid black', 
-                                    width: '40%', 
-                                    top: `${elements['Assinatura Pastor'].position.top + 5}%`,
-                                    left: `${elements['Assinatura Pastor'].position.left}%`,
-                                    transform: 'translateX(-50%)'
-                                }}
-                            />
-                        </div>
-                    )}
+                        ) : (
+                            // Verso da Carteirinha
+                            <div className='relative h-full w-full'>
+                                {renderElement('Logo Convenção 1')}
+                                {renderElement('Logo Convenção 2')}
+                                {renderElement('QR Code')}
+                                {renderElement('Assinatura')}
+                                {renderElement('Assinatura Pastor')}
+                                {renderElement('Validade')}
+                                {renderElement('Membro Desde')}
+                                <div 
+                                    style={{
+                                        position: 'absolute', 
+                                        borderTop: '1px solid black', 
+                                        width: '40%', 
+                                        top: `calc(${elements['Assinatura Pastor'].position.top}% + ${elements['Assinatura Pastor'].size.fontSize}px + 2px)`,
+                                        left: `${elements['Assinatura Pastor'].position.left}%`,
+                                        transform: 'translateX(-50%)'
+                                    }}
+                                />
+                            </div>
+                        )}
                     </div>
+                    <div className='flex flex-col items-center justify-center gap-4 p-4 border rounded-lg bg-background'>
+                        <p className="text-sm font-medium text-center">
+                            Ajustando: <span className={cn("font-bold", { "text-primary": selectedElement })}>{selectedElement || "Nenhum"}</span>
+                        </p>
+                        <Separator />
+                        <p className="text-sm font-medium">Posição</p>
+                        <div className='flex items-center gap-2'>
+                            <Button variant="outline" size="icon" onMouseDown={() => startMoving('position', 1, 'up')} onMouseUp={stopMoving} onMouseLeave={stopMoving} disabled={!selectedElement}><ArrowUp className="w-4 h-4" /></Button>
+                            <Button variant="outline" size="icon" onMouseDown={() => startMoving('position', 1, 'down')} onMouseUp={stopMoving} onMouseLeave={stopMoving} disabled={!selectedElement}><ArrowDown className="w-4 h-4" /></Button>
+                            <Button variant="outline" size="icon" onMouseDown={() => startMoving('position', 1, 'left')} onMouseUp={stopMoving} onMouseLeave={stopMoving} disabled={!selectedElement}><ArrowLeft className="w-4 h-4" /></Button>
+                            <Button variant="outline" size="icon" onMouseDown={() => startMoving('position', 1, 'right')} onMouseUp={stopMoving} onMouseLeave={stopMoving} disabled={!selectedElement}><ArrowRight className="w-4 h-4" /></Button>
+                        </div>
+                        <Separator />
+                        <p className="text-sm font-medium">Tamanho</p>
+                        <div className='flex items-center gap-2'>
+                            <Button variant="outline" size="icon" onMouseDown={() => startMoving('size', 1, 'decrease')} onMouseUp={stopMoving} onMouseLeave={stopMoving} disabled={!selectedElement}><Minus className="w-4 h-4" /></Button>
+                            <span className="text-sm font-semibold w-16 text-center">{getSelectedElementSize()}</span>
+                            <Button variant="outline" size="icon" onMouseDown={() => startMoving('size', 1, 'increase')} onMouseUp={stopMoving} onMouseLeave={stopMoving} disabled={!selectedElement}><Plus className="w-4 h-4" /></Button>
+                        </div>
+                    </div>
+                </div>
             </CardContent>
         </Card>
         <div className='flex flex-col items-center gap-4 pt-2'>
@@ -394,16 +476,16 @@ export default function CardStudioPage() {
                             </div>
                                 <div className="grid gap-2">
                                 <div className="grid grid-cols-3 items-center gap-4">
-                                    <Label htmlFor="color-title">Cor do Título</Label>
+                                    <Label htmlFor="color-title">Cor dos Títulos</Label>
                                     <Input id="color-title" type="color" defaultValue={elements['Título 1'].color} onChange={(e) => handleColorChange('title', e.target.value)} className="col-span-2 h-8 p-1" />
                                 </div>
                                     <div className="grid grid-cols-3 items-center gap-4">
-                                    <Label htmlFor="color-text">Cor do Texto</Label>
+                                    <Label htmlFor="color-text">Cor dos Dados</Label>
                                     <Input id="color-text" type="color" defaultValue={elements['Nome'].color} onChange={(e) => handleColorChange('text', e.target.value)} className="col-span-2 h-8 p-1" />
                                 </div>
                                 <div className="grid grid-cols-3 items-center gap-4">
                                     <Label htmlFor="color-bg">Cor do Fundo</Label>
-                                    <Input id="color-bg" type="color" defaultValue={isFront ? cardStyles.frontBackground : cardStyles.backBackground} onChange={(e) => handleColorChange('bg', e.target.value)} className="col-span-2 h-8 p-1" />
+                                    <Input id="color-bg" type="color" value={isFront ? cardStyles.frontBackground : cardStyles.backBackground} onChange={(e) => handleColorChange('bg', e.target.value)} className="col-span-2 h-8 p-1" />
                                 </div>
                             </div>
                             </div>
@@ -444,3 +526,5 @@ export default function CardStudioPage() {
     </div>
   );
 }
+
+    

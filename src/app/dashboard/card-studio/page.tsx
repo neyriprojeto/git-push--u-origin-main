@@ -379,12 +379,6 @@ export default function CardStudioPage() {
             userSelect: 'none', // Prevent text selection while dragging
         };
         
-        if (id.includes('Título') || id.includes('Congregação') || id.includes('Endereço') || id.includes('Assinatura Pastor') || id.includes('Validade') || id.includes('Membro Desde')) {
-            style.left = '50%';
-            style.width = '90%';
-            style.textAlign = 'center';
-        }
-        
          if (isText) {
             style.fontSize = el.size.fontSize ? `${el.size.fontSize}px` : undefined;
             style.color = el.color;
@@ -394,7 +388,10 @@ export default function CardStudioPage() {
             }
              // For all text elements, allow individual positioning
             style.transform = 'translateX(-50%)'; 
-            if (!id.includes('Título') && !id.includes('Congregação') && !id.includes('Endereço') && !id.includes('Assinatura Pastor') && !id.includes('Validade') && !id.includes('Membro Desde')) {
+            if (id.includes('Título') || id.includes('Congregação') || id.includes('Endereço')) {
+                style.textAlign = 'center';
+                style.width = '90%';
+            } else {
                  style.textAlign = 'left';
                  style.width = 'auto';
             }
@@ -698,3 +695,5 @@ export default function CardStudioPage() {
     </>
   );
 }
+
+    

@@ -1,3 +1,5 @@
+'use client';
+
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -18,17 +20,25 @@ import {
 import { AppLogo } from "@/components/icons";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Users, Share2, Radio, Menu } from "lucide-react";
+import { Users, Share2, Radio, Menu, Instagram, Youtube, Globe } from "lucide-react";
+import React from "react";
 
 export default function Home() {
   const churchBanner = PlaceHolderImages.find((p) => p.id === "church-banner");
   const pastorPhoto = PlaceHolderImages.find((p) => p.id === "pastor-photo");
+  const [isClient, setIsClient] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsClient(true);
+  }, []);
+
 
   return (
     <div className="flex flex-col min-h-screen bg-secondary">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-14 items-center justify-between">
           <div className="flex items-center gap-4">
+              {isClient && (
               <Sheet>
                 <SheetTrigger asChild>
                   <Button variant="ghost" size="icon" className="md:hidden">
@@ -45,22 +55,27 @@ export default function Home() {
                         </Link>
                     </SheetTitle>
                   </SheetHeader>
-                  <div className="flex flex-col space-y-4 py-4">
-                    <Button variant="ghost" asChild className="justify-start">
-                        <Link href="#">
-                            <Share2 className="mr-2 h-4 w-4"/>
-                            Redes Sociais
-                        </Link>
+                  <div className="flex flex-col space-y-2 py-4">
+                    <Button variant="ghost" className="justify-start">
+                        <Instagram className="mr-2 h-4 w-4"/>
+                        Instagram
                     </Button>
-                    <Button variant="ghost" asChild className="justify-start">
-                        <Link href="#">
-                            <Radio className="mr-2 h-4 w-4"/>
-                            Rádio
-                        </Link>
+                     <Button variant="ghost" className="justify-start">
+                        <Youtube className="mr-2 h-4 w-4"/>
+                        YouTube
+                    </Button>
+                     <Button variant="ghost" className="justify-start">
+                        <Globe className="mr-2 h-4 w-4"/>
+                        Site
+                    </Button>
+                    <Button variant="ghost" className="justify-start">
+                        <Radio className="mr-2 h-4 w-4"/>
+                        Rádio
                     </Button>
                   </div>
                 </SheetContent>
               </Sheet>
+              )}
                <Link href="/" className="mr-6 flex items-center space-x-2">
                 <AppLogo className="h-6 w-6 text-primary" />
                 <span className="font-bold sm:inline-block">A.D.KAIROS CONNECT</span>

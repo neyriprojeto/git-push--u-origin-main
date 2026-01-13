@@ -86,6 +86,7 @@ export default function CardStudioPage() {
         'Logo Convenção 1': useRef<HTMLInputElement>(null),
         'Logo Convenção 2': useRef<HTMLInputElement>(null),
         'Assinatura': useRef<HTMLInputElement>(null),
+        'Foto do Membro': useRef<HTMLInputElement>(null),
     };
 
     const [cardStyles, setCardStyles] = useState({
@@ -222,8 +223,8 @@ export default function CardStudioPage() {
             completedCrop.height * scaleY,
             0,
             0,
-            completedCrop.width * scaleX,
-            completedCrop.height * scaleY
+            canvas.width,
+            canvas.height
         );
 
         ctx.restore();

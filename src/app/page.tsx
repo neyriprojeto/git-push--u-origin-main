@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { Church, BookOpenText } from "lucide-react";
+import { Church, BookOpenText, MapPin } from "lucide-react";
 import { AppLogo } from "@/components/icons";
 
 export default function Home() {
@@ -19,7 +19,7 @@ export default function Home() {
             <AppLogo className="h-6 w-6 text-primary" />
             <span className="font-bold sm:inline-block">A.D.KAIROS CONNECT</span>
           </Link>
-          <nav className="flex flex-1 items-center space-x-4 sm:justify-end">
+          <nav className="flex flex-1 items-center space-x-4 justify-center">
             <Button asChild>
               <Link href="/login">Área de Membros</Link>
             </Button>
@@ -69,14 +69,18 @@ export default function Home() {
               </div>
               <div className="space-y-4">
                 <div className="inline-block rounded-lg bg-secondary px-3 py-1 text-sm">
-                  Palavra Pastoral
+                  Endereço
                 </div>
                 <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl font-headline">
-                  Uma Mensagem de Esperança
+                  Onde nos encontrar
                 </h2>
-                <p className="max-w-[600px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  "O Senhor te abençoe e te guarde; o Senhor faça resplandecer o seu rosto sobre ti e te conceda graça; o Senhor volte para ti o seu rosto e te dê paz." (Números 6:24-26). Que a paz de Cristo, que excede todo entendimento, guarde seus corações e suas mentes.
-                </p>
+                <div className="flex items-start gap-4 text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                    <MapPin className="h-6 w-6 mt-1 text-primary"/>
+                    <span>
+                    Rua Exemplo, 123, Bairro, Cidade - UF <br />
+                    CEP: 12345-678
+                    </span>
+                </div>
               </div>
             </div>
           </div>
@@ -120,11 +124,33 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        <section id="pastoral-word" className="w-full py-12 md:py-24 lg:py-32">
+          <div className="container px-4 md:px-6 flex justify-center">
+            <div className="space-y-4 text-center max-w-[700px]">
+                <div className="inline-block rounded-lg bg-secondary px-3 py-1 text-sm">
+                    Palavra Pastoral
+                </div>
+                <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl font-headline">
+                    Uma Mensagem de Esperança
+                </h2>
+                <p className="max-w-[600px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed mx-auto">
+                    "O Senhor te abençoe e te guarde; o Senhor faça resplandecer o seu rosto sobre ti e te conceda graça; o Senhor volte para ti o seu rosto e te dê paz." (Números 6:24-26). Que a paz de Cristo, que excede todo entendimento, guarde seus corações e suas mentes.
+                </p>
+            </div>
+          </div>
+        </section>
       </main>
 
       <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t">
         <p className="text-xs text-muted-foreground">&copy; {new Date().getFullYear()} A.D.KAIROS CONNECT. Todos os direitos reservados.</p>
         <nav className="sm:ml-auto flex gap-4 sm:gap-6">
+          <Link className="text-xs hover:underline underline-offset-4" href="#">
+            Congregações
+          </Link>
+          <Link className="text-xs hover:underline underline-offset-4" href="#">
+            Coordenação
+          </Link>
           <Link className="text-xs hover:underline underline-offset-4" href="#">
             Termos de Serviço
           </Link>

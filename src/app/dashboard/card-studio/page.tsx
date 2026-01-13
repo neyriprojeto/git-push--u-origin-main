@@ -450,9 +450,38 @@ export default function CardStudioPage() {
         </div>
 
         <div className="space-y-4">
-          <Card className='overflow-hidden'>
-              <CardContent className='p-2 bg-muted/30'>
-                  <div className='grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4'>
+          <Card>
+              <CardContent className='p-4 bg-muted/30'>
+                  <div className='flex flex-col items-center gap-4'>
+                      {/* Adjustment Controls */}
+                      <div className='w-full max-w-lg flex flex-col items-center gap-4 p-4 border rounded-lg bg-background'>
+                          <p className="text-sm font-medium text-center">
+                              Ajustando: <span className={cn("font-bold", { "text-primary": selectedElement })}>{selectedElement || "Nenhum"}</span>
+                          </p>
+                          <Separator />
+                           <div className='flex flex-col sm:flex-row items-center gap-4'>
+                                <div className='flex flex-col items-center gap-2'>
+                                  <p className="text-sm font-medium">Posição</p>
+                                  <div className='flex items-center gap-2'>
+                                      <Button variant="outline" size="icon" onMouseDown={() => startMoving('position', 1, 'up')} onMouseUp={stopMoving} onMouseLeave={stopMoving} disabled={!selectedElement}><ArrowUp className="w-4 h-4" /></Button>
+                                      <Button variant="outline" size="icon" onMouseDown={() => startMoving('position', 1, 'down')} onMouseUp={stopMoving} onMouseLeave={stopMoving} disabled={!selectedElement}><ArrowDown className="w-4 h-4" /></Button>
+                                      <Button variant="outline" size="icon" onMouseDown={() => startMoving('position', 1, 'left')} onMouseUp={stopMoving} onMouseLeave={stopMoving} disabled={!selectedElement}><ArrowLeft className="w-4 h-4" /></Button>
+                                      <Button variant="outline" size="icon" onMouseDown={() => startMoving('position', 1, 'right')} onMouseUp={stopMoving} onMouseLeave={stopMoving} disabled={!selectedElement}><ArrowRight className="w-4 h-4" /></Button>
+                                  </div>
+                                </div>
+                                <Separator orientation='vertical' className='h-16 hidden sm:block'/>
+                                <div className='flex flex-col items-center gap-2'>
+                                  <p className="text-sm font-medium">Tamanho</p>
+                                  <div className='flex items-center gap-2'>
+                                      <Button variant="outline" size="icon" onMouseDown={() => startMoving('size', 1, 'decrease')} onMouseUp={stopMoving} onMouseLeave={stopMoving} disabled={!selectedElement}><Minus className="w-4 h-4" /></Button>
+                                      <span className="text-sm font-semibold w-16 text-center">{getSelectedElementSize()}</span>
+                                      <Button variant="outline" size="icon" onMouseDown={() => startMoving('size', 1, 'increase')} onMouseUp={stopMoving} onMouseLeave={stopMoving} disabled={!selectedElement}><Plus className="w-4 h-4" /></Button>
+                                  </div>
+                                </div>
+                           </div>
+                      </div>
+
+                      {/* Card Preview */}
                       <div 
                           ref={cardRef}
                           className="aspect-[85.6/54] w-full max-w-lg mx-auto rounded-lg shadow-md relative"
@@ -465,7 +494,6 @@ export default function CardStudioPage() {
                           onMouseDown={() => setSelectedElement(null)} // Deselect when clicking on the card background
                       >
                           {isFront ? (
-                              // Frente da Carteirinha
                               <div className='relative h-full w-full'>
                                   {renderElement('Título 1')}
                                   {renderElement('Título 2')}
@@ -481,7 +509,6 @@ export default function CardStudioPage() {
                                   </div>
                               </div>
                           ) : (
-                              // Verso da Carteirinha
                               <div className='relative h-full w-full'>
                                   {renderElement('Logo Convenção 1')}
                                   {renderElement('Logo Convenção 2')}
@@ -503,35 +530,14 @@ export default function CardStudioPage() {
                               </div>
                           )}
                       </div>
-                      <div className='flex flex-col items-center justify-center gap-4 p-4 border rounded-lg bg-background'>
-                          <p className="text-sm font-medium text-center">
-                              Ajustando: <span className={cn("font-bold", { "text-primary": selectedElement })}>{selectedElement || "Nenhum"}</span>
-                          </p>
-                          <Separator />
-                          <p className="text-sm font-medium">Posição</p>
-                          <div className='flex items-center gap-2'>
-                              <Button variant="outline" size="icon" onMouseDown={() => startMoving('position', 1, 'up')} onMouseUp={stopMoving} onMouseLeave={stopMoving} disabled={!selectedElement}><ArrowUp className="w-4 h-4" /></Button>
-                              <Button variant="outline" size="icon" onMouseDown={() => startMoving('position', 1, 'down')} onMouseUp={stopMoving} onMouseLeave={stopMoving} disabled={!selectedElement}><ArrowDown className="w-4 h-4" /></Button>
-                              <Button variant="outline" size="icon" onMouseDown={() => startMoving('position', 1, 'left')} onMouseUp={stopMoving} onMouseLeave={stopMoving} disabled={!selectedElement}><ArrowLeft className="w-4 h-4" /></Button>
-                              <Button variant="outline" size="icon" onMouseDown={() => startMoving('position', 1, 'right')} onMouseUp={stopMoving} onMouseLeave={stopMoving} disabled={!selectedElement}><ArrowRight className="w-4 h-4" /></Button>
-                          </div>
-                          <Separator />
-                          <p className="text-sm font-medium">Tamanho</p>
-                          <div className='flex items-center gap-2'>
-                              <Button variant="outline" size="icon" onMouseDown={() => startMoving('size', 1, 'decrease')} onMouseUp={stopMoving} onMouseLeave={stopMoving} disabled={!selectedElement}><Minus className="w-4 h-4" /></Button>
-                              <span className="text-sm font-semibold w-16 text-center">{getSelectedElementSize()}</span>
-                              <Button variant="outline" size="icon" onMouseDown={() => startMoving('size', 1, 'increase')} onMouseUp={stopMoving} onMouseLeave={stopMoving} disabled={!selectedElement}><Plus className="w-4 h-4" /></Button>
-                          </div>
+                      <div className='flex gap-2'>
+                          <Button variant={isFront ? 'default' : 'outline'} onClick={() => setIsFront(true)}>Frente</Button>
+                          <Button variant={!isFront ? 'default' : 'outline'} onClick={() => setIsFront(false)}>Verso</Button>
                       </div>
                   </div>
               </CardContent>
           </Card>
-          <div className='flex flex-col items-center gap-4 pt-2'>
-              <div className='flex gap-2'>
-                  <Button variant={isFront ? 'default' : 'outline'} onClick={() => setIsFront(true)}>Frente</Button>
-                  <Button variant={!isFront ? 'default' : 'outline'} onClick={() => setIsFront(false)}>Verso</Button>
-              </div>
-              <div className='flex flex-wrap gap-2 justify-center'>
+          <div className='flex flex-wrap gap-2 justify-center pt-4'>
                   <Popover>
                       <PopoverTrigger asChild>
                           <Button variant="outline"><Type className="mr-2 h-4 w-4"/> Texto</Button>
@@ -624,7 +630,6 @@ export default function CardStudioPage() {
                       </PopoverContent>
                   </Popover>
 
-              </div>
           </div>
         </div>
       </div>

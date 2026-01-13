@@ -70,7 +70,7 @@ export default function CardStudioPage() {
     const [completedCrop, setCompletedCrop] = useState<Crop>();
     const [scale, setScale] = useState(1);
     const [rotate, setRotate] = useState(0);
-    const [aspect, setAspect] = useState<number | undefined>(16 / 9);
+    const [aspect, setAspect] = useState<number | undefined>(undefined);
     const [imageToCrop, setImageToCrop] = useState('');
     const [croppingId, setCroppingId] = useState('');
     const [isCropping, setIsCropping] = useState(false);
@@ -151,6 +151,8 @@ export default function CardStudioPage() {
         const file = e.target.files?.[0];
         if (file) {
             setCrop(undefined) // Makes crop preview update between images.
+            setScale(1);
+            setRotate(0);
             setCurrentFile(file);
             const reader = new FileReader()
             reader.addEventListener('load', () => {
@@ -183,7 +185,7 @@ export default function CardStudioPage() {
           toast({
             variant: 'destructive',
             title: 'Erro de Corte',
-            description: 'Não foi possível processar a imagem cortada.',
+            description: 'Não foi possível processar a imagem cortada. Tente novamente.',
           });
           return;
         }
@@ -193,16 +195,22 @@ export default function CardStudioPage() {
         const scaleX = image.naturalWidth / image.width;
         const scaleY = image.naturalHeight / image.height;
         
-        canvas.width = completedCrop.width * scaleX;
-        canvas.height = completedCrop.height * scaleY;
+        canvas.width = Math.floor(completedCrop.width * scaleX);
+        canvas.height = Math.floor(completedCrop.height * scaleY);
+
         const ctx = canvas.getContext('2d');
-        
         if (!ctx) {
           toast({ variant: 'destructive', title: 'Erro', description: 'Could not get 2d context' });
           setIsUploading(false);
           return;
         }
 
+        ctx.save();
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.rotate((rotate * Math.PI) / 180);
+        ctx.scale(scale, scale);
+        ctx.translate(-image.naturalWidth / 2, -image.naturalHeight / 2);
+        
         ctx.drawImage(
             image,
             completedCrop.x * scaleX,
@@ -214,6 +222,8 @@ export default function CardStudioPage() {
             canvas.width,
             canvas.height
         );
+
+        ctx.restore();
         
        canvas.toBlob(async (blob) => {
             if (!blob) {
@@ -661,6 +671,7 @@ export default function CardStudioPage() {
                                 onLoad={onImageLoad}
                                 width={500}
                                 height={500}
+                                className="max-h-[70vh] object-contain"
                             />
                         </ReactCrop>
                     )}
@@ -695,3 +706,5 @@ export default function CardStudioPage() {
     </>
   );
 }
+
+    

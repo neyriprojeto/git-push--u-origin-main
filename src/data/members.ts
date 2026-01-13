@@ -14,7 +14,7 @@ export type Member = {
   naturalness?: string; // Naturalidade (cidade/estado de nascimento)
   phone: string;
   whatsapp?: string;
-  role: 'Membro' | 'Líder' | 'Pastor' | 'Diácono' | 'Admin'; // Cargo
+  role: 'Membro' | 'Líder' | 'Pastor' | 'Diácono' | 'Admin' | 'Administrador'; // Cargo
   memberSince: string;
   history: { date: string; event: string }[];
   participation: { group: string; role: string }[];
@@ -34,6 +34,9 @@ export const members: Member[] = [
     phone: '(11) 98765-4321',
     address: 'Rua das Flores, 123, São Paulo, SP',
     birthDate: '1985-07-20',
+    maritalStatus: 'Casado(a)',
+    rg: '12.345.678-9',
+    cpf: '123.456.789-00',
     history: [
       { date: '2015-03-12', event: 'Tornou-se membro' },
       { date: '2018-01-15', event: 'Batismo' },
@@ -56,6 +59,9 @@ export const members: Member[] = [
     phone: '(21) 91234-5678',
     address: 'Avenida Copacabana, 456, Rio de Janeiro, RJ',
     birthDate: '1992-11-30',
+    maritalStatus: 'Solteiro(a)',
+    rg: '23.456.789-0',
+    cpf: '234.567.890-11',
     history: [
         { date: '2018-07-22', event: 'Tornou-se membro' },
         { date: '2019-04-01', event: 'Batismo' },
@@ -76,6 +82,9 @@ export const members: Member[] = [
     phone: '(31) 99999-8888',
     address: 'Praça da Liberdade, 789, Belo Horizonte, MG',
     birthDate: '1978-02-14',
+    maritalStatus: 'Casado(a)',
+    rg: '34.567.890-1',
+    cpf: '345.678.901-22',
     history: [
         { date: '2010-01-05', event: 'Tornou-se membro' },
         { date: '2012-06-18', event: 'Consagrado a diácono' },
@@ -97,9 +106,32 @@ export const members: Member[] = [
     phone: '(71) 98888-7777',
     address: 'Rua do Pelourinho, 321, Salvador, BA',
     birthDate: '2001-09-03',
+    maritalStatus: 'Solteiro(a)',
+    rg: '45.678.901-2',
+    cpf: '456.789.012-33',
     history: [
         { date: '2021-02-19', event: 'Tornou-se membro' },
     ],
     participation: []
   },
+  {
+    id: '5',
+    name: 'AD Kairós',
+    avatar: 'church-banner',
+    role: 'Administrador',
+    status: 'Ativo',
+    memberSince: '2000-01-01',
+    email: 'admin@adkairos.com',
+    recordNumber: '000',
+    phone: '(11) 1234-5678',
+    address: 'Rua Presidente Prudente, 28, Eldorado, Diadema - SP, 09972-300',
+    birthDate: '2000-01-01',
+    maritalStatus: 'N/A',
+    rg: '5528207',
+    cpf: '023.482.291-02',
+    history: [],
+    participation: []
+  },
 ];
+
+    

@@ -23,6 +23,8 @@ import { Eye } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 
 export default function MembersPage() {
+  const displayMembers = members.filter(m => m.role !== 'Administrador');
+
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
@@ -52,7 +54,7 @@ export default function MembersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {members.map((member: Member) => {
+              {displayMembers.map((member: Member) => {
                 const avatar = PlaceHolderImages.find(
                   (p) => p.id === member.avatar
                 );
@@ -99,3 +101,5 @@ export default function MembersPage() {
     </div>
   );
 }
+
+    

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Minus, Plus, Palette, Image as ImageIcon, Eye, MessageSquare, Type, Upload } from 'lucide-react';
+import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Minus, Plus, Palette, Image as ImageIcon, Type, Upload } from 'lucide-react';
 import { members } from '@/data/members';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
@@ -218,8 +218,6 @@ export default function CardStudioPage() {
                         </PopoverContent>
                     </Popover>
 
-                    <Button variant="secondary"><Eye className="mr-2 h-4 w-4"/> Preview</Button>
-                    <Button variant="secondary"><MessageSquare className="mr-2 h-4 w-4"/> Chat</Button>
                 </div>
             </div>
         </div>

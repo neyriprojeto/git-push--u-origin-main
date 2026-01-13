@@ -12,7 +12,7 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
 } from "@/components/ui/sidebar";
-import { Home, MessageSquare, Users, UserCog, Settings, CreditCard, LayoutGrid, Radio, Share2, Mail } from "lucide-react";
+import { Home, MessageSquare, Users, UserCog, Settings, CreditCard, LayoutGrid, Radio, Share2, Mail, Youtube, Instagram, Globe } from "lucide-react";
 import { AppLogo } from "@/components/icons";
 
 export default function DashboardLayout({
@@ -100,11 +100,27 @@ export default function DashboardLayout({
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip={{ children: "Redes Sociais" }}>
+               <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip={{ children: "Instagram" }}>
                   <Link href="#">
-                    <Share2 />
-                    <span>Redes Sociais</span>
+                    <Instagram />
+                    <span>Instagram</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip={{ children: "YouTube" }}>
+                  <Link href="#">
+                    <Youtube />
+                    <span>YouTube</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+               <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip={{ children: "Site" }}>
+                  <Link href="#">
+                    <Globe />
+                    <span>Site</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

@@ -16,7 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Separator } from '@/components/ui/separator';
 
 export default function CardStudioPage() {
-    const [selectedElement, setSelectedElement] = useState('NOME');
+    const [selectedElement, setSelectedElement] = useState<string | null>(null);
     const member = members[0]; // Using a sample member
     const avatar = PlaceHolderImages.find((p) => p.id === member.avatar);
     const qrCodePlaceholder = PlaceHolderImages.find((p) => p.id === 'qr-code-placeholder');
@@ -47,7 +47,7 @@ export default function CardStudioPage() {
                     <CardTitle>Elementos</CardTitle>
                 </CardHeader>
                 <CardContent>
-                   <p className="text-sm">Ajustando: <span className="font-bold text-primary">{selectedElement}</span></p>
+                   {selectedElement && <p className="text-sm">Ajustando: <span className="font-bold text-primary">{selectedElement}</span></p>}
                 </CardContent>
             </Card>
         </div>
@@ -136,93 +136,94 @@ export default function CardStudioPage() {
                      </div>
                 </CardContent>
             </Card>
-            <div className='flex flex-wrap gap-2 justify-center pt-2'>
-                <Button variant={isFront ? 'default' : 'outline'} onClick={() => setIsFront(true)}>Frente</Button>
-                <Button variant={!isFront ? 'default' : 'outline'} onClick={() => setIsFront(false)}>Verso</Button>
-                
-                <Popover>
-                    <PopoverTrigger asChild>
-                        <Button variant="outline"><Type className="mr-2 h-4 w-4"/> Texto</Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-80">
-                        <div className="grid gap-4">
-                            <div className="space-y-2">
-                                <h4 className="font-medium leading-none">Editar Textos</h4>
-                                <p className="text-sm text-muted-foreground">
-                                Altere os textos principais da carteirinha.
-                                </p>
+            <div className='flex flex-col items-center gap-4 pt-2'>
+                <div className='flex gap-2'>
+                    <Button variant={isFront ? 'default' : 'outline'} onClick={() => setIsFront(true)}>Frente</Button>
+                    <Button variant={!isFront ? 'default' : 'outline'} onClick={() => setIsFront(false)}>Verso</Button>
+                </div>
+                <div className='flex flex-wrap gap-2 justify-center'>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="outline"><Type className="mr-2 h-4 w-4"/> Texto</Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80">
+                            <div className="grid gap-4">
+                                <div className="space-y-2">
+                                    <h4 className="font-medium leading-none">Editar Textos</h4>
+                                    <p className="text-sm text-muted-foreground">
+                                    Altere os textos principais da carteirinha.
+                                    </p>
+                                </div>
+                                <div className="grid gap-2">
+                                    <div className="grid grid-cols-3 items-center gap-4">
+                                        <Label htmlFor="title1">Título 1</Label>
+                                        <Input id="title1" value={title1} onChange={(e) => setTitle1(e.target.value)} className="col-span-2 h-8" />
+                                    </div>
+                                    <div className="grid grid-cols-3 items-center gap-4">
+                                        <Label htmlFor="title2">Título 2</Label>
+                                        <Input id="title2" value={title2} onChange={(e) => setTitle2(e.target.value)} className="col-span-2 h-8" />
+                                    </div>
+                                     <div className="grid grid-cols-3 items-center gap-4">
+                                        <Label htmlFor="address">Endereço</Label>
+                                        <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} className="col-span-2 h-8" />
+                                    </div>
+                                </div>
                             </div>
-                            <div className="grid gap-2">
-                                <div className="grid grid-cols-3 items-center gap-4">
-                                    <Label htmlFor="title1">Título 1</Label>
-                                    <Input id="title1" value={title1} onChange={(e) => setTitle1(e.target.value)} className="col-span-2 h-8" />
-                                </div>
-                                <div className="grid grid-cols-3 items-center gap-4">
-                                    <Label htmlFor="title2">Título 2</Label>
-                                    <Input id="title2" value={title2} onChange={(e) => setTitle2(e.target.value)} className="col-span-2 h-8" />
-                                </div>
-                                 <div className="grid grid-cols-3 items-center gap-4">
-                                    <Label htmlFor="address">Endereço</Label>
-                                    <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} className="col-span-2 h-8" />
-                                </div>
-                            </div>
-                        </div>
-                    </PopoverContent>
-                </Popover>
+                        </PopoverContent>
+                    </Popover>
 
-                <Popover>
-                    <PopoverTrigger asChild>
-                        <Button variant="outline"><Palette className="mr-2 h-4 w-4"/> Cores</Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-80">
-                         <div className="grid gap-4">
-                            <div className="space-y-2">
-                                <h4 className="font-medium leading-none">Editar Cores</h4>
-                                <p className="text-sm text-muted-foreground">
-                                Escolha as cores dos elementos.
-                                </p>
-                            </div>
-                             <div className="grid gap-2">
-                                <div className="grid grid-cols-3 items-center gap-4">
-                                    <Label htmlFor="color-title">Cor do Título</Label>
-                                    <Input id="color-title" type="color" defaultValue="#000000" className="col-span-2 h-8 p-1" />
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="outline"><Palette className="mr-2 h-4 w-4"/> Cores</Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80">
+                             <div className="grid gap-4">
+                                <div className="space-y-2">
+                                    <h4 className="font-medium leading-none">Editar Cores</h4>
+                                    <p className="text-sm text-muted-foreground">
+                                    Escolha as cores dos elementos.
+                                    </p>
                                 </div>
-                                 <div className="grid grid-cols-3 items-center gap-4">
-                                    <Label htmlFor="color-text">Cor do Texto</Label>
-                                    <Input id="color-text" type="color" defaultValue="#333333" className="col-span-2 h-8 p-1" />
+                                 <div className="grid gap-2">
+                                    <div className="grid grid-cols-3 items-center gap-4">
+                                        <Label htmlFor="color-title">Cor do Título</Label>
+                                        <Input id="color-title" type="color" defaultValue="#000000" className="col-span-2 h-8 p-1" />
+                                    </div>
+                                     <div className="grid grid-cols-3 items-center gap-4">
+                                        <Label htmlFor="color-text">Cor do Texto</Label>
+                                        <Input id="color-text" type="color" defaultValue="#333333" className="col-span-2 h-8 p-1" />
+                                    </div>
+                                    <div className="grid grid-cols-3 items-center gap-4">
+                                        <Label htmlFor="color-bg">Cor do Fundo</Label>
+                                        <Input id="color-bg" type="color" defaultValue="#F3F4F6" className="col-span-2 h-8 p-1" />
+                                    </div>
                                 </div>
-                                <div className="grid grid-cols-3 items-center gap-4">
-                                    <Label htmlFor="color-bg">Cor do Fundo</Label>
-                                    <Input id="color-bg" type="color" defaultValue="#F3F4F6" className="col-span-2 h-8 p-1" />
-                                </div>
-                            </div>
-                         </div>
-                    </PopoverContent>
-                </Popover>
+                             </div>
+                        </PopoverContent>
+                    </Popover>
 
-                <Popover>
-                    <PopoverTrigger asChild>
-                         <Button variant="outline"><ImageIcon className="mr-2 h-4 w-4"/> Imagens</Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-2">
-                        <div className="flex flex-col gap-2">
-                             <Button variant="outline" size="sm"><Upload className="mr-2 h-4 w-4"/> Fundo (Frente)</Button>
-                             <Button variant="outline" size="sm"><Upload className="mr-2 h-4 w-4"/> Fundo (Verso)</Button>
-                             <Button variant="outline" size="sm"><Upload className="mr-2 h-4 w-4"/> Logo Igreja</Button>
-                             <Button variant="outline" size="sm"><Upload className="mr-2 h-4 w-4"/> Logo Conv. 1</Button>
-                             <Button variant="outline" size="sm"><Upload className="mr-2 h-4 w-4"/> Logo Conv. 2</Button>
-                             <Button variant="outline" size="sm"><Upload className="mr-2 h-4 w-4"/> Assinatura</Button>
-                        </div>
-                    </PopoverContent>
-                </Popover>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                             <Button variant="outline"><ImageIcon className="mr-2 h-4 w-4"/> Imagens</Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-2">
+                            <div className="flex flex-col gap-2">
+                                 <Button variant="outline" size="sm"><Upload className="mr-2 h-4 w-4"/> Fundo (Frente)</Button>
+                                 <Button variant="outline" size="sm"><Upload className="mr-2 h-4 w-4"/> Fundo (Verso)</Button>
+                                 <Button variant="outline" size="sm"><Upload className="mr-2 h-4 w-4"/> Logo Igreja</Button>
+                                 <Button variant="outline" size="sm"><Upload className="mr-2 h-4 w-4"/> Logo Conv. 1</Button>
+                                 <Button variant="outline" size="sm"><Upload className="mr-2 h-4 w-4"/> Logo Conv. 2</Button>
+                                 <Button variant="outline" size="sm"><Upload className="mr-2 h-4 w-4"/> Assinatura</Button>
+                            </div>
+                        </PopoverContent>
+                    </Popover>
 
-                <Button variant="secondary"><Eye className="mr-2 h-4 w-4"/> Preview</Button>
-                <Button variant="secondary"><MessageSquare className="mr-2 h-4 w-4"/> Chat</Button>
+                    <Button variant="secondary"><Eye className="mr-2 h-4 w-4"/> Preview</Button>
+                    <Button variant="secondary"><MessageSquare className="mr-2 h-4 w-4"/> Chat</Button>
+                </div>
             </div>
         </div>
       </div>
     </div>
   );
 }
-
-    

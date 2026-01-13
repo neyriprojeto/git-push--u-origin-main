@@ -205,22 +205,25 @@ export default function CardStudioPage() {
           return;
         }
 
+        const cropX = completedCrop.x * scaleX;
+        const cropY = completedCrop.y * scaleY;
+
         ctx.save();
         ctx.translate(canvas.width / 2, canvas.height / 2);
         ctx.rotate((rotate * Math.PI) / 180);
         ctx.scale(scale, scale);
-        ctx.translate(-image.naturalWidth / 2, -image.naturalHeight / 2);
-        
+        ctx.translate(-canvas.width / 2, -canvas.height / 2);
+
         ctx.drawImage(
             image,
-            completedCrop.x * scaleX,
-            completedCrop.y * scaleY,
+            cropX,
+            cropY,
             completedCrop.width * scaleX,
             completedCrop.height * scaleY,
             0,
             0,
-            canvas.width,
-            canvas.height
+            completedCrop.width * scaleX,
+            completedCrop.height * scaleY
         );
 
         ctx.restore();
@@ -310,7 +313,6 @@ export default function CardStudioPage() {
         setSelectedElement(id);
 
         if (cardRef.current) {
-            const cardRect = cardRef.current.getBoundingClientRect();
             dragInfo.current = {
                 isDragging: true,
                 elementId: id,
@@ -401,7 +403,6 @@ export default function CardStudioPage() {
             if (id === 'Endereço') {
                 style.whiteSpace = 'pre-wrap';
             }
-             style.width = 'auto'; // allow free movement
         } else { // isImage
              style.width = el.size.width ? `${el.size.width}px` : 'auto';
              style.height = el.size.height ? `${el.size.height}px` : 'auto';

@@ -75,6 +75,7 @@ export default function CardStudioPage() {
     const [croppingId, setCroppingId] = useState('');
     const [isCropping, setIsCropping] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const imgRef = useRef<HTMLImageElement>(null);
     const previewCanvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -149,6 +150,7 @@ export default function CardStudioPage() {
     const onSelectFile = (e: React.ChangeEvent<HTMLInputElement>, id: string) => {
         const file = e.target.files?.[0];
         if (file) {
+            setSelectedFile(file);
             setCrop(undefined) // Makes crop preview update between images.
             const reader = new FileReader()
             reader.addEventListener('load', () => {
@@ -175,79 +177,38 @@ export default function CardStudioPage() {
     }
 
     const saveCroppedImage = async () => {
-        const image = imgRef.current
-        const canvas = previewCanvasRef.current
-        if (!image || !canvas || !completedCrop) {
-            throw new Error('Crop canvas does not exist')
+        if (!selectedFile) {
+             toast({ variant: 'destructive', title: 'Erro', description: 'Nenhum arquivo selecionado.'});
+             return;
         }
 
         setIsUploading(true);
 
-        const scaleX = image.naturalWidth / image.width
-        const scaleY = image.naturalHeight / image.height
-        
-        canvas.width = completedCrop.width * scaleX
-        canvas.height = completedCrop.height * scaleY
+        try {
+            const src = await uploadArquivo(selectedFile);
+    
+            if (croppingId === 'Fundo (Frente)') {
+                setCardStyles(prev => ({...prev, frontBackgroundImage: src}));
+            } else if (croppingId === 'Fundo (Verso)') {
+                setCardStyles(prev => ({...prev, backBackgroundImage: src}));
+            } else {
+                setElements(prev => ({
+                    ...prev,
+                    [croppingId]: { ...prev[croppingId], src }
+                }));
+            }
 
-        const ctx = canvas.getContext('2d')
-        if (!ctx) {
+            toast({ title: 'Sucesso', description: 'Imagem enviada com sucesso!' });
+            setIsCropping(false);
+            setImageToCrop('');
+            setCroppingId('');
+            setSelectedFile(null);
+        } catch (error) {
+            console.error(error);
+            toast({ variant: 'destructive', title: 'Erro de Upload', description: 'Não foi possível enviar a imagem. Verifique seu `Cloud Name` e `Upload Preset` no Cloudinary.' });
+        } finally {
             setIsUploading(false);
-            throw new Error('No 2d context')
         }
-
-        const cropX = completedCrop.x * scaleX;
-        const cropY = completedCrop.y * scaleY;
-
-        ctx.save()
-        ctx.translate(canvas.width / 2, canvas.height / 2)
-        ctx.rotate((rotate * Math.PI) / 180)
-        ctx.scale(scale, scale)
-        ctx.translate(-canvas.width / 2, -canvas.height / 2)
-        ctx.drawImage(
-            image,
-            cropX,
-            cropY,
-            completedCrop.width * scaleX,
-            completedCrop.height * scaleY,
-            0,
-            0,
-            canvas.width,
-            canvas.height,
-        )
-        ctx.restore()
-        
-        canvas.toBlob(async (blob) => {
-            if (!blob) {
-                setIsUploading(false);
-                toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível converter a imagem.'});
-                return;
-            }
-            try {
-                const file = new File([blob], 'cropped-image.png', { type: 'image/png' });
-                const src = await uploadArquivo(file);
-        
-                if (croppingId === 'Fundo (Frente)') {
-                    setCardStyles(prev => ({...prev, frontBackgroundImage: src}));
-                } else if (croppingId === 'Fundo (Verso)') {
-                    setCardStyles(prev => ({...prev, backBackgroundImage: src}));
-                } else {
-                    setElements(prev => ({
-                        ...prev,
-                        [croppingId]: { ...prev[croppingId], src }
-                    }));
-                }
-
-                toast({ title: 'Sucesso', description: 'Imagem enviada com sucesso!' });
-                setIsCropping(false);
-                setImageToCrop('');
-                setCroppingId('');
-            } catch (error) {
-                console.error(error);
-                toast({ variant: 'destructive', title: 'Erro de Upload', description: 'Não foi possível enviar a imagem. Verifique seu `Cloud Name` e `Upload Preset` no Cloudinary.' });
-            } finally {
-                setIsUploading(false);
-            }
-        }, 'image/png');
     }
 
     
@@ -705,7 +666,7 @@ export default function CardStudioPage() {
           </DialogContent>
       </Dialog>
       
-      {/* Canvas for previewing cropped image */}
+      {/* This canvas is not displayed and is used for image processing. It can be removed if not needed. */}
       <canvas
         ref={previewCanvasRef}
         style={{
@@ -714,5 +675,5 @@ export default function CardStudioPage() {
         }}
       />
     </>
-  );
-}
+
+    

@@ -77,6 +77,7 @@ export default function CardStudioPage() {
     const [isUploading, setIsUploading] = useState(false);
     const imgRef = useRef<HTMLImageElement>(null);
     const previewCanvasRef = useRef<HTMLCanvasElement>(null);
+    const [currentFile, setCurrentFile] = useState<File | null>(null);
 
     const fileInputRefs = {
         'Fundo (Frente)': useRef<HTMLInputElement>(null),
@@ -101,10 +102,12 @@ export default function CardStudioPage() {
         'Congregação': { position: { top: 18, left: 50 }, size: { fontSize: 14 }, text: 'SEDE', color: '#000000', fontWeight: 'normal' },
         'Endereço': { position: { top: 23, left: 50 }, size: { fontSize: 8 }, text: 'Rua Presidente Prudente, N°28\nEldorado, Diadema-SP', color: '#000000' },
         'Foto do Membro': { position: { top: 30, left: 5 }, size: { width: 80, height: 100 }, src: avatarPlaceholder?.imageUrl },
-        'Nome': { position: { top: 60, left: 30 }, size: { fontSize: 11 }, text: member.name, color: '#333333', fontWeight: 'bold' },
-        'RG': { position: { top: 70, left: 30 }, size: { fontSize: 10 }, text: `RG: ${member.rg}`, color: '#333333', fontWeight: 'bold' },
-        'CPF': { position: { top: 70, left: 55 }, size: { fontSize: 10 }, text: `CPF: ${member.cpf}`, color: '#333333', fontWeight: 'bold' },
-        'Cargo': { position: { top: 80, left: 30 }, size: { fontSize: 10 }, text: `Cargo: ${member.role}`, color: '#333333', fontWeight: 'bold' },
+        'Nome': { position: { top: 60, left: 30 }, size: { fontSize: 11 }, text: `Nome: ${member.name}`, color: '#333333', fontWeight: 'bold' },
+        'RG': { position: { top: 70, left: 30 }, size: { fontSize: 10 }, text: `RG: ${member.rg}`, color: '#333333' },
+        'CPF': { position: { top: 70, left: 55 }, size: { fontSize: 10 }, text: `CPF: ${member.cpf}`, color: '#333333' },
+        'Cargo': { position: { top: 80, left: 30 }, size: { fontSize: 10 }, text: `Cargo: ${member.role}`, color: '#333333' },
+        'Data de Nascimento': { position: { top: 85, left: 30 }, size: { fontSize: 10 }, text: `Nasc: ${new Date(member.birthDate).toLocaleDateString()}`, color: '#333333' },
+        'Data de Batismo': { position: { top: 85, left: 55 }, size: { fontSize: 10 }, text: `Batismo: ${new Date().toLocaleDateString()}`, color: '#333333' },
         'Logo Igreja': { position: { top: 25, left: 75 }, size: { width: 60, height: 60 }, src: '' },
         
         // --- Verso ---
@@ -130,10 +133,8 @@ export default function CardStudioPage() {
                 setCardStyles(prev => ({ ...prev, backBackground: value }));
             }
         } else {
-            const elementsToUpdate = target === 'title' 
-                ? ['Título 1', 'Título 2', 'Congregação', 'Endereço', 'Assinatura Pastor', 'Validade', 'Membro Desde'] 
-                : ['Nome', 'RG', 'CPF', 'Cargo'];
-            
+            const elementsToUpdate = Object.keys(elements).filter(id => elements[id].text);
+
             setElements(prev => {
                 const newElements = { ...prev };
                 elementsToUpdate.forEach(id => {
@@ -150,6 +151,7 @@ export default function CardStudioPage() {
         const file = e.target.files?.[0];
         if (file) {
             setCrop(undefined) // Makes crop preview update between images.
+            setCurrentFile(file);
             const reader = new FileReader()
             reader.addEventListener('load', () => {
                 setImageToCrop(reader.result?.toString() || '')
@@ -177,7 +179,7 @@ export default function CardStudioPage() {
     const saveCroppedImage = async () => {
         const image = imgRef.current;
         const canvas = previewCanvasRef.current;
-        if (!image || !canvas || !completedCrop) {
+        if (!image || !canvas || !completedCrop || !currentFile) {
           toast({
             variant: 'destructive',
             title: 'Erro de Corte',
@@ -190,16 +192,14 @@ export default function CardStudioPage() {
 
         const scaleX = image.naturalWidth / image.width;
         const scaleY = image.naturalHeight / image.height;
-        const ctx = canvas.getContext('2d');
+        const offscreenCanvas = new OffscreenCanvas(completedCrop.width * scaleX, completedCrop.height * scaleY);
+        const ctx = offscreenCanvas.getContext('2d');
+        
         if (!ctx) {
-          throw new Error('Could not get 2d context from canvas');
+          toast({ variant: 'destructive', title: 'Erro', description: 'Could not get 2d context' });
+          setIsUploading(false);
+          return;
         }
-
-        canvas.width = completedCrop.width * scaleX;
-        canvas.height = completedCrop.height * scaleY;
-
-        ctx.setTransform(scale, 0, 0, scale, 0, 0);
-        ctx.imageSmoothingQuality = 'high';
 
         ctx.drawImage(
             image,
@@ -209,43 +209,40 @@ export default function CardStudioPage() {
             completedCrop.height * scaleY,
             0,
             0,
-            completedCrop.width * scaleX,
-            completedCrop.height * scaleY
+            offscreenCanvas.width,
+            offscreenCanvas.height
         );
         
-        canvas.toBlob(async (blob) => {
-            if (!blob) {
-                toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível criar a imagem cortada.' });
-                setIsUploading(false);
-                return;
+        const blob = await offscreenCanvas.convertToBlob({
+            type: 'image/png',
+        });
+       
+        try {
+            const croppedFile = new File([blob], currentFile.name, { type: blob.type });
+            const src = await uploadArquivo(croppedFile);
+    
+            if (croppingId === 'Fundo (Frente)') {
+                setCardStyles(prev => ({...prev, frontBackgroundImage: src}));
+            } else if (croppingId === 'Fundo (Verso)') {
+                setCardStyles(prev => ({...prev, backBackgroundImage: src}));
+            } else {
+                setElements(prev => ({
+                    ...prev,
+                    [croppingId]: { ...prev[croppingId], src }
+                }));
             }
 
-            try {
-                const croppedFile = new File([blob], "cropped_image.png", { type: "image/png" });
-                const src = await uploadArquivo(croppedFile);
-        
-                if (croppingId === 'Fundo (Frente)') {
-                    setCardStyles(prev => ({...prev, frontBackgroundImage: src}));
-                } else if (croppingId === 'Fundo (Verso)') {
-                    setCardStyles(prev => ({...prev, backBackgroundImage: src}));
-                } else {
-                    setElements(prev => ({
-                        ...prev,
-                        [croppingId]: { ...prev[croppingId], src }
-                    }));
-                }
-
-                toast({ title: 'Sucesso', description: 'Imagem enviada com sucesso!' });
-                setIsCropping(false);
-                setImageToCrop('');
-                setCroppingId('');
-            } catch (error) {
-                console.error(error);
-                toast({ variant: 'destructive', title: 'Erro de Upload', description: 'Não foi possível enviar a imagem. Verifique seu `Cloud Name` e `Upload Preset` no Cloudinary.' });
-            } finally {
-                setIsUploading(false);
-            }
-        }, 'image/png');
+            toast({ title: 'Sucesso', description: 'Imagem enviada com sucesso!' });
+            setIsCropping(false);
+            setImageToCrop('');
+            setCroppingId('');
+            setCurrentFile(null);
+        } catch (error) {
+            console.error(error);
+            toast({ variant: 'destructive', title: 'Erro de Upload', description: 'Não foi possível enviar a imagem. Verifique seu `Cloud Name` e `Upload Preset` no Cloudinary.' });
+        } finally {
+            setIsUploading(false);
+        }
     }
 
     
@@ -395,9 +392,11 @@ export default function CardStudioPage() {
             if (id === 'Endereço') {
                 style.whiteSpace = 'pre-wrap';
             }
-            if (id.startsWith('Nome') || id.startsWith('RG') || id.startsWith('CPF') || id.startsWith('Cargo')) {
-                 style.transform = 'none';
-                 style.left = `${el.position.left}%`
+             // For all text elements, allow individual positioning
+            style.transform = 'translateX(-50%)'; 
+            if (!id.includes('Título') && !id.includes('Congregação') && !id.includes('Endereço') && !id.includes('Assinatura Pastor') && !id.includes('Validade') && !id.includes('Membro Desde')) {
+                 style.textAlign = 'left';
+                 style.width = 'auto';
             }
         }
         
@@ -521,28 +520,17 @@ export default function CardStudioPage() {
                       >
                           {isFront ? (
                               <div className='relative h-full w-full'>
-                                  {renderElement('Título 1')}
-                                  {renderElement('Título 2')}
-                                  {renderElement('Congregação')}
-                                  {renderElement('Endereço')}
-                                  {renderElement('Foto do Membro')}
-                                  {renderElement('Logo Igreja')}
-                                  <div style={{ position: 'absolute', top: `${elements['Nome'].position.top}%`, left: `${elements['Nome'].position.left}%`, width: '65%'}}>
-                                          {renderElement('Nome')}
-                                          {renderElement('RG')}
-                                          {renderElement('CPF')}
-                                          {renderElement('Cargo')}
-                                  </div>
+                                  {/* Render all front elements individually */}
+                                  {Object.keys(elements)
+                                      .filter(id => !id.includes('Convenção') && !id.includes('QR Code') && !id.includes('Assinatura') && !id.includes('Validade') && !id.includes('Membro Desde'))
+                                      .map(id => renderElement(id))}
                               </div>
                           ) : (
                               <div className='relative h-full w-full'>
-                                  {renderElement('Logo Convenção 1')}
-                                  {renderElement('Logo Convenção 2')}
-                                  {renderElement('QR Code')}
-                                  {renderElement('Assinatura')}
-                                  {renderElement('Assinatura Pastor')}
-                                  {renderElement('Validade')}
-                                  {renderElement('Membro Desde')}
+                                  {/* Render all back elements individually */}
+                                  {Object.keys(elements)
+                                      .filter(id => id.includes('Convenção') || id.includes('QR Code') || id.includes('Assinatura') || id.includes('Validade') || id.includes('Membro Desde'))
+                                      .map(id => renderElement(id))}
                                   <div 
                                       style={{
                                           position: 'absolute', 
@@ -612,12 +600,8 @@ export default function CardStudioPage() {
                               </div>
                                   <div className="grid gap-2">
                                   <div className="grid grid-cols-3 items-center gap-4">
-                                      <Label htmlFor="color-title">Cor dos Títulos</Label>
-                                      <Input id="color-title" type="color" defaultValue={elements['Título 1'].color} onChange={(e) => handleColorChange('title', e.target.value)} className="col-span-2 h-8 p-1" />
-                                  </div>
-                                      <div className="grid grid-cols-3 items-center gap-4">
-                                      <Label htmlFor="color-text">Cor dos Dados</Label>
-                                      <Input id="color-text" type="color" defaultValue={elements['Nome'].color} onChange={(e) => handleColorChange('text', e.target.value)} className="col-span-2 h-8 p-1" />
+                                      <Label htmlFor="color-title">Cor dos Textos</Label>
+                                      <Input id="color-title" type="color" defaultValue={elements['Título 1'].color} onChange={(e) => handleColorChange('text', e.target.value)} className="col-span-2 h-8 p-1" />
                                   </div>
                                   <div className="grid grid-cols-3 items-center gap-4">
                                       <Label htmlFor="color-bg">Cor do Fundo</Label>

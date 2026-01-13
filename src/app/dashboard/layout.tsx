@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   SidebarProvider,
   Sidebar,
@@ -10,18 +9,17 @@ import {
   SidebarMenuButton,
   SidebarFooter,
   SidebarInset,
+  SidebarGroup,
+  SidebarGroupLabel,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, Users, LogOut, Contact, Share2, Radio } from "lucide-react";
+import { Home, MessageSquare, Users, UserCog, Settings, CreditCard, LayoutGrid } from "lucide-react";
 import { AppLogo } from "@/components/icons";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const pastorPhoto = PlaceHolderImages.find((p) => p.id === "pastor-photo");
-
   return (
     <SidebarProvider>
       <Sidebar>
@@ -36,58 +34,83 @@ export default function DashboardLayout({
         <SidebarContent>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                tooltip={{ children: "Dashboard" }}
-              >
+              <SidebarMenuButton asChild tooltip={{ children: "Início" }}>
                 <Link href="/dashboard">
-                  <LayoutDashboard />
-                  <span>Dashboard</span>
+                  <Home />
+                  <span>Início</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                tooltip={{ children: "Membros" }}
-              >
-                <Link href="/dashboard/members">
-                  <Users />
-                  <span>Membros</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                tooltip={{ children: "Redes Sociais" }}
-              >
+               <SidebarMenuButton asChild tooltip={{ children: "Mural" }}>
                 <Link href="#">
-                  <Share2 />
-                  <span>Redes Sociais</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                tooltip={{ children: "Rádio" }}
-              >
-                <Link href="#">
-                  <Radio />
-                  <span>Rádio</span>
+                  <LayoutGrid />
+                  <span>Mural</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
+
+          <SidebarGroup>
+            <SidebarGroupLabel>Administração</SidebarGroupLabel>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip={{ children: "Membros" }}>
+                  <Link href="/dashboard/members">
+                    <Users />
+                    <span>Membros</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip={{ children: "Gerenciar Administradores" }}>
+                  <Link href="#">
+                    <UserCog />
+                    <span>Gerenciar Admins</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+               <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip={{ children: "Mensagens" }}>
+                  <Link href="#">
+                    <MessageSquare />
+                    <span>Mensagens</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroup>
+          
+          <SidebarGroup>
+            <SidebarGroupLabel>Configurações</SidebarGroupLabel>
+            <SidebarMenu>
+               <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip={{ children: "Portal de Entrada" }}>
+                  <Link href="/">
+                    <Home />
+                    <span>Portal de Entrada</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip={{ children: "Carteirinhas" }}>
+                  <Link href="#">
+                    <CreditCard />
+                    <span>Carteirinhas</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroup>
+
         </SidebarContent>
         <SidebarFooter className="border-t border-sidebar-border">
            <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip={{ children: "Sair" }}>
-                <Link href="/">
-                  <LogOut />
-                  <span>Sair</span>
+              <SidebarMenuButton asChild tooltip={{ children: "Configurações" }}>
+                <Link href="#">
+                  <Settings />
+                  <span>Configurações</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

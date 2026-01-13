@@ -21,7 +21,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { AppLogo } from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
-import { User, CreditCard, FileText, MessageSquare } from "lucide-react";
+import { User, CreditCard, FileText, MessageSquare, BookOpen } from "lucide-react";
+import { bibleVerses } from "@/data/bible-verses";
+import { useState, useEffect } from "react";
+
+type Verse = {
+  book: string;
+  chapter: number;
+  verse: number;
+  text: string;
+};
 
 export default function MemberProfilePage({
   params,
@@ -29,6 +38,13 @@ export default function MemberProfilePage({
   params: { id: string };
 }) {
   const member = members.find((m) => m.id === params.id);
+  const [verse, setVerse] = useState<Verse | null>(null);
+
+  useEffect(() => {
+    // Select a random verse on client side to avoid hydration errors
+    const randomVerse = bibleVerses[Math.floor(Math.random() * bibleVerses.length)];
+    setVerse(randomVerse);
+  }, []);
 
   if (!member) {
     notFound();
@@ -70,6 +86,25 @@ export default function MemberProfilePage({
             </div>
           </CardContent>
         </Card>
+
+        {verse && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <BookOpen className="h-5 w-5 text-primary" />
+                Palavra do Dia
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <blockquote className="border-l-4 border-primary pl-4 italic">
+                <p className="mb-2">"{verse.text}"</p>
+                <footer className="text-sm font-semibold not-italic">
+                  {verse.book} {verse.chapter}:{verse.verse}
+                </footer>
+              </blockquote>
+            </CardContent>
+          </Card>
+        )}
 
         <Tabs defaultValue="carteirinha" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
@@ -217,5 +252,3 @@ export default function MemberProfilePage({
     </div>
   );
 }
-
-    

@@ -64,13 +64,13 @@ export default function CardStudioPage() {
     const { toast } = useToast();
     const avatarPlaceholder = PlaceHolderImages.find((p) => p.id === member.avatar);
     const qrCodePlaceholder = PlaceHolderImages.find((p) => p.id === 'qr-code-placeholder');
-    const [isFront, setIsFront] = useState(true);
+    const [isFront, setIsFront] = useState(isFront);
 
     const [crop, setCrop] = useState<Crop>();
     const [completedCrop, setCompletedCrop] = useState<Crop>();
     const [scale, setScale] = useState(1);
     const [rotate, setRotate] = useState(0);
-    const [aspect, setAspect] = useState<number | undefined>(16 / 9);
+    const [aspect, setAspect] = useState<number | undefined>(undefined);
     const [imageToCrop, setImageToCrop] = useState('');
     const [croppingId, setCroppingId] = useState('');
     const [isCropping, setIsCropping] = useState(false);
@@ -107,8 +107,8 @@ export default function CardStudioPage() {
         'RG': { position: { top: 68, left: 50 }, size: { fontSize: 10 }, text: `RG: ${member.rg}`, color: '#333333' },
         'CPF': { position: { top: 74, left: 50 }, size: { fontSize: 10 }, text: `CPF: ${member.cpf}`, color: '#333333' },
         'Cargo': { position: { top: 80, left: 50 }, size: { fontSize: 10 }, text: `Cargo: ${member.role}`, color: '#333333' },
-        'Data de Nascimento': { position: { top: 86, left: 35 }, size: { fontSize: 10 }, text: `Nasc: ${new Date(member.birthDate).toLocaleDateString('pt-BR')}`, color: '#333333' },
-        'Data de Batismo': { position: { top: 86, left: 65 }, size: { fontSize: 10 }, text: `Batismo: ${new Date().toLocaleDateString('pt-BR')}`, color: '#333333' },
+        'Data de Nascimento': { position: { top: 85, left: 30 }, size: { fontSize: 10 }, text: `Nasc: ${new Date(member.birthDate).toLocaleDateString('pt-BR')}`, color: '#333333' },
+        'Data de Batismo': { position: { top: 85, left: 65 }, size: { fontSize: 10 }, text: `Batismo: ${new Date().toLocaleDateString('pt-BR')}`, color: '#333333' },
         'Logo Igreja': { position: { top: 40, left: 80 }, size: { width: 60, height: 60 }, src: '' },
         
         // --- Verso ---
@@ -161,11 +161,13 @@ export default function CardStudioPage() {
                 setCroppingId(id);
                 setIsCropping(true);
 
-                 const elSize = elements[id]?.size;
-                if (elSize?.width && elSize?.height) {
+                const elSize = elements[id]?.size;
+                if (id.startsWith('Fundo')) {
+                    setAspect(85.6 / 54);
+                } else if (elSize?.width && elSize?.height) {
                     setAspect(elSize.width / elSize.height);
                 } else {
-                    setAspect(undefined); // Free crop for backgrounds
+                    setAspect(undefined); // Free crop
                 }
             })
             reader.readAsDataURL(file)
@@ -658,7 +660,7 @@ export default function CardStudioPage() {
               <DialogHeader>
                   <DialogTitle>Editar Imagem</DialogTitle>
               </DialogHeader>
-                <div className='flex items-center justify-center p-4'>
+                <div className='flex items-center justify-center p-4 bg-muted/20'>
                     {!!imageToCrop && (
                         <ReactCrop
                             crop={crop}
@@ -710,3 +712,5 @@ export default function CardStudioPage() {
     </>
   );
 }
+
+    

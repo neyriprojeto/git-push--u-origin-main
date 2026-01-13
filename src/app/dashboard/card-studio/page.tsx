@@ -675,5 +675,5 @@ export default function CardStudioPage() {
         }}
       />
     </>
-
-    
+  );
+}

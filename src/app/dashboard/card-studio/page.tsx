@@ -45,7 +45,6 @@ export default function CardStudioPage() {
             <Card className="bg-muted/40">
                 <CardHeader>
                     <CardTitle>Elementos</CardTitle>
-                    <CardDescription>Clique em um elemento para selecionar e ajustar.</CardDescription>
                 </CardHeader>
                 <CardContent>
                    <p className="text-sm">Ajustando: <span className="font-bold text-primary">{selectedElement}</span></p>
@@ -54,7 +53,7 @@ export default function CardStudioPage() {
         </div>
 
         {/* Preview da Carteirinha */}
-        <div className="lg:col-span-2 space-y-2">
+        <div className="lg:col-span-2 space-y-4">
              <Card className='overflow-hidden'>
                 <CardContent className='p-2 bg-muted/30'>
                     <div className='flex items-center justify-center flex-wrap gap-2 p-2 rounded-md bg-background border mb-2'>
@@ -137,7 +136,7 @@ export default function CardStudioPage() {
                      </div>
                 </CardContent>
             </Card>
-            <div className='flex flex-wrap gap-2 justify-center'>
+            <div className='flex flex-wrap gap-2 justify-center pt-2'>
                 <Button variant={isFront ? 'default' : 'outline'} onClick={() => setIsFront(true)}>Frente</Button>
                 <Button variant={!isFront ? 'default' : 'outline'} onClick={() => setIsFront(false)}>Verso</Button>
                 

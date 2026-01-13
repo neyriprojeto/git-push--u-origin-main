@@ -49,6 +49,22 @@ export default function DashboardLayout({
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
+             <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip={{ children: "Mensagens" }}>
+                  <Link href="#">
+                    <Mail />
+                    <span>Mensagens</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip={{ children: "Carteirinhas" }}>
+                  <Link href="#">
+                    <CreditCard />
+                    <span>Carteirinhas</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
           </SidebarMenu>
 
           <SidebarGroup>
@@ -70,33 +86,17 @@ export default function DashboardLayout({
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-               <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip={{ children: "Mensagens" }}>
-                  <Link href="#">
-                    <Mail />
-                    <span>Mensagens</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroup>
           
           <SidebarGroup>
-            <SidebarGroupLabel>Configurações</SidebarGroupLabel>
+            <SidebarGroupLabel>Links Externos</SidebarGroupLabel>
             <SidebarMenu>
                <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip={{ children: "Portal de Entrada" }}>
                   <Link href="/">
                     <Home />
                     <span>Portal de Entrada</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip={{ children: "Carteirinhas" }}>
-                  <Link href="#">
-                    <CreditCard />
-                    <span>Carteirinhas</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

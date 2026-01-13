@@ -21,6 +21,7 @@ type ElementStyle = {
     size: { width?: number; height?: number; fontSize?: number };
     text?: string;
     color?: string;
+    fontWeight?: 'normal' | 'bold';
 };
 
 type CardElements = {
@@ -36,22 +37,22 @@ export default function CardStudioPage() {
 
     const [elements, setElements] = useState<CardElements>({
         // --- Frente ---
-        'Título 1': { position: { top: 5, left: 0 }, size: { fontSize: 20 }, text: 'ASSEMBLEIA DE DEUS', color: '#000000' },
-        'Título 2': { position: { top: 12, left: 0 }, size: { fontSize: 16 }, text: 'MINISTÉRIO KAIRÓS', color: '#000000' },
+        'Título 1': { position: { top: 5, left: 0 }, size: { fontSize: 20 }, text: 'ASSEMBLEIA DE DEUS', color: '#000000', fontWeight: 'bold' },
+        'Título 2': { position: { top: 12, left: 0 }, size: { fontSize: 16 }, text: 'MINISTÉRIO KAIRÓS', color: '#000000', fontWeight: 'bold' },
         'Endereço': { position: { top: 18, left: 0 }, size: { fontSize: 8 }, text: 'Rua Presidente Prudente, N°28, Eldorado, Diadema-SP', color: '#333333' },
         'Foto do Membro': { position: { top: 30, left: 5 }, size: { width: 80, height: 100 } },
-        'Nome': { position: { top: 60, left: 30 }, size: { fontSize: 11 }, text: member.name, color: '#333333' },
-        'RG': { position: { top: 70, left: 30 }, size: { fontSize: 10 }, text: `RG: ${member.rg}`, color: '#333333' },
-        'CPF': { position: { top: 70, left: 55 }, size: { fontSize: 10 }, text: `CPF: ${member.cpf}`, color: '#333333' },
-        'Cargo': { position: { top: 80, left: 30 }, size: { fontSize: 10 }, text: `Cargo: ${member.role}`, color: '#333333' },
+        'Nome': { position: { top: 60, left: 30 }, size: { fontSize: 11 }, text: member.name, color: '#333333', fontWeight: 'bold' },
+        'RG': { position: { top: 70, left: 30 }, size: { fontSize: 10 }, text: `RG: ${member.rg}`, color: '#333333', fontWeight: 'bold' },
+        'CPF': { position: { top: 70, left: 55 }, size: { fontSize: 10 }, text: `CPF: ${member.cpf}`, color: '#333333', fontWeight: 'bold' },
+        'Cargo': { position: { top: 80, left: 30 }, size: { fontSize: 10 }, text: `Cargo: ${member.role}`, color: '#333333', fontWeight: 'bold' },
         
         // --- Verso ---
         'Logo Convenção 1': { position: { top: 5, left: 5 }, size: { width: 60, height: 60 } },
         'Logo Convenção 2': { position: { top: 5, left: 80 }, size: { width: 60, height: 60 } },
         'QR Code': { position: { top: 40, left: 5 }, size: { width: 70, height: 70 } },
         'Assinatura Pastor': { position: { top: 60, left: 35 }, size: { fontSize: 10 }, text: 'Assinatura Pastor Presidente', color: '#333333' },
-        'Validade': { position: { top: 85, left: 40 }, size: { fontSize: 10 }, text: 'Validade: 01/01/2026', color: '#333333' },
-        'Membro Desde': { position: { top: 90, left: 40 }, size: { fontSize: 10 }, text: `Membro desde: ${new Date(member.memberSince).toLocaleDateString()}`, color: '#333333' },
+        'Validade': { position: { top: 85, left: 40 }, size: { fontSize: 10 }, text: 'Validade: 01/01/2026', color: '#333333', fontWeight: 'bold' },
+        'Membro Desde': { position: { top: 90, left: 40 }, size: { fontSize: 10 }, text: `Membro desde: ${new Date(member.memberSince).toLocaleDateString()}`, color: '#333333', fontWeight: 'bold' },
     });
 
     const [selectedElement, setSelectedElement] = useState<string | null>(null);
@@ -109,6 +110,7 @@ export default function CardStudioPage() {
             width: el.size.width ? `${el.size.width}px` : (isInput ? '100%' : 'auto'),
             height: el.size.height ? `${el.size.height}px` : 'auto',
             color: el.color,
+            fontWeight: el.fontWeight,
             transform: 'translateX(-50%)',
         };
          if (id.includes('Título') || id.includes('Endereço')) {
@@ -188,7 +190,9 @@ export default function CardStudioPage() {
                     <CardTitle>Elementos</CardTitle>
                 </CardHeader>
                 <CardContent>
-                   {selectedElement && <p className="text-sm">Ajustando: <span className="font-bold text-primary">{selectedElement}</span></p>}
+                   <p className="text-sm">
+                    Ajustando: <span className={cn("font-bold", { "text-primary": selectedElement })}>{selectedElement || "Nenhum"}</span>
+                   </p>
                 </CardContent>
             </Card>
         </div>

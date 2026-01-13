@@ -379,7 +379,7 @@ export default function CardStudioPage() {
             userSelect: 'none', // Prevent text selection while dragging
         };
         
-         if (isText) {
+        if (isText) {
             style.fontSize = el.size.fontSize ? `${el.size.fontSize}px` : undefined;
             style.color = el.color;
             style.fontWeight = el.fontWeight;

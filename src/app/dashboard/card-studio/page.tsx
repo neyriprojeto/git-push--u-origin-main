@@ -61,16 +61,16 @@ export default function CardStudioPage() {
     const member = members[0]; // Using a sample member
     const avatarPlaceholder = PlaceHolderImages.find((p) => p.id === member.avatar);
     const qrCodePlaceholder = PlaceHolderImages.find((p) => p.id === 'qr-code-placeholder');
-    const [isFront, setIsFront = useState(true);
+    const [isFront, setIsFront] = useState(true);
 
-    const [crop, setCrop = useState<Crop>();
-    const [completedCrop, setCompletedCrop = useState<Crop>();
-    const [scale, setScale = useState(1);
-    const [rotate, setRotate = useState(0);
-    const [aspect, setAspect = useState<number | undefined>(16 / 9);
-    const [imageToCrop, setImageToCrop = useState('');
-    const [croppingId, setCroppingId = useState('');
-    const [isCropping, setIsCropping = useState(false);
+    const [crop, setCrop] = useState<Crop>();
+    const [completedCrop, setCompletedCrop] = useState<Crop>();
+    const [scale, setScale] = useState(1);
+    const [rotate, setRotate] = useState(0);
+    const [aspect, setAspect] = useState<number | undefined>(16 / 9);
+    const [imageToCrop, setImageToCrop] = useState('');
+    const [croppingId, setCroppingId] = useState('');
+    const [isCropping, setIsCropping] = useState(false);
     const imgRef = useRef<HTMLImageElement>(null);
     const previewCanvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -83,14 +83,14 @@ export default function CardStudioPage() {
         'Assinatura': useRef<HTMLInputElement>(null),
     };
 
-    const [cardStyles, setCardStyles = useState({
+    const [cardStyles, setCardStyles] = useState({
         frontBackground: '#F3F4F6',
         backBackground: '#F3F4F6',
         frontBackgroundImage: '',
         backBackgroundImage: '',
     });
 
-    const [elements, setElements = useState<CardElements>({
+    const [elements, setElements] = useState<CardElements>({
         // --- Frente ---
         'Título 1': { position: { top: 5, left: 50 }, size: { fontSize: 20 }, text: 'ASSEMBLEIA DE DEUS', color: '#000000', fontWeight: 'bold' },
         'Título 2': { position: { top: 12, left: 50 }, size: { fontSize: 16 }, text: 'MINISTÉRIO KAIRÓS', color: '#000000', fontWeight: 'bold' },
@@ -113,7 +113,7 @@ export default function CardStudioPage() {
         'Membro Desde': { position: { top: 93, left: 50 }, size: { fontSize: 10 }, text: `Membro desde: ${new Date(member.memberSince).toLocaleDateString()}`, color: '#333333', fontWeight: 'bold' },
     });
     
-    const [selectedElement, setSelectedElement = useState<string | null>(null);
+    const [selectedElement, setSelectedElement] = useState<string | null>(null);
     const cardRef = useRef<HTMLDivElement>(null);
     const dragInfo = useRef({ isDragging: false, elementId: '', initialMousePos: { x: 0, y: 0 }, initialElementPos: { top: 0, left: 0 } });
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -687,5 +687,3 @@ export default function CardStudioPage() {
     </>
   );
 }
-
-    

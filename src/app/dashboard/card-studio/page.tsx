@@ -4,9 +4,11 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Slider } from '@/components/ui/slider';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Minus, Plus, Palette, Image as ImageIcon, Type, Upload, GripVertical } from 'lucide-react';
+import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Minus, Plus, Palette, Image as ImageIcon, Type, Upload } from 'lucide-react';
 import { members } from '@/data/members';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
@@ -15,6 +17,9 @@ import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
+import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
+
 
 type ElementStyle = {
     position: { top: number; left: number };
@@ -29,11 +34,45 @@ type CardElements = {
     [key: string]: ElementStyle;
 };
 
+// This is to demonstate how to make and center a % aspect crop
+// which is a good starting default.
+function centerAspectCrop(
+  mediaWidth: number,
+  mediaHeight: number,
+  aspect: number,
+) {
+  return centerCrop(
+    makeAspectCrop(
+      {
+        unit: '%',
+        width: 90,
+      },
+      aspect,
+      mediaWidth,
+      mediaHeight,
+    ),
+    mediaWidth,
+    mediaHeight,
+  )
+}
+
+
 export default function CardStudioPage() {
     const member = members[0]; // Using a sample member
     const avatarPlaceholder = PlaceHolderImages.find((p) => p.id === member.avatar);
     const qrCodePlaceholder = PlaceHolderImages.find((p) => p.id === 'qr-code-placeholder');
     const [isFront, setIsFront] = useState(true);
+
+    const [crop, setCrop] = useState<Crop>();
+    const [completedCrop, setCompletedCrop] = useState<Crop>();
+    const [scale, setScale] = useState(1);
+    const [rotate, setRotate] = useState(0);
+    const [aspect, setAspect] = useState<number | undefined>(16 / 9);
+    const [imageToCrop, setImageToCrop] = useState('');
+    const [croppingId, setCroppingId] = useState('');
+    const [isCropping, setIsCropping] = useState(false);
+    const imgRef = useRef<HTMLImageElement>(null);
+    const previewCanvasRef = useRef<HTMLCanvasElement>(null);
 
     const fileInputRefs = {
         'Fundo (Frente)': useRef<HTMLInputElement>(null),
@@ -103,26 +142,90 @@ export default function CardStudioPage() {
         }
     };
     
-    const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>, id: string) => {
-        const file = event.target.files?.[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const src = e.target?.result as string;
-                if (id === 'Fundo (Frente)') {
-                    setCardStyles(prev => ({...prev, frontBackgroundImage: src}));
-                } else if (id === 'Fundo (Verso)') {
-                    setCardStyles(prev => ({...prev, backBackgroundImage: src}));
+    const onSelectFile = (e: React.ChangeEvent<HTMLInputElement>, id: string) => {
+        if (e.target.files && e.target.files.length > 0) {
+            setCrop(undefined) // Makes crop preview update between images.
+            const reader = new FileReader()
+            reader.addEventListener('load', () => {
+                setImageToCrop(reader.result?.toString() || '')
+                setCroppingId(id);
+                setIsCropping(true);
+
+                 const elSize = elements[id]?.size;
+                if (elSize?.width && elSize?.height) {
+                    setAspect(elSize.width / elSize.height);
                 } else {
-                    setElements(prev => ({
-                        ...prev,
-                        [id]: { ...prev[id], src }
-                    }));
+                    setAspect(undefined); // Free crop for backgrounds
                 }
-            };
-            reader.readAsDataURL(file);
+            })
+            reader.readAsDataURL(e.target.files[0])
         }
-    };
+    }
+
+    function onImageLoad(e: React.SyntheticEvent<HTMLImageElement>) {
+        if (aspect) {
+            const { width, height } = e.currentTarget
+            setCrop(centerAspectCrop(width, height, aspect))
+        }
+    }
+
+    const saveCroppedImage = () => {
+        const image = imgRef.current
+        const canvas = previewCanvasRef.current
+        if (!image || !canvas || !completedCrop) {
+            throw new Error('Crop canvas does not exist')
+        }
+
+        const scaleX = image.naturalWidth / image.width
+        const scaleY = image.naturalHeight / image.height
+        
+        canvas.width = completedCrop.width * scaleX
+        canvas.height = completedCrop.height * scaleY
+
+        const ctx = canvas.getContext('2d')
+        if (!ctx) {
+            throw new Error('No 2d context')
+        }
+
+        const cropX = completedCrop.x * scaleX;
+        const cropY = completedCrop.y * scaleY;
+
+        ctx.save()
+        ctx.translate(canvas.width / 2, canvas.height / 2)
+        ctx.rotate((rotate * Math.PI) / 180)
+        ctx.scale(scale, scale)
+        ctx.translate(-canvas.width / 2, -canvas.height / 2)
+        ctx.drawImage(
+            image,
+            cropX,
+            cropY,
+            completedCrop.width * scaleX,
+            completedCrop.height * scaleY,
+            0,
+            0,
+            canvas.width,
+            canvas.height,
+        )
+        ctx.restore()
+        
+        const src = canvas.toDataURL('image/png');
+        
+        if (croppingId === 'Fundo (Frente)') {
+            setCardStyles(prev => ({...prev, frontBackgroundImage: src}));
+        } else if (croppingId === 'Fundo (Verso)') {
+            setCardStyles(prev => ({...prev, backBackgroundImage: src}));
+        } else {
+            setElements(prev => ({
+                ...prev,
+                [croppingId]: { ...prev[croppingId], src }
+            }));
+        }
+
+        setIsCropping(false);
+        setImageToCrop('');
+        setCroppingId('');
+    }
+
     
      const triggerFileInput = (ref: React.RefObject<HTMLInputElement>) => {
         ref.current?.click();
@@ -333,198 +436,248 @@ export default function CardStudioPage() {
 
 
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <div className="flex items-center justify-between space-y-2">
-        <div className='flex items-center gap-2'>
-            <SidebarTrigger className="md:hidden" />
-            <h2 className="text-3xl font-bold tracking-tight">Estúdio de Carteirinha</h2>
+    <>
+      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+        <div className="flex items-center justify-between space-y-2">
+          <div className='flex items-center gap-2'>
+              <SidebarTrigger className="md:hidden" />
+              <h2 className="text-3xl font-bold tracking-tight">Estúdio de Carteirinha</h2>
+          </div>
+          <Avatar>
+              <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+              <AvatarFallback>A</AvatarFallback>
+          </Avatar>
         </div>
-        <Avatar>
-            <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-            <AvatarFallback>A</AvatarFallback>
-        </Avatar>
-      </div>
 
-      <div className="space-y-4">
-        <Card className='overflow-hidden'>
-            <CardContent className='p-2 bg-muted/30'>
-                <div className='grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4'>
-                    <div 
-                        ref={cardRef}
-                        className="aspect-[85.6/54] w-full max-w-lg mx-auto rounded-lg shadow-md relative"
-                        style={{ 
-                            backgroundColor: isFront ? cardStyles.frontBackground : cardStyles.backBackground,
-                            backgroundImage: `url(${isFront ? cardStyles.frontBackgroundImage : cardStyles.backBackgroundImage})`,
-                            backgroundSize: 'cover',
-                            backgroundPosition: 'center',
-                        }}
-                        onMouseDown={() => setSelectedElement(null)} // Deselect when clicking on the card background
-                    >
-                        {isFront ? (
-                            // Frente da Carteirinha
-                            <div className='relative h-full w-full'>
-                                {renderElement('Título 1')}
-                                {renderElement('Título 2')}
-                                {renderElement('Congregação')}
-                                {renderElement('Endereço')}
-                                {renderElement('Foto do Membro')}
-                                {renderElement('Logo Igreja')}
-                                <div style={{ position: 'absolute', top: `${elements['Nome'].position.top}%`, left: `${elements['Nome'].position.left}%`, width: '65%'}}>
-                                        {renderElement('Nome')}
-                                        {renderElement('RG')}
-                                        {renderElement('CPF')}
-                                        {renderElement('Cargo')}
-                                </div>
-                            </div>
-                        ) : (
-                            // Verso da Carteirinha
-                            <div className='relative h-full w-full'>
-                                {renderElement('Logo Convenção 1')}
-                                {renderElement('Logo Convenção 2')}
-                                {renderElement('QR Code')}
-                                {renderElement('Assinatura')}
-                                {renderElement('Assinatura Pastor')}
-                                {renderElement('Validade')}
-                                {renderElement('Membro Desde')}
-                                <div 
-                                    style={{
-                                        position: 'absolute', 
-                                        borderTop: '1px solid black', 
-                                        width: '40%', 
-                                        top: `calc(${elements['Assinatura Pastor'].position.top}% + ${elements['Assinatura Pastor'].size.fontSize}px + 2px)`,
-                                        left: `${elements['Assinatura Pastor'].position.left}%`,
-                                        transform: 'translateX(-50%)'
-                                    }}
-                                />
-                            </div>
-                        )}
-                    </div>
-                    <div className='flex flex-col items-center justify-center gap-4 p-4 border rounded-lg bg-background'>
-                        <p className="text-sm font-medium text-center">
-                            Ajustando: <span className={cn("font-bold", { "text-primary": selectedElement })}>{selectedElement || "Nenhum"}</span>
-                        </p>
-                        <Separator />
-                        <p className="text-sm font-medium">Posição</p>
-                        <div className='flex items-center gap-2'>
-                            <Button variant="outline" size="icon" onMouseDown={() => startMoving('position', 1, 'up')} onMouseUp={stopMoving} onMouseLeave={stopMoving} disabled={!selectedElement}><ArrowUp className="w-4 h-4" /></Button>
-                            <Button variant="outline" size="icon" onMouseDown={() => startMoving('position', 1, 'down')} onMouseUp={stopMoving} onMouseLeave={stopMoving} disabled={!selectedElement}><ArrowDown className="w-4 h-4" /></Button>
-                            <Button variant="outline" size="icon" onMouseDown={() => startMoving('position', 1, 'left')} onMouseUp={stopMoving} onMouseLeave={stopMoving} disabled={!selectedElement}><ArrowLeft className="w-4 h-4" /></Button>
-                            <Button variant="outline" size="icon" onMouseDown={() => startMoving('position', 1, 'right')} onMouseUp={stopMoving} onMouseLeave={stopMoving} disabled={!selectedElement}><ArrowRight className="w-4 h-4" /></Button>
-                        </div>
-                        <Separator />
-                        <p className="text-sm font-medium">Tamanho</p>
-                        <div className='flex items-center gap-2'>
-                            <Button variant="outline" size="icon" onMouseDown={() => startMoving('size', 1, 'decrease')} onMouseUp={stopMoving} onMouseLeave={stopMoving} disabled={!selectedElement}><Minus className="w-4 h-4" /></Button>
-                            <span className="text-sm font-semibold w-16 text-center">{getSelectedElementSize()}</span>
-                            <Button variant="outline" size="icon" onMouseDown={() => startMoving('size', 1, 'increase')} onMouseUp={stopMoving} onMouseLeave={stopMoving} disabled={!selectedElement}><Plus className="w-4 h-4" /></Button>
-                        </div>
-                    </div>
+        <div className="space-y-4">
+          <Card className='overflow-hidden'>
+              <CardContent className='p-2 bg-muted/30'>
+                  <div className='grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4'>
+                      <div 
+                          ref={cardRef}
+                          className="aspect-[85.6/54] w-full max-w-lg mx-auto rounded-lg shadow-md relative"
+                          style={{ 
+                              backgroundColor: isFront ? cardStyles.frontBackground : cardStyles.backBackground,
+                              backgroundImage: `url(${isFront ? cardStyles.frontBackgroundImage : cardStyles.backBackgroundImage})`,
+                              backgroundSize: 'cover',
+                              backgroundPosition: 'center',
+                          }}
+                          onMouseDown={() => setSelectedElement(null)} // Deselect when clicking on the card background
+                      >
+                          {isFront ? (
+                              // Frente da Carteirinha
+                              <div className='relative h-full w-full'>
+                                  {renderElement('Título 1')}
+                                  {renderElement('Título 2')}
+                                  {renderElement('Congregação')}
+                                  {renderElement('Endereço')}
+                                  {renderElement('Foto do Membro')}
+                                  {renderElement('Logo Igreja')}
+                                  <div style={{ position: 'absolute', top: `${elements['Nome'].position.top}%`, left: `${elements['Nome'].position.left}%`, width: '65%'}}>
+                                          {renderElement('Nome')}
+                                          {renderElement('RG')}
+                                          {renderElement('CPF')}
+                                          {renderElement('Cargo')}
+                                  </div>
+                              </div>
+                          ) : (
+                              // Verso da Carteirinha
+                              <div className='relative h-full w-full'>
+                                  {renderElement('Logo Convenção 1')}
+                                  {renderElement('Logo Convenção 2')}
+                                  {renderElement('QR Code')}
+                                  {renderElement('Assinatura')}
+                                  {renderElement('Assinatura Pastor')}
+                                  {renderElement('Validade')}
+                                  {renderElement('Membro Desde')}
+                                  <div 
+                                      style={{
+                                          position: 'absolute', 
+                                          borderTop: '1px solid black', 
+                                          width: '40%', 
+                                          top: `calc(${elements['Assinatura Pastor'].position.top}% + ${elements['Assinatura Pastor'].size.fontSize}px + 2px)`,
+                                          left: `${elements['Assinatura Pastor'].position.left}%`,
+                                          transform: 'translateX(-50%)'
+                                      }}
+                                  />
+                              </div>
+                          )}
+                      </div>
+                      <div className='flex flex-col items-center justify-center gap-4 p-4 border rounded-lg bg-background'>
+                          <p className="text-sm font-medium text-center">
+                              Ajustando: <span className={cn("font-bold", { "text-primary": selectedElement })}>{selectedElement || "Nenhum"}</span>
+                          </p>
+                          <Separator />
+                          <p className="text-sm font-medium">Posição</p>
+                          <div className='flex items-center gap-2'>
+                              <Button variant="outline" size="icon" onMouseDown={() => startMoving('position', 1, 'up')} onMouseUp={stopMoving} onMouseLeave={stopMoving} disabled={!selectedElement}><ArrowUp className="w-4 h-4" /></Button>
+                              <Button variant="outline" size="icon" onMouseDown={() => startMoving('position', 1, 'down')} onMouseUp={stopMoving} onMouseLeave={stopMoving} disabled={!selectedElement}><ArrowDown className="w-4 h-4" /></Button>
+                              <Button variant="outline" size="icon" onMouseDown={() => startMoving('position', 1, 'left')} onMouseUp={stopMoving} onMouseLeave={stopMoving} disabled={!selectedElement}><ArrowLeft className="w-4 h-4" /></Button>
+                              <Button variant="outline" size="icon" onMouseDown={() => startMoving('position', 1, 'right')} onMouseUp={stopMoving} onMouseLeave={stopMoving} disabled={!selectedElement}><ArrowRight className="w-4 h-4" /></Button>
+                          </div>
+                          <Separator />
+                          <p className="text-sm font-medium">Tamanho</p>
+                          <div className='flex items-center gap-2'>
+                              <Button variant="outline" size="icon" onMouseDown={() => startMoving('size', 1, 'decrease')} onMouseUp={stopMoving} onMouseLeave={stopMoving} disabled={!selectedElement}><Minus className="w-4 h-4" /></Button>
+                              <span className="text-sm font-semibold w-16 text-center">{getSelectedElementSize()}</span>
+                              <Button variant="outline" size="icon" onMouseDown={() => startMoving('size', 1, 'increase')} onMouseUp={stopMoving} onMouseLeave={stopMoving} disabled={!selectedElement}><Plus className="w-4 h-4" /></Button>
+                          </div>
+                      </div>
+                  </div>
+              </CardContent>
+          </Card>
+          <div className='flex flex-col items-center gap-4 pt-2'>
+              <div className='flex gap-2'>
+                  <Button variant={isFront ? 'default' : 'outline'} onClick={() => setIsFront(true)}>Frente</Button>
+                  <Button variant={!isFront ? 'default' : 'outline'} onClick={() => setIsFront(false)}>Verso</Button>
+              </div>
+              <div className='flex flex-wrap gap-2 justify-center'>
+                  <Popover>
+                      <PopoverTrigger asChild>
+                          <Button variant="outline"><Type className="mr-2 h-4 w-4"/> Texto</Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-80">
+                          <div className="grid gap-4">
+                              <div className="space-y-2">
+                                  <h4 className="font-medium leading-none">Editar Textos</h4>
+                                  <p className="text-sm text-muted-foreground">
+                                  Altere os textos principais da carteirinha.
+                                  </p>
+                              </div>
+                              <div className="grid gap-2">
+                                  <div className="grid grid-cols-3 items-center gap-4">
+                                      <Label htmlFor="title1">Título 1</Label>
+                                      <Input id="title1" value={elements['Título 1'].text} onChange={(e) => handleElementChange('Título 1', e.target.value)} className="col-span-2 h-8" />
+                                  </div>
+                                  <div className="grid grid-cols-3 items-center gap-4">
+                                      <Label htmlFor="title2">Título 2</Label>
+                                      <Input id="title2" value={elements['Título 2'].text} onChange={(e) => handleElementChange('Título 2', e.target.value)} className="col-span-2 h-8" />
+                                  </div>
+                                  <div className="grid grid-cols-3 items-center gap-4">
+                                      <Label htmlFor="congregacao">Congregação</Label>
+                                      <Input id="congregacao" value={elements['Congregação'].text} onChange={(e) => handleElementChange('Congregação', e.target.value)} className="col-span-2 h-8" />
+                                  </div>
+                                  <div className="grid grid-cols-3 items-center gap-4">
+                                      <Label htmlFor="address">Endereço</Label>
+                                      <Input id="address" value={elements['Endereço'].text} onChange={(e) => handleElementChange('Endereço', e.target.value)} className="col-span-2 h-8" />
+                                  </div>
+                              </div>
+                          </div>
+                      </PopoverContent>
+                  </Popover>
+
+                  <Popover>
+                      <PopoverTrigger asChild>
+                          <Button variant="outline"><Palette className="mr-2 h-4 w-4"/> Cores</Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-80">
+                              <div className="grid gap-4">
+                              <div className="space-y-2">
+                                  <h4 className="font-medium leading-none">Editar Cores</h4>
+                                  <p className="text-sm text-muted-foreground">
+                                  Escolha as cores dos elementos.
+                                  </p>
+                              </div>
+                                  <div className="grid gap-2">
+                                  <div className="grid grid-cols-3 items-center gap-4">
+                                      <Label htmlFor="color-title">Cor dos Títulos</Label>
+                                      <Input id="color-title" type="color" defaultValue={elements['Título 1'].color} onChange={(e) => handleColorChange('title', e.target.value)} className="col-span-2 h-8 p-1" />
+                                  </div>
+                                      <div className="grid grid-cols-3 items-center gap-4">
+                                      <Label htmlFor="color-text">Cor dos Dados</Label>
+                                      <Input id="color-text" type="color" defaultValue={elements['Nome'].color} onChange={(e) => handleColorChange('text', e.target.value)} className="col-span-2 h-8 p-1" />
+                                  </div>
+                                  <div className="grid grid-cols-3 items-center gap-4">
+                                      <Label htmlFor="color-bg">Cor do Fundo</Label>
+                                      <Input id="color-bg" type="color" value={isFront ? cardStyles.frontBackground : cardStyles.backBackground} onChange={(e) => handleColorChange('bg', e.target.value)} className="col-span-2 h-8 p-1" />
+                                  </div>
+                              </div>
+                              </div>
+                      </PopoverContent>
+                  </Popover>
+
+                  <Popover>
+                      <PopoverTrigger asChild>
+                              <Button variant="outline"><ImageIcon className="mr-2 h-4 w-4"/> Imagens</Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-2">
+                          <div className="flex flex-col gap-2">
+                                  {Object.keys(fileInputRefs).map((key) => (
+                                      <React.Fragment key={key}>
+                                          <input
+                                          type="file"
+                                          accept="image/*"
+                                          ref={fileInputRefs[key as keyof typeof fileInputRefs]}
+                                          onChange={(e) => onSelectFile(e, key)}
+                                          className="hidden"
+                                      />
+                                      <Button 
+                                          variant="outline" 
+                                          size="sm" 
+                                          onClick={() => triggerFileInput(fileInputRefs[key as keyof typeof fileInputRefs])}
+                                      >
+                                          <Upload className="mr-2 h-4 w-4"/> {key}
+                                      </Button>
+                                      </React.Fragment>
+                                  ))}
+                          </div>
+                      </PopoverContent>
+                  </Popover>
+
+              </div>
+          </div>
+        </div>
+      </div>
+      <Dialog open={isCropping} onOpenChange={setIsCropping}>
+          <DialogContent className="max-w-4xl">
+              <DialogHeader>
+                  <DialogTitle>Editar Imagem</DialogTitle>
+              </DialogHeader>
+                <div className='flex items-center justify-center'>
+                    {!!imageToCrop && (
+                        <ReactCrop
+                            crop={crop}
+                            onChange={(_, percentCrop) => setCrop(percentCrop)}
+                            onComplete={(c) => setCompletedCrop(c)}
+                            aspect={aspect}
+                        >
+                            <Image
+                                ref={imgRef}
+                                alt="Crop me"
+                                src={imageToCrop}
+                                style={{ transform: `scale(${scale}) rotate(${rotate}deg)` }}
+                                onLoad={onImageLoad}
+                                width={500}
+                                height={500}
+                            />
+                        </ReactCrop>
+                    )}
                 </div>
-            </CardContent>
-        </Card>
-        <div className='flex flex-col items-center gap-4 pt-2'>
-            <div className='flex gap-2'>
-                <Button variant={isFront ? 'default' : 'outline'} onClick={() => setIsFront(true)}>Frente</Button>
-                <Button variant={!isFront ? 'default' : 'outline'} onClick={() => setIsFront(false)}>Verso</Button>
-            </div>
-            <div className='flex flex-wrap gap-2 justify-center'>
-                <Popover>
-                    <PopoverTrigger asChild>
-                        <Button variant="outline"><Type className="mr-2 h-4 w-4"/> Texto</Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-80">
-                        <div className="grid gap-4">
-                            <div className="space-y-2">
-                                <h4 className="font-medium leading-none">Editar Textos</h4>
-                                <p className="text-sm text-muted-foreground">
-                                Altere os textos principais da carteirinha.
-                                </p>
-                            </div>
-                            <div className="grid gap-2">
-                                <div className="grid grid-cols-3 items-center gap-4">
-                                    <Label htmlFor="title1">Título 1</Label>
-                                    <Input id="title1" value={elements['Título 1'].text} onChange={(e) => handleElementChange('Título 1', e.target.value)} className="col-span-2 h-8" />
-                                </div>
-                                <div className="grid grid-cols-3 items-center gap-4">
-                                    <Label htmlFor="title2">Título 2</Label>
-                                    <Input id="title2" value={elements['Título 2'].text} onChange={(e) => handleElementChange('Título 2', e.target.value)} className="col-span-2 h-8" />
-                                </div>
-                                <div className="grid grid-cols-3 items-center gap-4">
-                                    <Label htmlFor="congregacao">Congregação</Label>
-                                    <Input id="congregacao" value={elements['Congregação'].text} onChange={(e) => handleElementChange('Congregação', e.target.value)} className="col-span-2 h-8" />
-                                </div>
-                                <div className="grid grid-cols-3 items-center gap-4">
-                                    <Label htmlFor="address">Endereço</Label>
-                                    <Input id="address" value={elements['Endereço'].text} onChange={(e) => handleElementChange('Endereço', e.target.value)} className="col-span-2 h-8" />
-                                </div>
-                            </div>
-                        </div>
-                    </PopoverContent>
-                </Popover>
-
-                <Popover>
-                    <PopoverTrigger asChild>
-                        <Button variant="outline"><Palette className="mr-2 h-4 w-4"/> Cores</Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-80">
-                            <div className="grid gap-4">
-                            <div className="space-y-2">
-                                <h4 className="font-medium leading-none">Editar Cores</h4>
-                                <p className="text-sm text-muted-foreground">
-                                Escolha as cores dos elementos.
-                                </p>
-                            </div>
-                                <div className="grid gap-2">
-                                <div className="grid grid-cols-3 items-center gap-4">
-                                    <Label htmlFor="color-title">Cor dos Títulos</Label>
-                                    <Input id="color-title" type="color" defaultValue={elements['Título 1'].color} onChange={(e) => handleColorChange('title', e.target.value)} className="col-span-2 h-8 p-1" />
-                                </div>
-                                    <div className="grid grid-cols-3 items-center gap-4">
-                                    <Label htmlFor="color-text">Cor dos Dados</Label>
-                                    <Input id="color-text" type="color" defaultValue={elements['Nome'].color} onChange={(e) => handleColorChange('text', e.target.value)} className="col-span-2 h-8 p-1" />
-                                </div>
-                                <div className="grid grid-cols-3 items-center gap-4">
-                                    <Label htmlFor="color-bg">Cor do Fundo</Label>
-                                    <Input id="color-bg" type="color" value={isFront ? cardStyles.frontBackground : cardStyles.backBackground} onChange={(e) => handleColorChange('bg', e.target.value)} className="col-span-2 h-8 p-1" />
-                                </div>
-                            </div>
-                            </div>
-                    </PopoverContent>
-                </Popover>
-
-                <Popover>
-                    <PopoverTrigger asChild>
-                            <Button variant="outline"><ImageIcon className="mr-2 h-4 w-4"/> Imagens</Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-2">
-                        <div className="flex flex-col gap-2">
-                                {Object.keys(fileInputRefs).map((key) => (
-                                    <React.Fragment key={key}>
-                                        <input
-                                        type="file"
-                                        accept="image/*"
-                                        ref={fileInputRefs[key as keyof typeof fileInputRefs]}
-                                        onChange={(e) => handleImageUpload(e, key)}
-                                        className="hidden"
-                                    />
-                                    <Button 
-                                        variant="outline" 
-                                        size="sm" 
-                                        onClick={() => triggerFileInput(fileInputRefs[key as keyof typeof fileInputRefs])}
-                                    >
-                                        <Upload className="mr-2 h-4 w-4"/> {key}
-                                    </Button>
-                                    </React.Fragment>
-                                ))}
-                        </div>
-                    </PopoverContent>
-                </Popover>
-
-            </div>
-        </div>
-      </div>
-    </div>
+                 <div>
+                    <Label>Zoom</Label>
+                    <Slider
+                        defaultValue={[1]}
+                        min={1}
+                        max={3}
+                        step={0.1}
+                        onValueChange={(value) => setScale(value[0])}
+                    />
+                </div>
+              <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsCropping(false)}>Cancelar</Button>
+                  <Button onClick={saveCroppedImage}>Salvar Imagem</Button>
+              </DialogFooter>
+          </DialogContent>
+      </Dialog>
+      
+      {/* Canvas for previewing cropped image */}
+      <canvas
+        ref={previewCanvasRef}
+        style={{
+            display: 'none',
+            objectFit: 'contain',
+        }}
+      />
+    </>
   );
 }
-
-    

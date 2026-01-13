@@ -11,7 +11,7 @@ import {
   SidebarFooter,
   SidebarInset,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, Users, LogOut, Contact } from "lucide-react";
+import { LayoutDashboard, Users, LogOut, Contact, Share2, Radio } from "lucide-react";
 import { AppLogo } from "@/components/icons";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 
@@ -54,6 +54,28 @@ export default function DashboardLayout({
                 <Link href="/dashboard/members">
                   <Users />
                   <span>Membros</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                tooltip={{ children: "Redes Sociais" }}
+              >
+                <Link href="#">
+                  <Share2 />
+                  <span>Redes Sociais</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                tooltip={{ children: "Rádio" }}
+              >
+                <Link href="#">
+                  <Radio />
+                  <span>Rádio</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

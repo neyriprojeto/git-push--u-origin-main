@@ -70,7 +70,7 @@ export default function CardStudioPage() {
     const [completedCrop, setCompletedCrop] = useState<Crop>();
     const [scale, setScale] = useState(1);
     const [rotate, setRotate] = useState(0);
-    const [aspect, setAspect] = useState<number | undefined>(undefined);
+    const [aspect, setAspect] = useState<number | undefined>(16 / 9);
     const [imageToCrop, setImageToCrop] = useState('');
     const [croppingId, setCroppingId] = useState('');
     const [isCropping, setIsCropping] = useState(false);
@@ -102,20 +102,20 @@ export default function CardStudioPage() {
         'Título 2': { position: { top: 12, left: 50 }, size: { fontSize: 16 }, text: 'MINISTÉRIO KAIRÓS', color: '#000000', fontWeight: 'bold' },
         'Congregação': { position: { top: 18, left: 50 }, size: { fontSize: 14 }, text: 'SEDE', color: '#000000', fontWeight: 'normal' },
         'Endereço': { position: { top: 23, left: 50 }, size: { fontSize: 8 }, text: 'Rua Presidente Prudente, N°28\nEldorado, Diadema-SP', color: '#000000' },
-        'Foto do Membro': { position: { top: 30, left: 5 }, size: { width: 80, height: 100 }, src: avatarPlaceholder?.imageUrl },
-        'Nome': { position: { top: 60, left: 30 }, size: { fontSize: 11 }, text: `Nome: ${member.name}`, color: '#333333', fontWeight: 'bold' },
-        'RG': { position: { top: 70, left: 30 }, size: { fontSize: 10 }, text: `RG: ${member.rg}`, color: '#333333' },
-        'CPF': { position: { top: 70, left: 55 }, size: { fontSize: 10 }, text: `CPF: ${member.cpf}`, color: '#333333' },
-        'Cargo': { position: { top: 80, left: 30 }, size: { fontSize: 10 }, text: `Cargo: ${member.role}`, color: '#333333' },
-        'Data de Nascimento': { position: { top: 85, left: 30 }, size: { fontSize: 10 }, text: `Nasc: ${new Date(member.birthDate).toLocaleDateString('pt-BR')}`, color: '#333333' },
-        'Data de Batismo': { position: { top: 85, left: 55 }, size: { fontSize: 10 }, text: `Batismo: ${new Date().toLocaleDateString('pt-BR')}`, color: '#333333' },
-        'Logo Igreja': { position: { top: 25, left: 75 }, size: { width: 60, height: 60 }, src: '' },
+        'Foto do Membro': { position: { top: 40, left: 15 }, size: { width: 80, height: 100 }, src: avatarPlaceholder?.imageUrl },
+        'Nome': { position: { top: 60, left: 50 }, size: { fontSize: 11 }, text: `Nome: ${member.name}`, color: '#333333', fontWeight: 'bold' },
+        'RG': { position: { top: 68, left: 50 }, size: { fontSize: 10 }, text: `RG: ${member.rg}`, color: '#333333' },
+        'CPF': { position: { top: 74, left: 50 }, size: { fontSize: 10 }, text: `CPF: ${member.cpf}`, color: '#333333' },
+        'Cargo': { position: { top: 80, left: 50 }, size: { fontSize: 10 }, text: `Cargo: ${member.role}`, color: '#333333' },
+        'Data de Nascimento': { position: { top: 86, left: 35 }, size: { fontSize: 10 }, text: `Nasc: ${new Date(member.birthDate).toLocaleDateString('pt-BR')}`, color: '#333333' },
+        'Data de Batismo': { position: { top: 86, left: 65 }, size: { fontSize: 10 }, text: `Batismo: ${new Date().toLocaleDateString('pt-BR')}`, color: '#333333' },
+        'Logo Igreja': { position: { top: 40, left: 80 }, size: { width: 60, height: 60 }, src: '' },
         
         // --- Verso ---
-        'Logo Convenção 1': { position: { top: 5, left: 25 }, size: { width: 60, height: 60 }, src: '' },
-        'Logo Convenção 2': { position: { top: 5, left: 75 }, size: { width: 60, height: 60 }, src: '' },
-        'QR Code': { position: { top: 30, left: 15 }, size: { width: 70, height: 70 }, src: qrCodePlaceholder?.imageUrl },
-        'Assinatura': { position: { top: 65, left: 50 }, size: { width: 120, height: 40 }, src: '' },
+        'Logo Convenção 1': { position: { top: 15, left: 25 }, size: { width: 60, height: 60 }, src: '' },
+        'Logo Convenção 2': { position: { top: 15, left: 75 }, size: { width: 60, height: 60 }, src: '' },
+        'QR Code': { position: { top: 45, left: 25 }, size: { width: 80, height: 80 }, src: qrCodePlaceholder?.imageUrl },
+        'Assinatura': { position: { top: 70, left: 65 }, size: { width: 120, height: 40 }, src: '' },
         'Assinatura Pastor': { position: { top: 82, left: 50 }, size: { fontSize: 10 }, text: 'Assinatura Pastor Presidente', color: '#333333' },
         'Validade': { position: { top: 88, left: 50 }, size: { fontSize: 10 }, text: 'Validade: 01/01/2026', color: '#333333', fontWeight: 'bold' },
         'Membro Desde': { position: { top: 93, left: 50 }, size: { fontSize: 10 }, text: `Membro desde: ${new Date(member.memberSince).toLocaleDateString('pt-BR')}`, color: '#333333', fontWeight: 'bold' },
@@ -182,7 +182,7 @@ export default function CardStudioPage() {
     const saveCroppedImage = async () => {
         const image = imgRef.current;
         const canvas = previewCanvasRef.current;
-        if (!image || !canvas || !completedCrop || !currentFile) {
+        if (!image || !canvas || !completedCrop) {
           toast({
             variant: 'destructive',
             title: 'Erro de Corte',
@@ -230,7 +230,7 @@ export default function CardStudioPage() {
         ctx.restore();
         
        canvas.toBlob(async (blob) => {
-            if (!blob) {
+            if (!blob || !currentFile) {
                 toast({ variant: 'destructive', title: 'Erro', description: 'Could not create blob' });
                 setIsUploading(false);
                 return;
@@ -314,6 +314,7 @@ export default function CardStudioPage() {
         setSelectedElement(id);
 
         if (cardRef.current) {
+            const cardRect = cardRef.current.getBoundingClientRect();
             dragInfo.current = {
                 isDragging: true,
                 elementId: id,
@@ -657,13 +658,14 @@ export default function CardStudioPage() {
               <DialogHeader>
                   <DialogTitle>Editar Imagem</DialogTitle>
               </DialogHeader>
-                <div className='flex items-center justify-center'>
+                <div className='flex items-center justify-center p-4'>
                     {!!imageToCrop && (
                         <ReactCrop
                             crop={crop}
                             onChange={(_, percentCrop) => setCrop(percentCrop)}
                             onComplete={(c) => setCompletedCrop(c)}
                             aspect={aspect}
+                            className='max-w-full'
                         >
                             <Image
                                 ref={imgRef}
@@ -671,9 +673,9 @@ export default function CardStudioPage() {
                                 src={imageToCrop}
                                 style={{ transform: `scale(${scale}) rotate(${rotate}deg)` }}
                                 onLoad={onImageLoad}
-                                width={500}
-                                height={500}
-                                className="max-h-[70vh] object-contain"
+                                width={800}
+                                height={600}
+                                className="max-h-[60vh] object-contain"
                             />
                         </ReactCrop>
                     )}
@@ -708,5 +710,3 @@ export default function CardStudioPage() {
     </>
   );
 }
-
-    

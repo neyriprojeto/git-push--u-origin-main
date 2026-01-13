@@ -1,16 +1,24 @@
 export type Member = {
-  id: string;
-  name: string;
-  avatar: string;
-  role: 'Membro' | 'Líder' | 'Pastor' | 'Diácono';
-  status: 'Ativo' | 'Inativo';
-  memberSince: string;
-  email: string;
-  phone: string;
-  address: string;
+  id: string; // Identificador único do usuário
+  name: string; // Nome Completo
+  avatar: string; // Foto do Perfil (URL)
+  email: string; // Usado para login e contato
+  recordNumber: string; // Número da Ficha
+  status: 'Ativo' | 'Inativo' | 'Pendente'; // Situação
+  gender?: 'Masculino' | 'Feminino';
   birthDate: string;
+  maritalStatus?: 'Solteiro(a)' | 'Casado(a)' | 'Divorciado(a)' | 'Viúvo(a)';
+  cpf?: string;
+  rg?: string;
+  nationality?: string;
+  naturalness?: string; // Naturalidade (cidade/estado de nascimento)
+  phone: string;
+  whatsapp?: string;
+  role: 'Membro' | 'Líder' | 'Pastor' | 'Diácono' | 'Admin'; // Cargo
+  memberSince: string;
   history: { date: string; event: string }[];
   participation: { group: string; role: string }[];
+  address: string;
 };
 
 export const members: Member[] = [
@@ -22,6 +30,7 @@ export const members: Member[] = [
     status: 'Ativo',
     memberSince: '2015-03-12',
     email: 'joao.silva@email.com',
+    recordNumber: '001',
     phone: '(11) 98765-4321',
     address: 'Rua das Flores, 123, São Paulo, SP',
     birthDate: '1985-07-20',
@@ -43,6 +52,7 @@ export const members: Member[] = [
     status: 'Ativo',
     memberSince: '2018-07-22',
     email: 'maria.oliveira@email.com',
+    recordNumber: '002',
     phone: '(21) 91234-5678',
     address: 'Avenida Copacabana, 456, Rio de Janeiro, RJ',
     birthDate: '1992-11-30',
@@ -62,6 +72,7 @@ export const members: Member[] = [
     status: 'Ativo',
     memberSince: '2010-01-05',
     email: 'pedro.santos@email.com',
+    recordNumber: '003',
     phone: '(31) 99999-8888',
     address: 'Praça da Liberdade, 789, Belo Horizonte, MG',
     birthDate: '1978-02-14',
@@ -82,6 +93,7 @@ export const members: Member[] = [
     status: 'Inativo',
     memberSince: '2021-02-19',
     email: 'ana.costa@email.com',
+    recordNumber: '004',
     phone: '(71) 98888-7777',
     address: 'Rua do Pelourinho, 321, Salvador, BA',
     birthDate: '2001-09-03',

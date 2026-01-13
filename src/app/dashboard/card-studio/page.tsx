@@ -61,10 +61,12 @@ export default function CardStudioPage() {
                     </div>
                      <div className="space-y-4">
                         <p className="text-sm font-medium">Imagens</p>
-                        <div className="grid gap-2">
-                             <Button variant="outline"><Upload className="mr-2 h-4 w-4"/> Logo da Igreja</Button>
-                             <Button variant="outline"><Upload className="mr-2 h-4 w-4"/> Logo Convenção 1</Button>
-                             <Button variant="outline"><Upload className="mr-2 h-4 w-4"/> Logo Convenção 2</Button>
+                        <div className="grid grid-cols-2 gap-2">
+                             <Button variant="outline"><Upload className="mr-2 h-4 w-4"/> Fundo (Frente)</Button>
+                             <Button variant="outline"><Upload className="mr-2 h-4 w-4"/> Fundo (Verso)</Button>
+                             <Button variant="outline"><Upload className="mr-2 h-4 w-4"/> Logo Igreja</Button>
+                             <Button variant="outline"><Upload className="mr-2 h-4 w-4"/> Logo Conv. 1</Button>
+                             <Button variant="outline"><Upload className="mr-2 h-4 w-4"/> Logo Conv. 2</Button>
                              <Button variant="outline"><Upload className="mr-2 h-4 w-4"/> Assinatura</Button>
                         </div>
                     </div>
@@ -73,7 +75,7 @@ export default function CardStudioPage() {
         </div>
 
         {/* Preview da Carteirinha */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className="lg:col-span-2 space-y-2">
             <Card className="overflow-hidden">
                 <CardContent className="p-4">
                      <div className="aspect-[85.6/54] w-full max-w-lg mx-auto rounded-lg shadow-md relative bg-gray-100 dark:bg-gray-800">

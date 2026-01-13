@@ -13,6 +13,7 @@ import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Separator } from '@/components/ui/separator';
 
 export default function CardStudioPage() {
     const [selectedElement, setSelectedElement] = useState('NOME');
@@ -43,35 +44,31 @@ export default function CardStudioPage() {
         <div className="lg:col-span-1">
             <Card className="bg-muted/40">
                 <CardHeader>
-                    <CardTitle>Painel de Ajuste</CardTitle>
-                    <CardDescription>Ajustando: <span className="font-bold text-primary">{selectedElement}</span></CardDescription>
+                    <CardTitle>Elementos</CardTitle>
+                    <CardDescription>Clique em um elemento para selecionar e ajustar.</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                    <div className="space-y-2">
-                        <p className="text-sm font-medium">Posição</p>
-                        <div className="flex items-center justify-center gap-2">
-                             <Button variant="outline" size="icon"><ArrowUp className="w-4 h-4" /></Button>
-                             <Button variant="outline" size="icon"><ArrowDown className="w-4 h-4" /></Button>
-                             <Button variant="outline" size="icon"><ArrowLeft className="w-4 h-4" /></Button>
-                             <Button variant="outline" size="icon"><ArrowRight className="w-4 h-4" /></Button>
-                        </div>
-                    </div>
-                     <div className="space-y-2">
-                        <p className="text-sm font-medium">Tamanho</p>
-                        <div className="flex items-center justify-center gap-2">
-                             <Button variant="outline" size="icon"><Minus className="w-4 h-4" /></Button>
-                             <span className="text-sm font-semibold w-16 text-center">100%</span>
-                             <Button variant="outline" size="icon"><Plus className="w-4 h-4" /></Button>
-                        </div>
-                    </div>
+                <CardContent>
+                   <p className="text-sm">Ajustando: <span className="font-bold text-primary">{selectedElement}</span></p>
                 </CardContent>
             </Card>
         </div>
 
         {/* Preview da Carteirinha */}
         <div className="lg:col-span-2 space-y-2">
-            <Card className="overflow-hidden">
-                <CardContent className="p-4">
+             <Card className='overflow-hidden'>
+                <CardContent className='p-2 bg-muted/30'>
+                    <div className='flex items-center justify-center flex-wrap gap-2 p-2 rounded-md bg-background border mb-2'>
+                        <p className="text-sm font-medium mr-2">Posição:</p>
+                        <Button variant="outline" size="icon"><ArrowUp className="w-4 h-4" /></Button>
+                        <Button variant="outline" size="icon"><ArrowDown className="w-4 h-4" /></Button>
+                        <Button variant="outline" size="icon"><ArrowLeft className="w-4 h-4" /></Button>
+                        <Button variant="outline" size="icon"><ArrowRight className="w-4 h-4" /></Button>
+                        <Separator orientation='vertical' className='h-6 mx-2'/>
+                         <p className="text-sm font-medium mr-2">Tamanho:</p>
+                         <Button variant="outline" size="icon"><Minus className="w-4 h-4" /></Button>
+                         <span className="text-sm font-semibold w-16 text-center">100%</span>
+                         <Button variant="outline" size="icon"><Plus className="w-4 h-4" /></Button>
+                    </div>
                      <div className="aspect-[85.6/54] w-full max-w-lg mx-auto rounded-lg shadow-md relative bg-gray-100 dark:bg-gray-800">
                         {isFront ? (
                             // Frente da Carteirinha
@@ -228,3 +225,5 @@ export default function CardStudioPage() {
     </div>
   );
 }
+
+    

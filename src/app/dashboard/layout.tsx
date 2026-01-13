@@ -49,7 +49,7 @@ export default function DashboardLayout({
             </SidebarMenuItem>
             <SidebarMenuItem>
                <SidebarMenuButton asChild tooltip={{ children: "Mural" }}>
-                <Link href="#">
+                <Link href="/dashboard/mural">
                   <LayoutGrid />
                   <span>Mural</span>
                 </Link>

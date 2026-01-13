@@ -12,7 +12,7 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
 } from "@/components/ui/sidebar";
-import { Home, MessageSquare, Users, UserCog, Settings, CreditCard, LayoutGrid } from "lucide-react";
+import { Home, MessageSquare, Users, UserCog, Settings, CreditCard, LayoutGrid, Radio, Share2 } from "lucide-react";
 import { AppLogo } from "@/components/icons";
 
 export default function DashboardLayout({
@@ -97,6 +97,22 @@ export default function DashboardLayout({
                   <Link href="#">
                     <CreditCard />
                     <span>Carteirinhas</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip={{ children: "Redes Sociais" }}>
+                  <Link href="#">
+                    <Share2 />
+                    <span>Redes Sociais</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+               <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip={{ children: "Rádio" }}>
+                  <Link href="#">
+                    <Radio />
+                    <span>Rádio</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

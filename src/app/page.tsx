@@ -26,6 +26,12 @@ export default function Home() {
             <span className="font-bold sm:inline-block">A.D.KAIROS CONNECT</span>
           </Link>
           <nav className="flex flex-1 items-center space-x-4 justify-end">
+            <Button variant="ghost" asChild>
+              <Link href="#">Redes Sociais</Link>
+            </Button>
+            <Button variant="ghost" asChild>
+              <Link href="#">Rádio</Link>
+            </Button>
             <Button asChild>
               <Link href="/login">Login</Link>
             </Button>
@@ -117,47 +123,6 @@ export default function Home() {
               </CardContent>
             </Card>
             
-            {/* Redes Sociais e Radio */}
-            <div className="grid md:grid-cols-2 gap-8">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-center flex items-center justify-center gap-2">
-                    <Share2 className="h-6 w-6"/>
-                    Redes Sociais
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground text-center">
-                    Siga-nos nas redes sociais e fique por dentro de todas as novidades e eventos.
-                  </p>
-                  <div className="flex justify-center gap-4 mt-4">
-                     {/* Placeholder links */}
-                    <Button variant="outline" size="icon" asChild><Link href="#"><svg role="img" viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><title>Instagram</title><path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126s1.338.935 2.126 1.384c.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.717 2.126-1.384s.935-1.338 1.384-2.126c.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.717-1.459-1.384-2.126S20.65.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.056 1.17-.249 1.805-.415 2.227a2.47 2.47 0 0 1-.896 1.382c-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.056-1.816-.249-2.236-.415a2.47 2.47 0 0 1-1.382-.896c-.42-.419-.679-.824-.896-1.38a2.47 2.47 0 0 1-.413-2.235c-.057-1.274-.07-1.649-.07-4.859 0-3.211.015-3.586.07-4.859.056-1.17.249-1.816.415-2.236.217-.562.477-.96.896-1.382.419-.419.819-.679 1.381-.896.422-.164 1.056-.36 2.226-.413 1.266-.057 1.646-.07 4.851-.07zm0 4.818c-2.414 0-4.364 1.95-4.364 4.364s1.95 4.364 4.364 4.364 4.364-1.95 4.364-4.364-1.95-4.364-4.364-4.364zm0 7.272c-1.609 0-2.909-1.3-2.909-2.909s1.3-2.909 2.909-2.909 2.909 1.3 2.909 2.909-1.3 2.909-2.909 2.909zM20.5 4.869a1.161 1.161 0 1 0-.002-2.322 1.161 1.161 0 0 0 .002 2.322z"/></svg></Link></Button>
-                    <Button variant="outline" size="icon" asChild><Link href="#"><svg role="img" viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><title>Facebook</title><path d="M22.675 0h-21.35C.59 0 0 .59 0 1.325v21.35C0 23.41.59 24 1.325 24H12.82v-9.294H9.692v-3.622h3.128V8.413c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.313h3.587l-.467 3.622h-3.12V24h6.116c.735 0 1.325-.59 1.325-1.325V1.325C24 .59 23.41 0 22.675 0z"/></svg></Link></Button>
-                    <Button variant="outline" size="icon" asChild><Link href="#"><svg role="img" viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><title>YouTube</title><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></Link></Button>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-center flex items-center justify-center gap-2">
-                    <Radio className="h-6 w-6"/>
-                    Rádio
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground text-center">
-                    Ouça nossa rádio e seja abençoado com louvores e mensagens inspiradoras.
-                  </p>
-                   <div className="flex justify-center gap-4 mt-4">
-                     <Button asChild className="w-full max-w-xs mx-auto">
-                        <Link href="#">Ouvir Agora</Link>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
             {/* Congregações e Comissão */}
             <div className="grid md:grid-cols-2 gap-8">
               <Card>

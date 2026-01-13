@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Slider } from '@/components/ui/slider';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Minus, Plus, Palette, Image as ImageIcon, Type, Upload } from 'lucide-react';
+import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Minus, Plus, Palette, Image as ImageIcon, Type, Upload, Save } from 'lucide-react';
 import { members } from '@/data/members';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
@@ -444,10 +444,13 @@ export default function CardStudioPage() {
               <SidebarTrigger className="md:hidden" />
               <h2 className="text-3xl font-bold tracking-tight">Estúdio de Carteirinha</h2>
           </div>
-          <Avatar>
-              <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-              <AvatarFallback>A</AvatarFallback>
-          </Avatar>
+          <div className="flex items-center gap-2">
+            <Button><Save className="mr-2 h-4 w-4" />Salvar Alterações</Button>
+            <Avatar>
+                <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+                <AvatarFallback>A</AvatarFallback>
+            </Avatar>
+          </div>
         </div>
 
         <div className="space-y-4">
@@ -687,5 +690,3 @@ export default function CardStudioPage() {
     </>
   );
 }
-
-    

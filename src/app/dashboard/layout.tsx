@@ -65,7 +65,7 @@ export default function DashboardLayout({
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip={{ children: "Carteirinhas" }}>
-                  <Link href="#">
+                  <Link href="/dashboard/card-studio">
                     <CreditCard />
                     <span>Carteirinhas</span>
                   </Link>

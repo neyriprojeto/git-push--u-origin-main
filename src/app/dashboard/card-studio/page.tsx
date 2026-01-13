@@ -192,8 +192,10 @@ export default function CardStudioPage() {
 
         const scaleX = image.naturalWidth / image.width;
         const scaleY = image.naturalHeight / image.height;
-        const offscreenCanvas = new OffscreenCanvas(completedCrop.width * scaleX, completedCrop.height * scaleY);
-        const ctx = offscreenCanvas.getContext('2d');
+        
+        canvas.width = completedCrop.width * scaleX;
+        canvas.height = completedCrop.height * scaleY;
+        const ctx = canvas.getContext('2d');
         
         if (!ctx) {
           toast({ variant: 'destructive', title: 'Erro', description: 'Could not get 2d context' });
@@ -209,40 +211,43 @@ export default function CardStudioPage() {
             completedCrop.height * scaleY,
             0,
             0,
-            offscreenCanvas.width,
-            offscreenCanvas.height
+            canvas.width,
+            canvas.height
         );
         
-        const blob = await offscreenCanvas.convertToBlob({
-            type: 'image/png',
-        });
-       
-        try {
-            const croppedFile = new File([blob], currentFile.name, { type: blob.type });
-            const src = await uploadArquivo(croppedFile);
-    
-            if (croppingId === 'Fundo (Frente)') {
-                setCardStyles(prev => ({...prev, frontBackgroundImage: src}));
-            } else if (croppingId === 'Fundo (Verso)') {
-                setCardStyles(prev => ({...prev, backBackgroundImage: src}));
-            } else {
-                setElements(prev => ({
-                    ...prev,
-                    [croppingId]: { ...prev[croppingId], src }
-                }));
+       canvas.toBlob(async (blob) => {
+            if (!blob) {
+                toast({ variant: 'destructive', title: 'Erro', description: 'Could not create blob' });
+                setIsUploading(false);
+                return;
             }
+            try {
+                const croppedFile = new File([blob], currentFile.name, { type: blob.type });
+                const src = await uploadArquivo(croppedFile);
+        
+                if (croppingId === 'Fundo (Frente)') {
+                    setCardStyles(prev => ({...prev, frontBackgroundImage: src}));
+                } else if (croppingId === 'Fundo (Verso)') {
+                    setCardStyles(prev => ({...prev, backBackgroundImage: src}));
+                } else {
+                    setElements(prev => ({
+                        ...prev,
+                        [croppingId]: { ...prev[croppingId], src }
+                    }));
+                }
 
-            toast({ title: 'Sucesso', description: 'Imagem enviada com sucesso!' });
-            setIsCropping(false);
-            setImageToCrop('');
-            setCroppingId('');
-            setCurrentFile(null);
-        } catch (error) {
-            console.error(error);
-            toast({ variant: 'destructive', title: 'Erro de Upload', description: 'Não foi possível enviar a imagem. Verifique seu `Cloud Name` e `Upload Preset` no Cloudinary.' });
-        } finally {
-            setIsUploading(false);
-        }
+                toast({ title: 'Sucesso', description: 'Imagem enviada com sucesso!' });
+                setIsCropping(false);
+                setImageToCrop('');
+                setCroppingId('');
+                setCurrentFile(null);
+            } catch (error) {
+                console.error(error);
+                toast({ variant: 'destructive', title: 'Erro de Upload', description: 'Não foi possível enviar a imagem. Verifique seu `Cloud Name` e `Upload Preset` no Cloudinary.' });
+            } finally {
+                setIsUploading(false);
+            }
+       }, 'image/png');
     }
 
     
@@ -295,6 +300,7 @@ export default function CardStudioPage() {
         setSelectedElement(id);
 
         if (cardRef.current) {
+            const cardRect = cardRef.current.getBoundingClientRect();
             dragInfo.current = {
                 isDragging: true,
                 elementId: id,
@@ -373,8 +379,6 @@ export default function CardStudioPage() {
             position: 'absolute',
             top: `${el.position.top}%`,
             left: `${el.position.left}%`,
-            width: el.size.width ? `${el.size.width}px` : 'auto',
-            height: el.size.height ? `${el.size.height}px` : 'auto',
             transform: 'translateX(-50%)',
             userSelect: 'none', // Prevent text selection while dragging
         };
@@ -383,18 +387,14 @@ export default function CardStudioPage() {
             style.fontSize = el.size.fontSize ? `${el.size.fontSize}px` : undefined;
             style.color = el.color;
             style.fontWeight = el.fontWeight;
+            style.textAlign = 'center';
             if (id === 'Endereço') {
                 style.whiteSpace = 'pre-wrap';
             }
-             // For all text elements, allow individual positioning
-            style.transform = 'translateX(-50%)'; 
-            if (id.includes('Título') || id.includes('Congregação') || id.includes('Endereço')) {
-                style.textAlign = 'center';
-                style.width = '90%';
-            } else {
-                 style.textAlign = 'left';
-                 style.width = 'auto';
-            }
+             style.width = 'auto'; // allow free movement
+        } else { // isImage
+             style.width = el.size.width ? `${el.size.width}px` : 'auto';
+             style.height = el.size.height ? `${el.size.height}px` : 'auto';
         }
         
         const className = cn(
@@ -520,14 +520,14 @@ export default function CardStudioPage() {
                                   {/* Render all front elements individually */}
                                   {Object.keys(elements)
                                       .filter(id => !id.includes('Convenção') && !id.includes('QR Code') && !id.includes('Assinatura') && !id.includes('Validade') && !id.includes('Membro Desde'))
-                                      .map(id => renderElement(id))}
+                                      .map(id => <React.Fragment key={id}>{renderElement(id)}</React.Fragment>)}
                               </div>
                           ) : (
                               <div className='relative h-full w-full'>
                                   {/* Render all back elements individually */}
                                   {Object.keys(elements)
                                       .filter(id => id.includes('Convenção') || id.includes('QR Code') || id.includes('Assinatura') || id.includes('Validade') || id.includes('Membro Desde'))
-                                      .map(id => renderElement(id))}
+                                      .map(id => <React.Fragment key={id}>{renderElement(id)}</React.Fragment>)}
                                   <div 
                                       style={{
                                           position: 'absolute', 
@@ -695,5 +695,3 @@ export default function CardStudioPage() {
     </>
   );
 }
-
-    

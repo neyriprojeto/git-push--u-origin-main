@@ -57,7 +57,7 @@ export default function CardStudioPage() {
         // --- Frente ---
         'Título 1': { position: { top: 5, left: 0 }, size: { fontSize: 20 }, text: 'ASSEMBLEIA DE DEUS', color: '#000000', fontWeight: 'bold' },
         'Título 2': { position: { top: 12, left: 0 }, size: { fontSize: 16 }, text: 'MINISTÉRIO KAIRÓS', color: '#000000', fontWeight: 'bold' },
-        'Endereço': { position: { top: 18, left: 0 }, size: { fontSize: 8 }, text: 'Rua Presidente Prudente, N°28, Eldorado, Diadema-SP', color: '#333333' },
+        'Endereço': { position: { top: 18, left: 0 }, size: { fontSize: 8 }, text: 'Rua Presidente Prudente, N°28\nEldorado, Diadema-SP', color: '#333333' },
         'Foto do Membro': { position: { top: 30, left: 5 }, size: { width: 80, height: 100 }, src: avatarPlaceholder?.imageUrl },
         'Nome': { position: { top: 60, left: 30 }, size: { fontSize: 11 }, text: member.name, color: '#333333', fontWeight: 'bold' },
         'RG': { position: { top: 70, left: 30 }, size: { fontSize: 10 }, text: `RG: ${member.rg}`, color: '#333333', fontWeight: 'bold' },
@@ -195,6 +195,9 @@ export default function CardStudioPage() {
             style.fontSize = el.size.fontSize ? `${el.size.fontSize}px` : undefined;
             style.color = el.color;
             style.fontWeight = el.fontWeight;
+            if (id === 'Endereço') {
+                style.whiteSpace = 'pre-wrap';
+            }
             if (id.startsWith('Nome') || id.startsWith('RG') || id.startsWith('CPF') || id.startsWith('Cargo')) {
                  style.transform = 'none';
             }
@@ -438,3 +441,5 @@ export default function CardStudioPage() {
     </div>
   );
 }
+
+    

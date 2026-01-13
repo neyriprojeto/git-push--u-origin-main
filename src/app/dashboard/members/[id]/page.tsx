@@ -24,6 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { User, CreditCard, FileText, MessageSquare, BookOpen, RefreshCw } from "lucide-react";
 import { bibleVerses } from "@/data/bible-verses";
 import { useState, useEffect, useCallback } from "react";
+import { cn } from "@/lib/utils";
 
 type Verse = {
   book: string;
@@ -39,6 +40,7 @@ export default function MemberProfilePage({
 }) {
   const member = members.find((m) => m.id === params.id);
   const [verse, setVerse] = useState<Verse | null>(null);
+  const [isCardFlipped, setIsCardFlipped] = useState(false);
 
   const selectRandomVerse = useCallback(() => {
     const randomVerse = bibleVerses[Math.floor(Math.random() * bibleVerses.length)];
@@ -46,7 +48,6 @@ export default function MemberProfilePage({
   }, []);
 
   useEffect(() => {
-    // Select a random verse on client side to avoid hydration errors
     selectRandomVerse();
   }, [selectRandomVerse]);
 
@@ -138,61 +139,96 @@ export default function MemberProfilePage({
               </p>
 
               {/* Digital ID Card */}
-              <Card className="max-w-lg mx-auto overflow-hidden shadow-lg bg-[#0a2749] text-white">
-                  <div className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        {churchPicture && 
-                          <Image src={churchPicture.imageUrl} alt="Igreja" width={60} height={60} className="rounded-md" />
-                        }
-                        <div>
-                          <h3 className="font-bold text-sm sm:text-base">ASSEMBLEIA DE DEUS</h3>
-                          <h4 className="font-semibold text-xs sm:text-sm">MINISTÉRIO KAIRÓS</h4>
-                          <p className="text-xs opacity-80">Tempo de Deus</p>
-                        </div>
+              <div 
+                className="max-w-lg mx-auto flip-card-container cursor-pointer" 
+                style={{ height: '390px' }} 
+                onClick={() => setIsCardFlipped(!isCardFlipped)}
+              >
+                  <div className={cn("flip-card w-full h-full", { 'flipped': isCardFlipped })}>
+                      {/* Card Front */}
+                      <div className="flip-card-front">
+                        <Card className="h-full w-full overflow-hidden shadow-lg bg-[#0a2749] text-white flex flex-col">
+                            <div className="p-4">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  {churchPicture && 
+                                    <Image src={churchPicture.imageUrl} alt="Igreja" width={60} height={60} className="rounded-md" />
+                                  }
+                                  <div>
+                                    <h3 className="font-bold text-sm sm:text-base">ASSEMBLEIA DE DEUS</h3>
+                                    <h4 className="font-semibold text-xs sm:text-sm">MINISTÉRIO KAIRÓS</h4>
+                                    <p className="text-xs opacity-80">Tempo de Deus</p>
+                                  </div>
+                                </div>
+                                <div className="text-center">
+                                  <AppLogo className="h-8 w-8 mx-auto" />
+                                  <span className="text-[10px] font-bold">A.D. K</span>
+                                </div>
+                              </div>
+                              <p className="text-center text-xs opacity-80 mt-2">Rua Presidente Prudente, 28, Eldorado, Diadema - SP, 09972-300</p>
+                            </div>
+                            <div className="bg-white text-gray-800 p-4 space-y-3 flex-1">
+                                <div className="flex items-center gap-4">
+                                  <Avatar className="h-16 w-16 border">
+                                      {avatar && <AvatarImage src={avatar.imageUrl} alt={avatar.description} data-ai-hint={avatar.imageHint} />}
+                                      <AvatarFallback className="text-2xl">
+                                          {member.name.charAt(0)}
+                                      </AvatarFallback>
+                                  </Avatar>
+                                  <div className="border-b pb-1 flex-1">
+                                      <Label className="text-xs text-muted-foreground">NOME</Label>
+                                      <p className="font-bold text-sm">{member.name}</p>
+                                  </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="border-b pb-1">
+                                      <Label className="text-xs text-muted-foreground">RG</Label>
+                                      <p className="font-bold text-sm">{member.rg || 'N/A'}</p>
+                                    </div>
+                                    <div className="border-b pb-1">
+                                      <Label className="text-xs text-muted-foreground">DATA NASC.</Label>
+                                      <p className="font-bold text-sm">{new Date(member.birthDate).toLocaleDateString()}</p>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="border-b pb-1">
+                                      <Label className="text-xs text-muted-foreground">CARGO</Label>
+                                      <p className="font-bold text-sm">{member.role}</p>
+                                    </div>
+                                    <div className="border-b pb-1">
+                                      <Label className="text-xs text-muted-foreground">MEMBRO DESDE</Label>
+                                      <p className="font-bold text-sm">{new Date(member.memberSince).toLocaleDateString()}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </Card>
                       </div>
-                      <div className="text-center">
-                        <AppLogo className="h-8 w-8 mx-auto" />
-                        <span className="text-[10px] font-bold">A.D. K</span>
+
+                      {/* Card Back */}
+                      <div className="flip-card-back">
+                          <Card className="h-full w-full overflow-hidden shadow-lg bg-[#0a2749] text-white flex flex-col justify-between">
+                            <div className="p-4">
+                               <p className="text-xs text-center text-white/80">Válido em todo o território nacional.</p>
+                            </div>
+                            <div className="p-4 bg-white text-gray-800 space-y-4">
+                                <div className="space-y-1">
+                                    <Label className="text-xs text-muted-foreground">ASSINATURA DO PASTOR</Label>
+                                    <div className="h-10 border-b border-gray-400"></div>
+                                </div>
+                                 <div className="space-y-1">
+                                    <Label className="text-xs text-muted-foreground">ASSINATURA DO MEMBRO</Label>
+                                    <div className="h-10 border-b border-gray-400"></div>
+                                </div>
+                                <div className="text-center pt-4">
+                                    <p className="text-sm font-semibold">"Se o filho vos libertar, verdadeiramente sereis livres."</p>
+                                    <p className="text-xs text-muted-foreground">João 8:36</p>
+                                </div>
+                            </div>
+                          </Card>
                       </div>
-                    </div>
-                     <p className="text-center text-xs opacity-80 mt-2">Rua Presidente Prudente, 28, Eldorado, Diadema - SP, 09972-300</p>
                   </div>
-                  <div className="bg-white text-gray-800 p-4 space-y-3">
-                      <div className="flex items-center gap-4">
-                        <Avatar className="h-16 w-16 border">
-                            {avatar && <AvatarImage src={avatar.imageUrl} alt={avatar.description} data-ai-hint={avatar.imageHint} />}
-                            <AvatarFallback className="text-2xl">
-                                {member.name.charAt(0)}
-                            </AvatarFallback>
-                        </Avatar>
-                        <div className="border-b pb-1 flex-1">
-                            <Label className="text-xs text-muted-foreground">NOME</Label>
-                            <p className="font-bold text-sm">{member.name}</p>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                          <div className="border-b pb-1">
-                            <Label className="text-xs text-muted-foreground">RG</Label>
-                            <p className="font-bold text-sm">{member.rg || 'N/A'}</p>
-                          </div>
-                          <div className="border-b pb-1">
-                            <Label className="text-xs text-muted-foreground">DATA NASC.</Label>
-                            <p className="font-bold text-sm">{new Date(member.birthDate).toLocaleDateString()}</p>
-                          </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                           <div className="border-b pb-1">
-                            <Label className="text-xs text-muted-foreground">CARGO</Label>
-                            <p className="font-bold text-sm">{member.role}</p>
-                          </div>
-                          <div className="border-b pb-1">
-                            <Label className="text-xs text-muted-foreground">MEMBRO DESDE</Label>
-                            <p className="font-bold text-sm">{new Date(member.memberSince).toLocaleDateString()}</p>
-                          </div>
-                      </div>
-                  </div>
-              </Card>
+              </div>
+
 
               <Card>
                 <CardHeader>
@@ -292,5 +328,3 @@ export default function MemberProfilePage({
     </div>
   );
 }
-
-    

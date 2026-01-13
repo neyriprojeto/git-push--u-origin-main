@@ -26,19 +26,12 @@ import React from "react";
 export default function Home() {
   const churchBanner = PlaceHolderImages.find((p) => p.id === "church-banner");
   const pastorPhoto = PlaceHolderImages.find((p) => p.id === "pastor-photo");
-  const [isClient, setIsClient] = React.useState(false);
-
-  React.useEffect(() => {
-    setIsClient(true);
-  }, []);
-
 
   return (
     <div className="flex flex-col min-h-screen bg-secondary">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-14 items-center justify-between">
           <div className="flex items-center gap-4">
-              {isClient && (
               <Sheet>
                 <SheetTrigger asChild>
                   <Button variant="ghost" size="icon" className="md:hidden">
@@ -75,7 +68,6 @@ export default function Home() {
                   </div>
                 </SheetContent>
               </Sheet>
-              )}
                <Link href="/" className="mr-6 flex items-center space-x-2">
                 <AppLogo className="h-6 w-6 text-primary" />
                 <span className="font-bold sm:inline-block">A.D.KAIROS CONNECT</span>

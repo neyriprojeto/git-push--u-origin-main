@@ -57,7 +57,8 @@ export default function CardStudioPage() {
         // --- Frente ---
         'Título 1': { position: { top: 5, left: 0 }, size: { fontSize: 20 }, text: 'ASSEMBLEIA DE DEUS', color: '#000000', fontWeight: 'bold' },
         'Título 2': { position: { top: 12, left: 0 }, size: { fontSize: 16 }, text: 'MINISTÉRIO KAIRÓS', color: '#000000', fontWeight: 'bold' },
-        'Endereço': { position: { top: 18, left: 0 }, size: { fontSize: 8 }, text: 'Rua Presidente Prudente, N°28\nEldorado, Diadema-SP', color: '#333333' },
+        'Congregação': { position: { top: 18, left: 0 }, size: { fontSize: 14 }, text: 'SEDE', color: '#000000', fontWeight: 'normal' },
+        'Endereço': { position: { top: 23, left: 0 }, size: { fontSize: 8 }, text: 'Rua Presidente Prudente, N°28\nEldorado, Diadema-SP', color: '#000000' },
         'Foto do Membro': { position: { top: 30, left: 5 }, size: { width: 80, height: 100 }, src: avatarPlaceholder?.imageUrl },
         'Nome': { position: { top: 60, left: 30 }, size: { fontSize: 11 }, text: member.name, color: '#333333', fontWeight: 'bold' },
         'RG': { position: { top: 70, left: 30 }, size: { fontSize: 10 }, text: `RG: ${member.rg}`, color: '#333333', fontWeight: 'bold' },
@@ -87,8 +88,8 @@ export default function CardStudioPage() {
             }
         } else {
             const elementsToUpdate = target === 'title' 
-                ? ['Título 1', 'Título 2'] 
-                : ['Endereço', 'Nome', 'RG', 'CPF', 'Cargo', 'Assinatura Pastor', 'Validade', 'Membro Desde'];
+                ? ['Título 1', 'Título 2', 'Congregação', 'Endereço'] 
+                : ['Nome', 'RG', 'CPF', 'Cargo', 'Assinatura Pastor', 'Validade', 'Membro Desde'];
             
             setElements(prev => {
                 const newElements = { ...prev };
@@ -185,7 +186,7 @@ export default function CardStudioPage() {
             transform: 'translateX(-50%)',
         };
         
-        if (id.includes('Título') || id.includes('Endereço') || id.includes('Assinatura Pastor') || id.includes('Validade') || id.includes('Membro Desde')) {
+        if (id.includes('Título') || id.includes('Congregação') || id.includes('Endereço') || id.includes('Assinatura Pastor') || id.includes('Validade') || id.includes('Membro Desde')) {
             style.left = '50%';
             style.width = '90%';
             style.textAlign = 'center';
@@ -303,6 +304,7 @@ export default function CardStudioPage() {
                         <div className='relative h-full w-full'>
                             {renderElement('Título 1')}
                             {renderElement('Título 2')}
+                            {renderElement('Congregação')}
                             {renderElement('Endereço')}
                             {renderElement('Foto do Membro')}
                             {renderElement('Logo Igreja')}
@@ -365,7 +367,11 @@ export default function CardStudioPage() {
                                     <Label htmlFor="title2">Título 2</Label>
                                     <Input id="title2" value={elements['Título 2'].text} onChange={(e) => handleElementChange('Título 2', e.target.value)} className="col-span-2 h-8" />
                                 </div>
-                                    <div className="grid grid-cols-3 items-center gap-4">
+                                <div className="grid grid-cols-3 items-center gap-4">
+                                    <Label htmlFor="congregacao">Congregação</Label>
+                                    <Input id="congregacao" value={elements['Congregação'].text} onChange={(e) => handleElementChange('Congregação', e.target.value)} className="col-span-2 h-8" />
+                                </div>
+                                <div className="grid grid-cols-3 items-center gap-4">
                                     <Label htmlFor="address">Endereço</Label>
                                     <Input id="address" value={elements['Endereço'].text} onChange={(e) => handleElementChange('Endereço', e.target.value)} className="col-span-2 h-8" />
                                 </div>
@@ -438,5 +444,3 @@ export default function CardStudioPage() {
     </div>
   );
 }
-
-    

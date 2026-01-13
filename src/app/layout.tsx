@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: 'AdKairos Connect',
+  title: 'A.D.KAIROS CONNECT',
   description: 'Gerenciamento de membros com carteirinha digital',
 };
 

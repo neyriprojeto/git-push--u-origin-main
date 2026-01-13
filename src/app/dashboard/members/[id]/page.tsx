@@ -42,7 +42,7 @@ export default function MemberProfilePage({
               <div className="flex justify-center mb-2">
                 <AppLogo className="h-8 w-8"/>
               </div>
-              <h3 className="font-semibold text-lg">ADKAIROS CONNECT</h3>
+              <h3 className="font-semibold text-lg">A.D.KAIROS CONNECT</h3>
               <p className="text-sm opacity-90">Igreja Evangélica AdKairos</p>
             </div>
             <CardContent className="p-6 flex flex-col items-center text-center">

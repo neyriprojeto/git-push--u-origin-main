@@ -17,7 +17,7 @@ export default function Home() {
         <div className="container flex h-14 items-center">
           <Link href="/" className="mr-6 flex items-center space-x-2">
             <AppLogo className="h-6 w-6 text-primary" />
-            <span className="font-bold sm:inline-block">AdKairos Connect</span>
+            <span className="font-bold sm:inline-block">A.D.KAIROS CONNECT</span>
           </Link>
           <nav className="flex flex-1 items-center space-x-4 sm:justify-end">
             <Button asChild>
@@ -123,7 +123,7 @@ export default function Home() {
       </main>
 
       <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t">
-        <p className="text-xs text-muted-foreground">&copy; {new Date().getFullYear()} AdKairos Connect. Todos os direitos reservados.</p>
+        <p className="text-xs text-muted-foreground">&copy; {new Date().getFullYear()} A.D.KAIROS CONNECT. Todos os direitos reservados.</p>
         <nav className="sm:ml-auto flex gap-4 sm:gap-6">
           <Link className="text-xs hover:underline underline-offset-4" href="#">
             Termos de Serviço

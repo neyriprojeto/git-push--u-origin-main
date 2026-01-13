@@ -29,7 +29,7 @@ export default function DashboardLayout({
           <Link href="/dashboard" className="flex items-center gap-2">
             <AppLogo className="size-6 text-sidebar-primary" />
             <span className="text-lg font-semibold text-sidebar-foreground">
-              AdKairos
+              A.D.KAIROS CONNECT
             </span>
           </Link>
         </SidebarHeader>

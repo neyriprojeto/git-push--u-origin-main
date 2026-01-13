@@ -12,7 +12,7 @@ export default function LoginPage() {
         <div className="mx-auto flex justify-center mb-6">
             <Link href="/" className="flex items-center space-x-2 text-foreground">
                 <AppLogo className="h-8 w-8 text-primary" />
-                <span className="text-2xl font-bold">AdKairos Connect</span>
+                <span className="text-2xl font-bold">A.D.KAIROS CONNECT</span>
             </Link>
         </div>
         <Card>

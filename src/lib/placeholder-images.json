@@ -35,6 +35,12 @@
       "description": "Avatar for Ana Costa",
       "imageUrl": "https://images.unsplash.com/photo-1610655507808-a59293f4e332?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHx3b21hbiUyMHBvcnRyYWl0fGVufDB8fHx8MTc2ODI0NTg4Mnww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "woman portrait"
+    },
+    {
+      "id": "qr-code-placeholder",
+      "description": "A placeholder QR code",
+      "imageUrl": "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=Example",
+      "imageHint": "qr code"
     }
   ]
 }

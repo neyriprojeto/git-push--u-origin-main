@@ -226,30 +226,64 @@ export default function MemberProfilePage({
                 <CardDescription>Verifique e atualize suas informações pessoais.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                  <div className="flex items-center gap-4">
-                    <strong>Email:</strong>
-                    <span>{member.email}</span>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <strong>Telefone:</strong>
-                    <span>{member.phone}</span>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <strong>Endereço:</strong>
-                    <span>{member.address}</span>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <strong>Data de Nascimento:</strong>
-                    <span>{new Date(member.birthDate).toLocaleDateString()}</span>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <strong>Membro desde:</strong>
-                    <span>{new Date(member.memberSince).toLocaleDateString()}</span>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <strong>Estado Civil:</strong>
-                    <span>{member.maritalStatus || 'Não informado'}</span>
-                  </div>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div className="space-y-1">
+                      <p className="font-medium text-muted-foreground">Nome Completo</p>
+                      <p>{member.name}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-medium text-muted-foreground">Email</p>
+                      <p>{member.email}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-medium text-muted-foreground">Telefone</p>
+                      <p>{member.phone}</p>
+                    </div>
+                     <div className="space-y-1">
+                      <p className="font-medium text-muted-foreground">WhatsApp</p>
+                      <p>{member.whatsapp || 'Não informado'}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-medium text-muted-foreground">Endereço</p>
+                      <p>{member.address}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-medium text-muted-foreground">Data de Nascimento</p>
+                      <p>{new Date(member.birthDate).toLocaleDateString()}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-medium text-muted-foreground">Gênero</p>
+                      <p>{member.gender || 'Não informado'}</p>
+                    </div>
+                     <div className="space-y-1">
+                      <p className="font-medium text-muted-foreground">Estado Civil</p>
+                      <p>{member.maritalStatus || 'Não informado'}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-medium text-muted-foreground">RG</p>
+                      <p>{member.rg || 'Não informado'}</p>
+                    </div>
+                     <div className="space-y-1">
+                      <p className="font-medium text-muted-foreground">CPF</p>
+                      <p>{member.cpf || 'Não informado'}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-medium text-muted-foreground">Naturalidade</p>
+                      <p>{member.naturalness || 'Não informado'}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-medium text-muted-foreground">Nacionalidade</p>
+                      <p>{member.nationality || 'Não informado'}</p>
+                    </div>
+                     <div className="space-y-1">
+                      <p className="font-medium text-muted-foreground">Nº da Ficha</p>
+                      <p>{member.recordNumber}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-medium text-muted-foreground">Membro desde</p>
+                      <p>{new Date(member.memberSince).toLocaleDateString()}</p>
+                    </div>
+                 </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -258,3 +292,5 @@ export default function MemberProfilePage({
     </div>
   );
 }
+
+    

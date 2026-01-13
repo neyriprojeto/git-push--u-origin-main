@@ -106,8 +106,8 @@ export default function CardStudioPage() {
         'RG': { position: { top: 70, left: 30 }, size: { fontSize: 10 }, text: `RG: ${member.rg}`, color: '#333333' },
         'CPF': { position: { top: 70, left: 55 }, size: { fontSize: 10 }, text: `CPF: ${member.cpf}`, color: '#333333' },
         'Cargo': { position: { top: 80, left: 30 }, size: { fontSize: 10 }, text: `Cargo: ${member.role}`, color: '#333333' },
-        'Data de Nascimento': { position: { top: 85, left: 30 }, size: { fontSize: 10 }, text: `Nasc: ${new Date(member.birthDate).toLocaleDateString()}`, color: '#333333' },
-        'Data de Batismo': { position: { top: 85, left: 55 }, size: { fontSize: 10 }, text: `Batismo: ${new Date().toLocaleDateString()}`, color: '#333333' },
+        'Data de Nascimento': { position: { top: 85, left: 30 }, size: { fontSize: 10 }, text: `Nasc: ${new Date(member.birthDate).toLocaleDateString('pt-BR')}`, color: '#333333' },
+        'Data de Batismo': { position: { top: 85, left: 55 }, size: { fontSize: 10 }, text: `Batismo: ${new Date().toLocaleDateString('pt-BR')}`, color: '#333333' },
         'Logo Igreja': { position: { top: 25, left: 75 }, size: { width: 60, height: 60 }, src: '' },
         
         // --- Verso ---
@@ -117,7 +117,7 @@ export default function CardStudioPage() {
         'Assinatura': { position: { top: 65, left: 50 }, size: { width: 120, height: 40 }, src: '' },
         'Assinatura Pastor': { position: { top: 82, left: 50 }, size: { fontSize: 10 }, text: 'Assinatura Pastor Presidente', color: '#333333' },
         'Validade': { position: { top: 88, left: 50 }, size: { fontSize: 10 }, text: 'Validade: 01/01/2026', color: '#333333', fontWeight: 'bold' },
-        'Membro Desde': { position: { top: 93, left: 50 }, size: { fontSize: 10 }, text: `Membro desde: ${new Date(member.memberSince).toLocaleDateString()}`, color: '#333333', fontWeight: 'bold' },
+        'Membro Desde': { position: { top: 93, left: 50 }, size: { fontSize: 10 }, text: `Membro desde: ${new Date(member.memberSince).toLocaleDateString('pt-BR')}`, color: '#333333', fontWeight: 'bold' },
     });
     
     const [selectedElement, setSelectedElement] = useState<string | null>(null);

@@ -104,7 +104,7 @@ export default function MuralPage() {
                   <div className="grid gap-0.5">
                     <CardTitle>{post.title}</CardTitle>
                     <CardDescription>
-                      Por {post.author} em {new Date(post.date).toLocaleDateString()}
+                      Por {post.author} em {new Date(post.date).toLocaleDateString('pt-BR')}
                     </CardDescription>
                   </div>
                 </div>

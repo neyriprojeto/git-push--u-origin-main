@@ -187,7 +187,7 @@ export default function MemberProfilePage({
                                     </div>
                                     <div className="border-b pb-1">
                                       <Label className="text-xs text-muted-foreground">DATA NASC.</Label>
-                                      <p className="font-bold text-sm">{new Date(member.birthDate).toLocaleDateString()}</p>
+                                      <p className="font-bold text-sm">{new Date(member.birthDate).toLocaleDateString('pt-BR')}</p>
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
@@ -197,7 +197,7 @@ export default function MemberProfilePage({
                                     </div>
                                     <div className="border-b pb-1">
                                       <Label className="text-xs text-muted-foreground">MEMBRO DESDE</Label>
-                                      <p className="font-bold text-sm">{new Date(member.memberSince).toLocaleDateString()}</p>
+                                      <p className="font-bold text-sm">{new Date(member.memberSince).toLocaleDateString('pt-BR')}</p>
                                     </div>
                                 </div>
                             </div>
@@ -285,7 +285,7 @@ export default function MemberProfilePage({
                     </div>
                     <div className="space-y-1">
                       <p className="font-medium text-muted-foreground">Data de Nascimento</p>
-                      <p>{new Date(member.birthDate).toLocaleDateString()}</p>
+                      <p>{new Date(member.birthDate).toLocaleDateString('pt-BR')}</p>
                     </div>
                     <div className="space-y-1">
                       <p className="font-medium text-muted-foreground">Gênero</p>
@@ -317,7 +317,7 @@ export default function MemberProfilePage({
                     </div>
                     <div className="space-y-1">
                       <p className="font-medium text-muted-foreground">Membro desde</p>
-                      <p>{new Date(member.memberSince).toLocaleDateString()}</p>
+                      <p>{new Date(member.memberSince).toLocaleDateString('pt-BR')}</p>
                     </div>
                  </div>
               </CardContent>

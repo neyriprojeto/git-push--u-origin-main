@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -81,7 +82,7 @@ export default function MembersPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
-                      {new Date(member.memberSince).toLocaleDateString()}
+                      {new Date(member.memberSince).toLocaleDateString('pt-BR')}
                     </TableCell>
                     <TableCell>
                       <Button asChild variant="ghost" size="icon">

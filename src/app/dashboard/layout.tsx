@@ -49,10 +49,11 @@ export default function DashboardLayout({
   const isPastor = userRole === 'Pastor Dirigente/Local';
   const isMember = userRole === 'Membro';
 
+  // Encode the congregation name to handle special characters in the URL
   const settingsLink = isAdmin
     ? "/dashboard/settings/congregations"
-    : isPastor
-    ? `/dashboard/settings/congregations/${userCongregacao}`
+    : isPastor && userCongregacao
+    ? `/dashboard/settings/congregations/${encodeURIComponent(userCongregacao)}`
     : "#";
 
   return (
@@ -73,7 +74,7 @@ export default function DashboardLayout({
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip={{ children: "Início" }}>
-                <Link href={user ? `/dashboard/members/${user.uid}` : "/dashboard"}>
+                <Link href={user ? `/dashboard` : "/dashboard"}>
                   <Home />
                   <span>Início</span>
                 </Link>

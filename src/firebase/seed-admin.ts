@@ -6,13 +6,6 @@ import type { Firestore } from 'firebase/firestore';
 
 const ADMIN_EMAIL = 'admin@adkairos.com';
 
-// IMPORTANT: In a real-world scenario, you should have a secure way to find the admin's UID.
-// For this app, we will assume a known, hardcoded UID for the admin user.
-// This UID should correspond to the user created in Firebase Authentication with the email 'admin@adkairos.com'.
-// You can get this UID from the Firebase Console -> Authentication section.
-// Replace 'ADMIN_USER_UID_HERE' with the actual UID.
-const ADMIN_UID = 'ADMIN_USER_UID_HERE'; // <--- Este valor será ignorado se o e-mail for encontrado, mas é um fallback.
-
 const adminData = {
     nome: 'Administrador Principal',
     email: ADMIN_EMAIL,

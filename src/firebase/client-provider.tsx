@@ -26,7 +26,7 @@ export function FirebaseClientProvider({ children }: FirebaseClientProviderProps
         if (services.auth && services.firestore) {
           const unsubscribe = onAuthStateChanged(services.auth, async (user) => {
             if (user && user.email === 'admin@adkairos.com') {
-              await seedAdminUser(services.firestore!, user.uid);
+              await seedAdminUser(services.firestore, user.uid);
             }
             // We only need to run this check once on initial load
             unsubscribe();

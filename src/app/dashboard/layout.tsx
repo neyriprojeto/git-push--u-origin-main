@@ -44,9 +44,9 @@ export default function DashboardLayout({
   const userCongregacao = userData?.congregacao;
   const isLoading = isUserLoading || isUserDataLoading;
 
-  const canManageUsers = userRole === 'Administrador' || userRole === 'Pastor Dirigente/Local';
   const isAdmin = userRole === 'Administrador';
   const isPastor = userRole === 'Pastor Dirigente/Local';
+  const canManageUsers = isAdmin || isPastor;
   const isMember = userRole === 'Membro';
 
   // Encode the congregation name to handle special characters in the URL
@@ -81,7 +81,7 @@ export default function DashboardLayout({
               </SidebarMenuButton>
             </SidebarMenuItem>
             
-            {!isMember && (
+            {!isLoading && !isMember && (
               <>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild tooltip={{ children: "Mural" }}>

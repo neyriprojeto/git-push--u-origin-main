@@ -1,12 +1,13 @@
 
+
 'use client';
 
+import React, { use, useState } from 'react';
 import { notFound } from 'next/navigation';
 import { members } from '@/data/members';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { format } from 'date-fns';
-import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
 
 
@@ -142,6 +143,3 @@ export default function MemberFilePage({ params }: { params: { id: string } }) {
         </div>
     );
 }
-
-
-    

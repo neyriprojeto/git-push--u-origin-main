@@ -5,8 +5,10 @@ import { useParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUser, useFirestore, useMemoFirebase, useDoc } from '@/firebase';
 import { doc } from 'firebase/firestore';
+import { Loader2 } from 'lucide-react';
 
 interface UserData {
+    cargo?: string;
     congregacao?: string;
 }
 
@@ -25,8 +27,16 @@ export default function CongregationSettingsPage() {
 
     const isLoading = isUserLoading || isUserDataLoading;
 
+    if (isLoading) {
+        return (
+             <div className="flex-1 space-y-4 p-4 md:p-8 pt-6 flex items-center justify-center">
+                <Loader2 className="h-16 w-16 animate-spin" />
+            </div>
+        )
+    }
+
     // Security check: Ensure the logged-in pastor belongs to the congregation they are trying to view
-    if (!isLoading && userData?.congregacao !== congregationId) {
+    if (userData?.cargo === 'Pastor Dirigente/Local' && userData?.congregacao !== congregationId) {
         return (
             <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
                 <Card className="border-destructive">

@@ -188,7 +188,7 @@ export default function DashboardLayout({
         </SidebarContent>
         <SidebarFooter className="border-t border-sidebar-border">
            <SidebarMenu>
-            {(isAdmin || isPastor) && (
+            {!isLoading && (isAdmin || isPastor) && (
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip={{ children: "Configurações" }}>
                   <Link href={settingsLink}>

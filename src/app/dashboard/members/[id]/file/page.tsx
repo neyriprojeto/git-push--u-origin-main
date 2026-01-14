@@ -10,11 +10,11 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 
-const DetailItem = ({ label, value, className }: { label: string; value?: string | null, className?: string }) => {
+const DetailItem = ({ label, value, colSpan = 1 }: { label: string; value?: string | null, colSpan?: number }) => {
     return (
-        <div className={cn("flex items-end border-b border-dotted border-gray-400 pb-1", className)}>
-            <span className="text-xs font-bold whitespace-nowrap mr-2">{label}:</span>
-            <span className="text-xs break-words">{value || 'Não informado'}</span>
+        <div className={`col-span-${colSpan} flex items-end border-b border-dotted border-gray-400 pb-1`}>
+            <span className="text-sm font-bold whitespace-nowrap mr-2">{label}:</span>
+            <span className="text-sm break-words">{value || 'Não informado'}</span>
             <span className="flex-grow"></span>
         </div>
     );
@@ -52,9 +52,9 @@ export default function MemberFilePage({ params }: { params: { id: string } }) {
                                         <span className="text-xs text-gray-400 text-center">Foto 3x4</span>
                                     )}
                                 </div>
-                                <div className="text-center flex-grow">
-                                    <h1 className="text-2xl md:text-4xl font-bold">Ficha de Membro</h1>
-                                    <p className="text-md md:text-lg font-sans">Nº: {member.recordNumber}</p>
+                                <div className="text-center flex-grow px-4">
+                                    <h1 className="text-3xl font-bold">Ficha de Membro</h1>
+                                    <p className="text-lg font-sans">Nº: {member.recordNumber}</p>
                                 </div>
                                 <div className="w-24 h-24 border border-gray-300 flex items-center justify-center shrink-0 bg-gray-100">
                                     {churchLogo ? (
@@ -66,7 +66,7 @@ export default function MemberFilePage({ params }: { params: { id: string } }) {
                             </div>
 
                             {/* Content */}
-                            <div className="flex-grow pt-6 grid grid-cols-12 gap-x-8 gap-y-4 font-sans">
+                            <div className="flex-grow pt-6 grid grid-cols-12 gap-x-8 gap-y-4 font-sans text-sm">
                                 <div className="col-span-12"><DetailItem label="Nome" value={member.name} /></div>
 
                                 <div className="col-span-7"><DetailItem label="Naturalidade" value={member.naturalness} /></div>
@@ -99,11 +99,11 @@ export default function MemberFilePage({ params }: { params: { id: string } }) {
                         <div className="absolute w-full h-full bg-white shadow-lg p-8 flex flex-col" style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
                             {/* Header */}
                             <div className="text-center pb-4 border-b border-black">
-                                <h1 className="text-2xl md:text-4xl font-bold">Dados Eclesiásticos</h1>
+                                <h1 className="text-3xl font-bold">Dados Eclesiásticos</h1>
                             </div>
 
                             {/* Content */}
-                            <div className="flex-grow pt-6 grid grid-cols-12 gap-x-8 gap-y-4 font-sans">
+                            <div className="flex-grow pt-6 grid grid-cols-12 gap-x-8 gap-y-4 font-sans text-sm">
                                 <div className="col-span-6"><DetailItem label="Data de Batismo" value={member.baptismDate ? format(new Date(member.baptismDate), 'dd/MM/yyyy') : ''} /></div>
                                 <div className="col-span-6"><DetailItem label="Data de Membresia" value={member.memberSince ? format(new Date(member.memberSince), 'dd/MM/yyyy') : ''} /></div>
                                 
@@ -113,7 +113,7 @@ export default function MemberFilePage({ params }: { params: { id: string } }) {
                                 <div className="col-span-12"><DetailItem label="Pastor Responsável" value={member.responsiblePastor} /></div>
                                 
                                 <div className="col-span-12 pt-8">
-                                    <h2 className="text-lg md:text-xl font-bold text-center mb-4 font-serif">Observações</h2>
+                                    <h2 className="text-lg font-bold text-center mb-4 font-serif">Observações</h2>
                                     <div className="space-y-6 mt-4">
                                         <div className="border-b border-dotted border-gray-400"></div>
                                         <div className="border-b border-dotted border-gray-400"></div>

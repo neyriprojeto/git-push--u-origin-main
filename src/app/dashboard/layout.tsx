@@ -43,7 +43,8 @@ export default function DashboardLayout({
   const isLoading = isUserLoading || isUserDataLoading;
   const userRole = userData?.cargo;
 
-  // Determine visibility based on role, assuming admin access during load.
+  // Assume admin access during load to prevent menu flickering for admins.
+  // Menus are only hidden once the role is confirmed to be restricted (e.g., 'Membro').
   const canSeeAdminMenus = isLoading || (userRole && userRole !== 'Membro');
   const canSeeFullAdminFeatures = isLoading || userRole === 'Administrador';
 

@@ -1,3 +1,4 @@
+
 /**
  * Core Philosophy: This ruleset enforces a role-based and ownership-based security model
  * for a church management application. The primary goal is to ensure that sensitive member
@@ -114,7 +115,8 @@ service cloud.firestore {
      *   /users/{userId}
      */
     match /users/{userId} {
-        allow get, update: if request.auth.uid == userId || isAdmin();
+        allow get: if isSignedIn();
+        allow update: if request.auth.uid == userId || isAdmin();
         allow list: if isAdmin();
         allow create: if true; // Allow public registration
         allow delete: if isAdmin();
@@ -183,9 +185,9 @@ service cloud.firestore {
     match /churchInfo/{churchInfoId} {
       allow get: if true;
       allow list: if true;
-      allow create: if false; // TODO: Define an admin role for managing church info.
-      allow update: if false; // TODO: Define an admin role for managing church info.
-      allow delete: if false; // TODO: Define an admin role for managing church info.
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
     }
     
     /**

@@ -1,22 +1,31 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { notFound } from 'next/navigation';
-import { members } from '@/data/members';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
+import { Loader2 } from 'lucide-react';
+import { Member } from '@/data/members';
 
 
-const DetailItem = ({ label, value }: { label: string; value?: string | null }) => {
+const DetailItem = ({ label, value }: { label: string; value?: string | null | Date }) => {
+    let displayValue: string | null = 'Não informado';
+
+    if (value instanceof Date) {
+        displayValue = format(value, 'dd/MM/yyyy');
+    } else if (value) {
+        displayValue = value;
+    }
+
     return (
         <div className="flex items-baseline border-b border-dotted border-gray-500 pb-1">
             <span className="font-bold whitespace-nowrap mr-2">{label}:</span>
-            <span className="break-words">{value || 'Não informado'}</span>
+            <span className="break-words">{displayValue}</span>
         </div>
     );
 };
@@ -24,12 +33,22 @@ const DetailItem = ({ label, value }: { label: string; value?: string | null }) 
 
 export default function MemberFilePage({ params }: { params: { id: string } }) {
     const memberId = params.id;
-    const member = members.find((m) => m.id === memberId);
     const [isFlipped, setIsFlipped] = useState(false);
     const firestore = useFirestore();
     
+    const memberRef = useMemoFirebase(() => (firestore ? doc(firestore, 'users', memberId) : null), [firestore, memberId]);
+    const { data: member, isLoading: memberLoading } = useDoc<Member>(memberRef);
+    
     const churchInfoRef = useMemoFirebase(() => (firestore ? doc(firestore, 'churchInfo', 'main') : null), [firestore]);
-    const { data: churchInfo } = useDoc<{ fichaLogoUrl?: string }>(churchInfoRef);
+    const { data: churchInfo, isLoading: churchInfoLoading } = useDoc<{ fichaLogoUrl?: string }>(churchInfoRef);
+    
+    if (memberLoading || churchInfoLoading) {
+        return (
+            <div className="w-full min-h-screen bg-secondary p-4 flex justify-center items-center">
+                <Loader2 className="h-16 w-16 animate-spin" />
+            </div>
+        )
+    }
     
     if (!member) {
         notFound();
@@ -76,7 +95,7 @@ export default function MemberFilePage({ params }: { params: { id: string } }) {
                             {/* Content */}
                             <div className="flex-grow pt-[2vw] md:pt-6 grid grid-cols-12 gap-x-[2vw] md:gap-x-8 gap-y-[1vw] md:gap-y-4 font-sans text-[1.5vw] md:text-sm">
                                 <div className="col-span-8"><DetailItem label="Nome" value={member.name} /></div>
-                                <div className="col-span-4"><DetailItem label="Data Nasc" value={member.birthDate ? format(new Date(member.birthDate), 'dd/MM/yyyy') : ''} /></div>
+                                <div className="col-span-4"><DetailItem label="Data Nasc" value={member.birthDate} /></div>
 
                                 <div className="col-span-4"><DetailItem label="Naturalidade" value={member.naturalness} /></div>
                                 <div className="col-span-4"><DetailItem label="Nacionalidade" value={member.nationality} /></div>
@@ -111,8 +130,8 @@ export default function MemberFilePage({ params }: { params: { id: string } }) {
 
                                 {/* Content */}
                                 <div className="flex-grow pt-[2vw] md:pt-6 grid grid-cols-12 gap-x-[2vw] md:gap-x-8 gap-y-[1vw] md:gap-y-4 font-sans text-[1.5vw] md:text-sm">
-                                    <div className="col-span-6"><DetailItem label="Data de Batismo" value={member.baptismDate ? format(new Date(member.baptismDate), 'dd/MM/yyyy') : ''} /></div>
-                                    <div className="col-span-6"><DetailItem label="Data de Membresia" value={member.memberSince ? format(new Date(member.memberSince), 'dd/MM/yyyy') : ''} /></div>
+                                    <div className="col-span-6"><DetailItem label="Data de Batismo" value={member.baptismDate} /></div>
+                                    <div className="col-span-6"><DetailItem label="Data de Membresia" value={member.memberSince} /></div>
                                     
                                     <div className="col-span-12"><DetailItem label="Congregação" value={member.congregation}/></div>
                                     
@@ -150,3 +169,5 @@ export default function MemberFilePage({ params }: { params: { id: string } }) {
         </div>
     );
 }
+
+    

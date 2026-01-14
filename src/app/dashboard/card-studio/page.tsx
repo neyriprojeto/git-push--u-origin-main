@@ -469,7 +469,7 @@ export default function CardStudioPage() {
             style.textAlign = el.textAlign;
             style.whiteSpace = 'pre-wrap';
 
-            if (id.includes('Título') || id === 'Nome') {
+            if (id.includes('Título') || id === 'Nome' || id.includes('Assinatura Pastor') || id.includes('Validade') || id.includes('Membro Desde')) {
                 style.whiteSpace = 'nowrap';
             }
         } else { // isImage
@@ -495,6 +495,7 @@ export default function CardStudioPage() {
                     </div>
                 )
             }
+            const objectFitStyle: 'cover' | 'contain' = id === 'Foto do Membro' ? 'cover' : 'contain';
             return (
                  <div
                     style={style}
@@ -506,7 +507,7 @@ export default function CardStudioPage() {
                         src={el.src}
                         alt={id}
                         fill
-                        objectFit={id === 'Foto do Membro' ? "cover" : "contain"}
+                        style={{ objectFit: objectFitStyle }}
                         className={cn({ 'rounded-md': id !== 'Assinatura'})}
                         draggable={false}
                     />
@@ -789,5 +790,7 @@ export default function CardStudioPage() {
     </>
   );
 }
+
+    
 
     

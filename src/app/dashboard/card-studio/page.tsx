@@ -60,6 +60,8 @@ function centerAspectCrop(
   )
 }
 
+const churchLogoPlaceholder = PlaceHolderImages.find((p) => p.id === 'church-banner');
+
 const defaultElements: CardElements = {
     // --- Frente ---
     'Título 1': { position: { top: 5, left: 50 }, size: { fontSize: 20 }, text: 'ASSEMBLEIA DE DEUS', fontWeight: 'bold', textAlign: 'center' },
@@ -73,7 +75,7 @@ const defaultElements: CardElements = {
     'CPF': { position: { top: 74, left: 40 }, size: { fontSize: 10 }, text: `CPF: ${members[0].cpf}`, textAlign: 'left' },
     'Data de Nascimento': { position: { top: 74, left: 75 }, size: { fontSize: 10 }, text: `Nasc: ${new Date(members[0].birthDate).toLocaleDateString('pt-BR')}`, textAlign: 'left' },
     'Cargo': { position: { top: 80, left: 40 }, size: { fontSize: 10 }, text: `Cargo: ${members[0].role}`, textAlign: 'left' },
-    'Logo Igreja': { position: { top: 38, left: 80 }, size: { width: 70, height: 70 }, src: '' },
+    'Logo Igreja': { position: { top: 38, left: 80 }, size: { width: 70, height: 70 }, src: churchLogoPlaceholder?.imageUrl || '' },
     
     // --- Verso ---
     'Logo Convenção 1': { position: { top: 15, left: 25 }, size: { width: 80, height: 80 }, src: '' },

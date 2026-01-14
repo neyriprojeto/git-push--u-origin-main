@@ -15,8 +15,8 @@ import { useRouter } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("admin@adkairos.com");
-  const [password, setPassword] = useState("adk123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const auth = useAuth();

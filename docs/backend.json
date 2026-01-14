@@ -40,6 +40,11 @@
           "type": "boolean",
           "description": "Whether the user account is active."
         },
+        "status": {
+            "type": "string",
+            "enum": ["Ativo", "Inativo", "Pendente"],
+            "description": "The current status of the member's registration."
+        },
         "criadoEm": {
           "type": "string",
           "format": "date-time",
@@ -108,7 +113,8 @@
         "rg",
         "cpf",
         "dataNascimento",
-        "cargo"
+        "cargo",
+        "status"
       ]
     },
     "igreja": {

@@ -1,3 +1,4 @@
+
 'use client';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { useFirestore } from '..';
@@ -12,7 +13,9 @@ export const addMember = async (firestore: any, memberData: any) => {
   try {
     await addDoc(collection(firestore, 'users'), {
       ...memberData,
-      ativo: true, // Assuming new members are active by default
+      ativo: false, // New members are inactive until approved
+      status: 'Pendente', // Set status to pending for admin approval
+      tipo: 'membro', // All public registrations are for members
       criadoEm: serverTimestamp(),
     });
   } catch (error) {

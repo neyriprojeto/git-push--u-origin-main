@@ -12,6 +12,7 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { useAuth } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { Separator } from "@/components/ui/separator";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("admin@adkairos.com");
@@ -104,6 +105,15 @@ export default function LoginPage() {
                     {isLoading ? 'Entrando...' : 'Entrar'}
                 </Button>
             </form>
+             <Separator className="my-6" />
+              <div className="text-center">
+                <p className="text-sm">
+                  Ainda não é membro?{" "}
+                  <Link href="/register" className="underline">
+                    Cadastre-se
+                  </Link>
+                </p>
+              </div>
             </CardContent>
         </Card>
       </div>

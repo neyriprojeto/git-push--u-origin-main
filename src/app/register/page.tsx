@@ -70,6 +70,13 @@ export default function RegisterPage() {
       rg: '',
       cpf: '',
       cargo: 'Membro',
+      congregacao: '',
+      cep: '',
+      logradouro: '',
+      numero: '',
+      bairro: '',
+      cidade: '',
+      estado: '',
     },
   });
 
@@ -471,5 +478,3 @@ export default function RegisterPage() {
     </div>
   );
 }
-
-    

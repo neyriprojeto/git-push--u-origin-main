@@ -70,6 +70,13 @@ export default function NewMemberPage() {
       rg: '',
       cpf: '',
       cargo: 'Membro',
+      congregacao: '',
+      cep: '',
+      logradouro: '',
+      numero: '',
+      bairro: '',
+      cidade: '',
+      estado: '',
     },
   });
 
@@ -450,5 +457,3 @@ export default function NewMemberPage() {
     </div>
   );
 }
-
-    

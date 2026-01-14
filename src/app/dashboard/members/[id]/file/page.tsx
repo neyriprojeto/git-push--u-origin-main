@@ -23,7 +23,8 @@ const DetailItem = ({ label, value }: { label: string; value?: string | null }) 
 
 
 export default function MemberFilePage({ params }: { params: { id: string } }) {
-    const member = members.find((m) => m.id === params.id);
+    const memberId = params.id;
+    const member = members.find((m) => m.id === memberId);
     const [isFlipped, setIsFlipped] = useState(false);
     const firestore = useFirestore();
     

@@ -1,221 +1,197 @@
-
 {
   "entities": {
-    "user": {
-      "title": "User",
-      "description": "Represents a user in the system.",
+    "Member": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Member",
       "type": "object",
+      "description": "Represents a member of the church.",
       "properties": {
-        "nome": {
+        "id": {
           "type": "string",
-          "description": "The user's full name."
+          "description": "Unique identifier for the Member entity."
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The first name of the member."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The last name of the member."
         },
         "email": {
           "type": "string",
-          "format": "email",
-          "description": "The user's email address."
+          "description": "The email address of the member.",
+          "format": "email"
         },
-        "cargo": {
+        "phoneNumber": {
           "type": "string",
-          "description": "The user's role in the church (e.g., 'diacono', 'membro')."
+          "description": "The phone number of the member."
         },
-        "tipo": {
+        "address": {
           "type": "string",
-          "enum": [
-            "obreiro",
-            "membro"
-          ],
-          "description": "The type of member."
+          "description": "The address of the member."
         },
-        "fotoUrl": {
+        "dateOfBirth": {
           "type": "string",
-          "format": "uri",
-          "description": "URL of the user's profile picture from Cloudinary."
+          "description": "The date of birth of the member.",
+          "format": "date-time"
         },
-        "igrejaId": {
+        "membershipDate": {
           "type": "string",
-          "description": "The ID of the church the user belongs to."
+          "description": "The date when the member joined the church.",
+          "format": "date-time"
         },
-        "congregacao": {
-          "type": "string",
-          "description": "The congregation the user belongs to."
-        },
-        "ativo": {
-          "type": "boolean",
-          "description": "Whether the user account is active."
-        },
-        "status": {
-            "type": "string",
-            "enum": ["Ativo", "Inativo", "Pendente"],
-            "description": "The current status of the member's registration."
-        },
-        "criadoEm": {
-          "type": "string",
-          "format": "date-time",
-          "description": "The timestamp when the user was created."
-        },
-        "dataNascimento": {
-            "type": "string",
-            "format": "date-time",
-            "description": "The user's birth date."
-        },
-        "dataBatismo": {
-            "type": "string",
-            "format": "date-time",
-            "description": "The user's baptism date."
-        },
-        "recordNumber": {
-            "type": "string",
-            "description": "The user's registration number."
-        },
-        "rg": {
-            "type": "string",
-            "description": "The user's RG."
-        },
-        "cpf": {
-            "type": "string",
-            "description": "The user's CPF."
-        },
-        "cep": {
-            "type": "string",
-            "description": "The user's postal code."
-        },
-        "logradouro": {
-            "type": "string",
-            "description": "The user's street."
-        },
-        "numero": {
-            "type": "string",
-            "description": "The user's house number."
-        },
-        "bairro": {
-            "type": "string",
-            "description": "The user's neighborhood."
-        },
-        "cidade": {
-            "type": "string",
-            "description": "The user's city."
-        },
-        "estado": {
-            "type": "string",
-            "description": "The user's state."
+        "groupIds": {
+          "type": "array",
+          "description": "References to Groups. (Relationship: Member N:N Group)",
+          "items": {
+            "type": "string"
+          }
         }
       },
       "required": [
-        "nome",
+        "id",
+        "firstName",
+        "lastName",
         "email",
-        "igrejaId",
-        "congregacao",
-        "ativo",
-        "criadoEm",
-        "tipo",
-        "rg",
-        "cpf",
-        "cargo",
-        "status"
+        "phoneNumber",
+        "address",
+        "dateOfBirth",
+        "membershipDate"
       ]
     },
-    "igreja": {
-      "title": "Igreja",
-      "description": "Represents a church.",
+    "Group": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Group",
       "type": "object",
+      "description": "Represents a group within the church (e.g., youth group, choir).",
       "properties": {
-        "nome": {
+        "id": {
           "type": "string",
-          "description": "The name of the church."
+          "description": "Unique identifier for the Group entity."
         },
-        "logoUrl": {
+        "name": {
           "type": "string",
-          "format": "uri",
-          "description": "URL of the church's logo from Cloudinary."
+          "description": "The name of the group."
         },
-        "criadaEm": {
+        "description": {
           "type": "string",
-          "format": "date-time",
-          "description": "The timestamp when the church was created."
+          "description": "A description of the group."
+        },
+        "memberIds": {
+          "type": "array",
+          "description": "References to Members. (Relationship: Group N:N Member)",
+          "items": {
+            "type": "string"
+          }
         }
       },
       "required": [
-        "nome",
-        "criadaEm"
+        "id",
+        "name",
+        "description"
       ]
     },
-    "cardTemplate": {
-      "title": "Card Template",
-      "description": "Stores the customization settings for the member ID card.",
+    "ChurchInfo": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ChurchInfo",
       "type": "object",
+      "description": "Represents the church's banner, pastor information, and pastoral message.",
       "properties": {
-        "elements": {
-          "type": "object",
-          "description": "Position, size, and content of each element on the card."
-        },
-        "cardStyles": {
-          "type": "object",
-          "description": "Background colors and images for the card."
-        },
-        "textColors": {
-          "type": "object",
-          "description": "Colors for different text groups on the card."
-        },
-        "updatedAt": {
+        "id": {
           "type": "string",
-          "format": "date-time",
-          "description": "Timestamp of the last update."
-        }
-      }
-    },
-    "congregacao": {
-      "title": "Congregação",
-      "description": "Represents a church congregation.",
-      "type": "object",
-      "properties": {
-        "nome": {
-          "type": "string",
-          "description": "The name of the congregation."
+          "description": "Unique identifier for the ChurchInfo entity."
         },
-        "criadaEm": {
+        "bannerImageUrl": {
           "type": "string",
-          "format": "date-time",
-          "description": "The timestamp when the congregation was created."
+          "description": "URL of the church banner image.",
+          "format": "uri"
+        },
+        "pastorImageUrl": {
+          "type": "string",
+          "description": "URL of the pastor's image.",
+          "format": "uri"
+        },
+        "pastorName": {
+          "type": "string",
+          "description": "The name of the pastor."
+        },
+        "pastoralMessage": {
+          "type": "string",
+          "description": "The pastoral message from the pastor."
+        },
+        "aboutUs": {
+          "type": "string",
+          "description": "The 'about us' section for the mini site."
         }
       },
       "required": [
-        "nome",
-        "criadaEm"
+        "id",
+        "bannerImageUrl",
+        "pastorImageUrl",
+        "pastorName",
+        "pastoralMessage",
+        "aboutUs"
       ]
     }
   },
   "auth": {
     "providers": [
-      "password"
+      "password",
+      "anonymous"
     ]
   },
   "firestore": {
-    "/users/{userId}": {
-      "schema": {
-        "$ref": "#/entities/user"
+    "structure": [
+      {
+        "path": "/members/{memberId}",
+        "definition": {
+          "entityName": "Member",
+          "schema": {
+            "$ref": "#/backend/entities/Member"
+          },
+          "description": "Stores member information. Each document represents a church member.",
+          "params": [
+            {
+              "name": "memberId",
+              "description": "The unique identifier for the member."
+            }
+          ]
+        }
       },
-      "description": "Stores individual user profiles."
-    },
-    "/igrejas/{igrejaId}": {
-      "schema": {
-        "$ref": "#/entities/igreja"
+      {
+        "path": "/groups/{groupId}",
+        "definition": {
+          "entityName": "Group",
+          "schema": {
+            "$ref": "#/backend/entities/Group"
+          },
+          "description": "Stores group information. Each document represents a group within the church.",
+          "params": [
+            {
+              "name": "groupId",
+              "description": "The unique identifier for the group."
+            }
+          ]
+        }
       },
-      "description": "Stores information about different churches."
-    },
-    "/cardTemplates/{templateId}": {
-      "schema": {
-        "$ref": "#/entities/cardTemplate"
-      },
-      "description": "Stores the member ID card design template."
-    },
-    "/congregacoes/{congregacaoId}": {
-      "schema": {
-        "$ref": "#/entities/congregacao"
-      },
-      "description": "Stores the list of congregations."
-    }
+      {
+        "path": "/churchInfo/{churchInfoId}",
+        "definition": {
+          "entityName": "ChurchInfo",
+          "schema": {
+            "$ref": "#/backend/entities/ChurchInfo"
+          },
+          "description": "Stores church information, including banner image URL, pastor information, and pastoral message.  There should only ever be ONE document in this collection.",
+          "params": [
+            {
+              "name": "churchInfoId",
+              "description": "The unique identifier for the church information (e.g., 'main')."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to manage church member data, group affiliations, and church information for the AdKairos Connect app. The structure prioritizes authorization independence and supports secure list operations. User authentication is handled via Firebase Auth, and roles are managed within the database using membership maps. This approach avoids hierarchical authorization dependencies and simplifies security rules.\n\nTo ensure **Authorization Independence**, the `groupIds` within each `Member` document, as well as the `memberIds` within each `Group` document are arrays of simple ID values, and do not require `get()` calls in the rules. For collaborative access, the structure uses a `members` map on the `/groups/{groupId}` document, containing user IDs as keys and their roles within the group as values. The `ChurchInfo` collection contains a single document with the church's banner image URL, pastor information, and pastoral message. This data is publicly accessible.\n\nTo support **QAPs**, the separation of member data and group data into distinct collections ensures that list operations can be performed securely. Rules will use `exists()` to determine access for individual members or groups, preventing unauthorized data retrieval."
   }
 }
-
-    

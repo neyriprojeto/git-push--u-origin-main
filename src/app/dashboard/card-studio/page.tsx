@@ -100,11 +100,16 @@ export default function CardStudioPage() {
     const { data: userData, isLoading: isUserDataLoading } = useDoc(userRef);
 
     useEffect(() => {
-        // Redirect if user is not an admin
-        if (!isUserDataLoading && userData?.cargo !== 'Administrador') {
+        // Wait until user data is fully loaded before checking permissions.
+        if (isUserLoading || isUserDataLoading) {
+            return; // Don't do anything while loading.
+        }
+
+        // After loading, if the user is not an admin, redirect them.
+        if (userData?.cargo !== 'Administrador') {
             router.push('/dashboard');
         }
-    }, [isUserDataLoading, userData, router]);
+    }, [isUserLoading, isUserDataLoading, userData, router]);
 
 
     const avatarPlaceholder = PlaceHolderImages.find((p) => p.id === member.avatar);
@@ -602,6 +607,7 @@ export default function CardStudioPage() {
         );
     }
     
+    // This check now happens after loading is complete.
     if (userData?.cargo !== 'Administrador') {
          return (
             <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">

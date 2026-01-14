@@ -71,8 +71,8 @@ const defaultElements: CardElements = {
     'Nº Reg.': { position: { top: 68, left: 40 }, size: { fontSize: 10 }, text: `Nº Reg.: ${members[0].recordNumber}`, textAlign: 'left' },
     'RG': { position: { top: 68, left: 75 }, size: { fontSize: 10 }, text: `RG: ${members[0].rg}`, textAlign: 'left' },
     'CPF': { position: { top: 74, left: 40 }, size: { fontSize: 10 }, text: `CPF: ${members[0].cpf}`, textAlign: 'left' },
+    'Data de Nascimento': { position: { top: 74, left: 75 }, size: { fontSize: 10 }, text: `Nasc: ${new Date(members[0].birthDate).toLocaleDateString('pt-BR')}`, textAlign: 'left' },
     'Cargo': { position: { top: 80, left: 40 }, size: { fontSize: 10 }, text: `Cargo: ${members[0].role}`, textAlign: 'left' },
-    'Data de Nascimento': { position: { top: 80, left: 75 }, size: { fontSize: 10 }, text: `Nasc: ${new Date(members[0].birthDate).toLocaleDateString('pt-BR')}`, textAlign: 'left' },
     'Logo Igreja': { position: { top: 38, left: 80 }, size: { width: 70, height: 70 }, src: '' },
     
     // --- Verso ---
@@ -228,13 +228,16 @@ export default function CardStudioPage() {
 
                 if (id.startsWith('Fundo')) {
                     setAspect(85.6 / 54);
-                } else {
+                } else if (id === 'Foto do Membro') {
                     const elSize = elements[id]?.size;
                     if (elSize?.width && elSize?.height) {
                         setAspect(elSize.width / elSize.height);
                     } else {
-                        setAspect(undefined); // Free crop
+                        setAspect(1); // Square aspect for member photo
                     }
+                }
+                 else {
+                    setAspect(undefined); // Free crop for logos and signature
                 }
             })
             reader.readAsDataURL(file)

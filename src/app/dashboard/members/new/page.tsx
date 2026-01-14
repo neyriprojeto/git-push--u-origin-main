@@ -29,7 +29,7 @@ import { ptBR } from 'date-fns/locale';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const formSchema = z.object({
-  // Dados da Carteirinha (Obrigatórios)
+  // Dados Pessoais
   nome: z.string().min(2, { message: 'O nome deve ter pelo menos 2 caracteres.' }),
   rg: z.string().min(1, { message: 'O RG é obrigatório.' }),
   cpf: z.string().min(11, { message: 'O CPF deve ter 11 caracteres.' }).max(14, { message: 'O CPF deve ter no máximo 14 caracteres.' }),
@@ -192,16 +192,16 @@ export default function NewMemberPage() {
                                     <Button
                                     variant={"outline"}
                                     className={cn(
-                                        "pl-3 text-left font-normal",
+                                        "w-full justify-start text-left font-normal",
                                         !field.value && "text-muted-foreground"
                                     )}
                                     >
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
                                     {field.value ? (
                                         format(field.value, "dd/MM/yyyy")
                                     ) : (
                                         <span>Escolha uma data</span>
                                     )}
-                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                     </Button>
                                 </FormControl>
                                 </PopoverTrigger>
@@ -289,16 +289,16 @@ export default function NewMemberPage() {
                                     <Button
                                     variant={"outline"}
                                     className={cn(
-                                        "pl-3 text-left font-normal",
+                                        "w-full justify-start text-left font-normal",
                                         !field.value && "text-muted-foreground"
                                     )}
                                     >
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
                                     {field.value ? (
                                         format(field.value, "dd/MM/yyyy")
                                     ) : (
                                         <span>Escolha uma data</span>
                                     )}
-                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                     </Button>
                                 </FormControl>
                                 </PopoverTrigger>
@@ -329,16 +329,16 @@ export default function NewMemberPage() {
                                     <Button
                                     variant={"outline"}
                                     className={cn(
-                                        "pl-3 text-left font-normal",
+                                        "w-full justify-start text-left font-normal",
                                         !field.value && "text-muted-foreground"
                                     )}
                                     >
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
                                     {field.value ? (
                                         format(field.value, "dd/MM/yyyy")
                                     ) : (
                                         <span>Escolha uma data</span>
                                     )}
-                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                     </Button>
                                 </FormControl>
                                 </PopoverTrigger>

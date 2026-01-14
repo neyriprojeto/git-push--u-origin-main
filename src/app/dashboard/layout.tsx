@@ -43,11 +43,12 @@ export default function DashboardLayout({
   const isLoading = isUserLoading || isUserDataLoading;
   const userRole = userData?.cargo;
 
-  // Assume admin access during load to prevent menu flickering for admins.
+  // Mostra menus de admin/pastor durante o carregamento ou se o usuário não for 'Membro'.
   const canSeeAdminMenus = isLoading || (userRole && userRole !== 'Membro');
-  const canSeeFullAdminFeatures = isLoading || userRole === 'Administrador';
+  // Mostra features de admin completo APENAS se o cargo for 'Administrador'.
+  const canSeeFullAdminFeatures = userRole === 'Administrador';
 
-  // For members, "Início" links to their profile. For others, to the main dashboard.
+  // Para membros, "Início" links to their profile. For others, to the main dashboard.
   const homeLink = userRole === 'Membro' && user ? `/dashboard/members/${user.uid}` : '/dashboard';
 
   const settingsLink = userRole === 'Administrador'

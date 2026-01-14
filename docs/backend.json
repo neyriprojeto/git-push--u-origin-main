@@ -54,6 +54,16 @@
           "format": "date-time",
           "description": "The timestamp when the user was created."
         },
+        "dataNascimento": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The user's birth date."
+        },
+        "dataBatismo": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The user's baptism date."
+        },
         "recordNumber": {
             "type": "string",
             "description": "The user's registration number."
@@ -207,5 +217,3 @@
     }
   }
 }
-
-    

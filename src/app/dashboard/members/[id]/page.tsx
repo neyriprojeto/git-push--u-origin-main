@@ -25,6 +25,7 @@ import { User, CreditCard, FileText, MessageSquare, BookOpen, RefreshCw } from "
 import { bibleVerses } from "@/data/bible-verses";
 import { useState, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
 type Verse = {
   book: string;
@@ -189,6 +190,14 @@ export default function MemberProfilePage({
                                       <Label className="text-xs text-muted-foreground">CARGO</Label>
                                       <p className="font-bold text-sm">{member.role}</p>
                                     </div>
+                                    <div className="border-b pb-1">
+                                      <Label className="text-xs text-muted-foreground">NASCIMENTO</Label>
+                                      <p className="font-bold text-sm">{member.birthDate ? format(new Date(member.birthDate), 'dd/MM/yyyy') : 'N/A'}</p>
+                                    </div>
+                                     <div className="border-b pb-1">
+                                      <Label className="text-xs text-muted-foreground">MEMBRO DESDE</Label>
+                                      <p className="font-bold text-sm">{member.memberSince ? format(new Date(member.memberSince), 'dd/MM/yyyy') : 'N/A'}</p>
+                                    </div>
                                 </div>
                             </div>
                         </Card>
@@ -261,6 +270,10 @@ export default function MemberProfilePage({
                       <p className="font-medium text-muted-foreground">Email</p>
                       <p>{member.email}</p>
                     </div>
+                     <div className="space-y-1">
+                      <p className="font-medium text-muted-foreground">Data de Nascimento</p>
+                      <p>{member.birthDate ? format(new Date(member.birthDate), 'dd/MM/yyyy') : 'Não informado'}</p>
+                    </div>
                     <div className="space-y-1">
                       <p className="font-medium text-muted-foreground">Telefone</p>
                       <p>{member.phone}</p>
@@ -301,6 +314,10 @@ export default function MemberProfilePage({
                       <p className="font-medium text-muted-foreground">Nº da Ficha</p>
                       <p>{member.recordNumber}</p>
                     </div>
+                     <div className="space-y-1">
+                      <p className="font-medium text-muted-foreground">Membro Desde</p>
+                      <p>{member.memberSince ? format(new Date(member.memberSince), 'dd/MM/yyyy') : 'Não informado'}</p>
+                    </div>
                  </div>
               </CardContent>
             </Card>
@@ -310,5 +327,3 @@ export default function MemberProfilePage({
     </div>
   );
 }
-
-    

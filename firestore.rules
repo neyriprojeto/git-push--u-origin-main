@@ -24,8 +24,10 @@ service cloud.firestore {
      match /congregacoes/{congregacaoId} {
       // Allow public read for congregations list on registration page
       allow read: if true; 
-      // Only authenticated users can create or delete
-      allow create, delete: if request.auth != null;
+      // Only admins can create or delete
+      allow create, delete: if request.auth != null && request.auth.token.admin == true;
     }
   }
 }
+
+    

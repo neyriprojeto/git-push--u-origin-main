@@ -25,6 +25,7 @@ import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const formSchema = z.object({
@@ -32,11 +33,11 @@ const formSchema = z.object({
   nome: z.string().min(2, { message: 'O nome deve ter pelo menos 2 caracteres.' }),
   rg: z.string().min(1, { message: 'O RG é obrigatório.' }),
   cpf: z.string().min(11, { message: 'O CPF deve ter 11 caracteres.' }).max(14, { message: 'O CPF deve ter no máximo 14 caracteres.' }),
-  cargo: z.string({ required_error: 'O cargo é obrigatório.' }),
-  congregacao: z.string({ required_error: 'A congregação é obrigatória.' }),
   dataNascimento: z.date({ required_error: 'A data de nascimento é obrigatória.' }),
   
   // Dados de Membro
+  cargo: z.string({ required_error: 'O cargo é obrigatório.' }),
+  congregacao: z.string({ required_error: 'A congregação é obrigatória.' }),
   dataBatismo: z.date().optional(),
   dataMembro: z.date().optional(),
 
@@ -147,56 +148,6 @@ export default function NewMemberPage() {
                     )}
                     />
                     <FormField
-                      control={form.control}
-                      name="cargo"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Cargo</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Selecione o cargo" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="Membro">Membro</SelectItem>
-                              <SelectItem value="Cooperador(a)">Cooperador(a)</SelectItem>
-                              <SelectItem value="Diácono(a)">Diácono(a)</SelectItem>
-                              <SelectItem value="Presbítero">Presbítero</SelectItem>
-                              <SelectItem value="Evangelista">Evangelista</SelectItem>
-                              <SelectItem value="Missionário(a)">Missionário(a)</SelectItem>
-                              <SelectItem value="Pastor(a)">Pastor(a)</SelectItem>
-                              <SelectItem value="Pastor Dirigente">Pastor Dirigente</SelectItem>
-                              <SelectItem value="Pastor Local">Pastor Local</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                     <FormField
-                      control={form.control}
-                      name="congregacao"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Congregação</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value} disabled={loadingCongregacoes}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder={loadingCongregacoes ? "Carregando..." : "Selecione a congregação"} />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                {congregacoes.map((c) => (
-                                    <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>
-                                ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
                     control={form.control}
                     name="rg"
                     render={({ field }) => (
@@ -249,6 +200,7 @@ export default function NewMemberPage() {
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-0" align="start">
                                 <Calendar
+                                    locale={ptBR}
                                     mode="single"
                                     selected={field.value}
                                     onSelect={field.onChange}
@@ -269,6 +221,55 @@ export default function NewMemberPage() {
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">Dados de Membro</h3>
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                     <FormField
+                      control={form.control}
+                      name="cargo"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Cargo</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione o cargo" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Membro">Membro</SelectItem>
+                              <SelectItem value="Cooperador(a)">Cooperador(a)</SelectItem>
+                              <SelectItem value="Diácono(a)">Diácono(a)</SelectItem>
+                              <SelectItem value="Presbítero">Presbítero</SelectItem>
+                              <SelectItem value="Evangelista">Evangelista</SelectItem>
+                              <SelectItem value="Missionário(a)">Missionário(a)</SelectItem>
+                              <SelectItem value="Pastor(a)">Pastor(a)</SelectItem>
+                              <SelectItem value="Pastor Dirigente/Local">Pastor Dirigente/Local</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                     <FormField
+                      control={form.control}
+                      name="congregacao"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Congregação</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value} disabled={loadingCongregacoes}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder={loadingCongregacoes ? "Carregando..." : "Selecione a congregação"} />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {congregacoes.map((c) => (
+                                    <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>
+                                ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                       <FormField
                         control={form.control}
                         name="dataBatismo"
@@ -296,6 +297,7 @@ export default function NewMemberPage() {
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-0" align="start">
                                 <Calendar
+                                    locale={ptBR}
                                     mode="single"
                                     selected={field.value}
                                     onSelect={field.onChange}
@@ -335,6 +337,7 @@ export default function NewMemberPage() {
                                 </PopoverTrigger>
                                 <PopoverContent className="w-auto p-0" align="start">
                                 <Calendar
+                                    locale={ptBR}
                                     mode="single"
                                     selected={field.value}
                                     onSelect={field.onChange}
@@ -447,3 +450,5 @@ export default function NewMemberPage() {
     </div>
   );
 }
+
+    

@@ -33,6 +33,7 @@ const formSchema = z.object({
   rg: z.string().min(1, { message: 'O RG é obrigatório.' }),
   cpf: z.string().min(11, { message: 'O CPF deve ter 11 caracteres.' }).max(14, { message: 'O CPF deve ter no máximo 14 caracteres.' }),
   cargo: z.string({ required_error: 'O cargo é obrigatório.' }),
+  congregacao: z.string({ required_error: 'A congregação é obrigatória.' }),
   dataNascimento: z.date({ required_error: 'A data de nascimento é obrigatória.' }),
   
   // Dados de Membro
@@ -94,7 +95,6 @@ export default function NewMemberPage() {
       // O número de registro será gerado automaticamente aqui no futuro
       const memberData = {
         ...values,
-        recordNumber: new Date().getTime().toString(), // Placeholder for automatic generation
       }
       await addMember(firestore, memberData);
       toast({
@@ -160,6 +160,30 @@ export default function NewMemberPage() {
                               <SelectItem value="Missionário(a)">Missionário(a)</SelectItem>
                               <SelectItem value="Evangelista">Evangelista</SelectItem>
                               <SelectItem value="Pastor(a)">Pastor(a)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                     <FormField
+                      control={form.control}
+                      name="congregacao"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Congregação</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione a congregação" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="ADKAIROS SEDE">ADKAIROS SEDE</SelectItem>
+                              <SelectItem value="ADKAIROS VILA CARAQUATA">ADKAIROS VILA CARAQUATA</SelectItem>
+                              <SelectItem value="ADKAIROS MATA VIRGEM">ADKAIROS MATA VIRGEM</SelectItem>
+                              <SelectItem value="ADKAIROS VERANÓPOLIS BAIRRO SANTO ANTÔNIO">ADKAIROS VERANÓPOLIS BAIRRO SANTO ANTÔNIO</SelectItem>
+                              <SelectItem value="ADKAIROS VERANÓPOLIS BAIRRO CENTRO">ADKAIROS VERANÓPOLIS BAIRRO CENTRO</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -417,5 +441,3 @@ export default function NewMemberPage() {
     </div>
   );
 }
-
-    

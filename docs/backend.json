@@ -36,6 +36,17 @@
           "type": "string",
           "description": "The ID of the church the user belongs to."
         },
+        "congregacao": {
+          "type": "string",
+          "description": "The congregation the user belongs to.",
+           "enum": [
+            "ADKAIROS SEDE",
+            "ADKAIROS VILA CARAQUATA",
+            "ADKAIROS MATA VIRGEM",
+            "ADKAIROS VERANÓPOLIS BAIRRO SANTO ANTÔNIO",
+            "ADKAIROS VERANÓPOLIS BAIRRO CENTRO"
+          ]
+        },
         "ativo": {
           "type": "boolean",
           "description": "Whether the user account is active."
@@ -106,6 +117,7 @@
         "nome",
         "email",
         "igrejaId",
+        "congregacao",
         "ativo",
         "criadoEm",
         "tipo",
@@ -192,5 +204,3 @@
     }
   }
 }
-
-    

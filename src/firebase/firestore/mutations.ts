@@ -3,7 +3,7 @@ import { addDoc, collection, deleteDoc, doc, Firestore, serverTimestamp, setDoc,
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
-export const addMember = async (firestore: Firestore, uid: string, memberData: any) => {
+export const addMember = async (firestore: Firestore, uid: string | undefined, memberData: any) => {
   if (!firestore) {
     throw new Error('Firestore is not initialized');
   }
@@ -17,8 +17,12 @@ export const addMember = async (firestore: Firestore, uid: string, memberData: a
   if (!dataToSave.recordNumber) {
     dataToSave.recordNumber = new Date().getTime().toString();
   }
-  
-  const memberRef = doc(firestore, 'users', uid);
+
+  // If a UID is provided (from Auth), use it as the document ID.
+  // Otherwise, let Firestore auto-generate an ID.
+  const memberRef = uid ? doc(firestore, 'users', uid) : doc(collection(firestore, 'users'));
+
+  // Use the reference to set the document data.
   setDoc(memberRef, dataToSave)
     .catch(error => {
       errorEmitter.emit('permission-error', new FirestorePermissionError({
@@ -28,6 +32,7 @@ export const addMember = async (firestore: Firestore, uid: string, memberData: a
       }));
     });
 };
+
 
 export const updateMember = async (firestore: Firestore, uid: string, memberData: any) => {
     if (!firestore) {

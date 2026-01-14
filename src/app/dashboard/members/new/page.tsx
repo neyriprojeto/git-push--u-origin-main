@@ -172,7 +172,7 @@ export default function NewMemberPage() {
                                             >
                                             <CalendarIcon className="mr-2 h-4 w-4" />
                                             {field.value ? (
-                                                format(field.value, "dd/MM/yyyy", { locale: ptBR })
+                                                format(field.value, "PPP", { locale: ptBR })
                                             ) : (
                                                 <span>Escolha uma data</span>
                                             )}
@@ -182,12 +182,11 @@ export default function NewMemberPage() {
                                         <PopoverContent className="w-auto p-0" align="start">
                                             <Calendar
                                                 mode="single"
-                                                locale={ptBR}
-                                                selected={field.value}
-                                                onSelect={field.onChange}
                                                 captionLayout="dropdown-nav"
                                                 fromYear={1920}
                                                 toYear={new Date().getFullYear()}
+                                                selected={field.value}
+                                                onSelect={field.onChange}
                                                 disabled={(date) =>
                                                 date > new Date() || date < new Date("1900-01-01")
                                                 }
@@ -298,7 +297,7 @@ export default function NewMemberPage() {
                                             >
                                             <CalendarIcon className="mr-2 h-4 w-4" />
                                             {field.value ? (
-                                                format(field.value, "dd/MM/yyyy", { locale: ptBR })
+                                                format(field.value, "PPP", { locale: ptBR })
                                             ) : (
                                                 <span>Escolha uma data</span>
                                             )}
@@ -308,12 +307,11 @@ export default function NewMemberPage() {
                                         <PopoverContent className="w-auto p-0" align="start">
                                             <Calendar
                                                 mode="single"
-                                                locale={ptBR}
-                                                selected={field.value}
-                                                onSelect={field.onChange}
                                                 captionLayout="dropdown-nav"
                                                 fromYear={1920}
                                                 toYear={new Date().getFullYear()}
+                                                selected={field.value}
+                                                onSelect={field.onChange}
                                                 disabled={(date) =>
                                                 date > new Date() || date < new Date("1900-01-01")
                                                 }
@@ -427,5 +425,3 @@ export default function NewMemberPage() {
     </div>
   );
 }
-
-    

@@ -15,29 +15,51 @@ export type Member = {
   naturalness?: string; // Naturalidade (cidade/estado de nascimento)
   phone: string;
   whatsapp?: string;
-  role: 'Membro' | 'Líder' | 'Pastor' | 'Diácono' | 'Admin' | 'Administrador'; // Cargo
-  memberSince: string;
+  role: 'Membro' | 'Líder' | 'Pastor' | 'Diácono' | 'Admin' | 'Administrador' | 'Pastor(a)'; // Cargo
+  memberSince: string; // Data de Membresia
+  baptismDate?: string; // Data de Batismo
   history: { date: string; event: string }[];
   participation: { group: string; role: string }[];
   address: string;
+  addressNumber?: string;
+  addressDistrict?: string;
+  addressCity?: string;
+  addressState?: string;
+  addressCep?: string;
+  congregation?: string;
+  originChurch?: string;
+  responsiblePastor?: string;
+  observations?: string;
 };
 
 export const members: Member[] = [
   {
     id: '1',
-    name: 'João da Silva',
+    name: 'Jonatas Peres Galarce',
     avatar: 'member-avatar-1',
-    role: 'Líder',
+    role: 'Pastor(a)',
     status: 'Ativo',
-    memberSince: '2015-03-12',
-    email: 'joao.silva@email.com',
+    memberSince: '2019-01-08',
+    baptismDate: '2007-01-08',
+    email: 'jonatasgalrce@hotmail.com',
     recordNumber: '001',
-    phone: '(11) 98765-4321',
-    address: 'Rua das Flores, 123, São Paulo, SP',
-    birthDate: '1985-07-20',
+    phone: '5499170-1536',
+    whatsapp: '5499170-1536',
+    address: 'Capitao Pelegrino Guzzo',
+    addressNumber: '534',
+    addressDistrict: 'Santo Antônio',
+    addressCity: 'Veranópolis',
+    addressState: 'RS',
+    addressCep: '95330-000',
+    birthDate: '1988-04-15',
     maritalStatus: 'Casado(a)',
-    rg: '12.345.678-9',
-    cpf: '123.456.789-00',
+    gender: 'Masculino',
+    rg: '6092271995',
+    cpf: '015.932.700-89',
+    naturalness: 'Veranópolis/RS',
+    nationality: 'Brasileira',
+    congregation: 'A.D. Kairós Veranópolis - Bairro Santo Antônio',
+    responsiblePastor: 'Jonatas Peres',
     history: [
       { date: '2015-03-12', event: 'Tornou-se membro' },
       { date: '2018-01-15', event: 'Batismo' },
@@ -63,6 +85,8 @@ export const members: Member[] = [
     maritalStatus: 'Solteiro(a)',
     rg: '23.456.789-0',
     cpf: '234.567.890-11',
+    naturalness: 'Rio de Janeiro/RJ',
+    nationality: 'Brasileira',
     history: [
         { date: '2018-07-22', event: 'Tornou-se membro' },
         { date: '2019-04-01', event: 'Batismo' },
@@ -86,6 +110,8 @@ export const members: Member[] = [
     maritalStatus: 'Casado(a)',
     rg: '34.567.890-1',
     cpf: '345.678.901-22',
+    naturalness: 'Belo Horizonte/MG',
+    nationality: 'Brasileira',
     history: [
         { date: '2010-01-05', event: 'Tornou-se membro' },
         { date: '2012-06-18', event: 'Consagrado a diácono' },
@@ -110,6 +136,8 @@ export const members: Member[] = [
     maritalStatus: 'Solteiro(a)',
     rg: '45.678.901-2',
     cpf: '456.789.012-33',
+    naturalness: 'Salvador/BA',
+    nationality: 'Brasileira',
     history: [
         { date: '2021-02-19', event: 'Tornou-se membro' },
     ],
@@ -134,5 +162,3 @@ export const members: Member[] = [
     participation: []
   },
 ];
-
-    

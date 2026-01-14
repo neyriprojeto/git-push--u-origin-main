@@ -1,4 +1,5 @@
 
+
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -20,7 +21,7 @@ import {
 } from "@/components/ui/table";
 import { members, Member } from "@/data/members";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { Eye } from "lucide-react";
+import { Eye, FileText } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 
 export default function MembersPage() {
@@ -84,13 +85,21 @@ export default function MembersPage() {
                     <TableCell className="hidden md:table-cell">
                       {new Date(member.memberSince).toLocaleDateString('pt-BR')}
                     </TableCell>
-                    <TableCell>
-                      <Button asChild variant="ghost" size="icon">
-                        <Link href={`/dashboard/members/${member.id}`}>
-                          <Eye className="h-4 w-4" />
-                          <span className="sr-only">Ver Perfil</span>
-                        </Link>
-                      </Button>
+                    <TableCell className="text-right">
+                       <div className="flex items-center justify-end gap-2">
+                          <Button asChild variant="ghost" size="icon">
+                            <Link href={`/dashboard/members/${member.id}`}>
+                              <Eye className="h-4 w-4" />
+                              <span className="sr-only">Ver Perfil</span>
+                            </Link>
+                          </Button>
+                           <Button asChild variant="ghost" size="icon">
+                            <Link href={`/dashboard/members/${member.id}/file`}>
+                              <FileText className="h-4 w-4" />
+                              <span className="sr-only">Ver Ficha</span>
+                            </Link>
+                          </Button>
+                       </div>
                     </TableCell>
                   </TableRow>
                 );
@@ -102,5 +111,3 @@ export default function MembersPage() {
     </div>
   );
 }
-
-    

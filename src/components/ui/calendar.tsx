@@ -22,7 +22,8 @@ function Calendar({
 
    const formatWeekdayName = (day: Date) => {
     // Retorna a primeira letra do dia da semana em maiúsculo
-    return ptBR.localize?.day(day.getDay(), { width: 'short' }).charAt(0).toUpperCase() ?? '';
+    const dayName = ptBR.localize?.day(day.getDay(), { width: 'short' }) ?? '';
+     return dayName.charAt(0).toUpperCase();
   };
 
 

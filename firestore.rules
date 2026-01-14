@@ -41,6 +41,34 @@ service cloud.firestore {
     function isSignedIn() {
       return request.auth != null;
     }
+    
+    /**
+     * getUserData
+     * Fetches the user document data for a given userId.
+     */
+    function getUserData(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data;
+    }
+    
+    /**
+     * isPastorDirigente
+     * Checks if the user has the role of 'Pastor Dirigente/Local'.
+     */
+    function isPastorDirigente(userId) {
+        return getUserData(userId).cargo == 'Pastor Dirigente/Local';
+    }
+
+    /**
+     * isPastorOfSameCongregation
+     * Checks if the requesting pastor belongs to the same congregation as the target user.
+     * Assumes the requesting user is a 'Pastor Dirigente/Local'.
+     */
+    function isPastorOfSameCongregation(targetUserId) {
+      let requestingUserData = getUserData(request.auth.uid);
+      let targetUserData = getUserData(targetUserId);
+      return requestingUserData.congregacao == targetUserData.congregacao;
+    }
+
 
     /**
      * isGroupMember
@@ -70,13 +98,10 @@ service cloud.firestore {
     
     /**
      * isAdmin
-     * Placeholder function to check for a global admin role.
-     * This should be implemented based on custom claims or a roles collection.
+     * Checks if the user has the 'Administrador' role.
      */
     function isAdmin() {
-      // TODO: Implement a real admin check, e.g., using custom claims.
-      // return request.auth.token.admin == true;
-      return isSignedIn(); // For now, any signed-in user can act as admin for certain tasks.
+      return isSignedIn() && getUserData(request.auth.uid).cargo == 'Administrador';
     }
 
 
@@ -109,17 +134,19 @@ service cloud.firestore {
     /**
      * @description
      *   Manages user documents, which now include member data.
-     *   Public users can create their own document (register). Admins can manage all.
-     *   Users can read/update their own data.
+     *   - Public users can create their own document (register).
+     *   - Admins can manage all users.
+     *   - Users can read/update their own data.
+     *   - Congregation Pastors can read/update members of their own congregation.
      * @path
      *   /users/{userId}
      */
     match /users/{userId} {
-        allow get: if isSignedIn();
-        allow update: if request.auth.uid == userId || isAdmin();
-        allow list: if isAdmin();
+        allow get: if (isSignedIn() && request.auth.uid == userId) || isAdmin() || (isPastorDirigente(request.auth.uid) && isPastorOfSameCongregation(userId));
+        allow list: if isAdmin() || isPastorDirigente(request.auth.uid); // Admins can list all, Pastors can list within their congregation (enforced by query)
+        allow update: if (request.auth.uid == userId) || isAdmin() || (isPastorDirigente(request.auth.uid) && isPastorOfSameCongregation(userId));
         allow create: if true; // Allow public registration
-        allow delete: if isAdmin();
+        allow delete: if isAdmin() || (isPastorDirigente(request.auth.uid) && isPastorOfSameCongregation(userId));
     }
 
 
@@ -202,5 +229,3 @@ service cloud.firestore {
     }
   }
 }
-
-    

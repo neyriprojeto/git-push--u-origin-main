@@ -23,29 +23,60 @@ import {
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Eye, FileText, Loader2 } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { collection, query, where } from "firebase/firestore";
+import { useDoc } from "@/firebase/firestore/use-doc";
+import { doc } from "firebase/firestore";
 
 // Definição do tipo para os dados que esperamos do Firestore
 type Member = {
   id: string;
   nome: string;
-  avatar?: string; // a imagem do avatar virá de outro lugar
+  avatar?: string;
   cargo: string;
   status: 'Ativo' | 'Inativo' | 'Pendente';
-  dataBatismo?: string; // Supondo que seja uma string
-  nomeCongregacao?: string;
-  // Adicione outros campos que você espera receber do Firestore
+  dataBatismo?: string; 
+  congregacao?: string; // Corrigido de nomeCongregacao para congregacao
 };
 
 
 export default function MembersPage() {
   const firestore = useFirestore();
-  const membersCollection = useMemoFirebase(
-    () => (firestore ? query(collection(firestore, 'users'), where('cargo', '!=', 'Administrador')) : null),
-    [firestore]
+  const { user, isUserLoading } = useUser();
+
+  // Busca os dados do usuário logado para obter cargo e congregação
+  const currentUserRef = useMemoFirebase(
+    () => (firestore && user ? doc(firestore, 'users', user.uid) : null),
+    [firestore, user]
   );
+  const { data: currentUserData, isLoading: isCurrentUserLoading } = useDoc<Member>(currentUserRef);
+
+
+  const membersCollection = useMemoFirebase(() => {
+    if (!firestore || !currentUserData) return null;
+    
+    // Se for Pastor Dirigente, filtra pela sua congregação
+    if (currentUserData.cargo === 'Pastor Dirigente/Local' && currentUserData.congregacao) {
+      return query(
+        collection(firestore, 'users'), 
+        where('congregacao', '==', currentUserData.congregacao),
+        where('cargo', '!=', 'Administrador')
+      );
+    }
+    
+    // Se for admin, mostra todos (exceto outros admins)
+    if (currentUserData.cargo === 'Administrador') {
+       return query(collection(firestore, 'users'), where('cargo', '!=', 'Administrador'));
+    }
+
+    // Se não for nenhum dos dois, não retorna nada por enquanto (ou pode retornar uma query vazia)
+    return null;
+
+  }, [firestore, currentUserData]);
+  
   const { data: members, isLoading } = useCollection<Member>(membersCollection);
+
+  const showLoading = isLoading || isUserLoading || isCurrentUserLoading;
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -76,7 +107,7 @@ export default function MembersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading ? (
+              {showLoading ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center h-24">
                      <Loader2 className="mx-auto h-6 w-6 animate-spin" />
@@ -84,7 +115,6 @@ export default function MembersPage() {
                 </TableRow>
               ) : members && members.length > 0 ? (
                 members.map((member) => {
-                  // O avatar ainda pode vir de um placeholder, se não estiver no Firestore
                   const avatar = PlaceHolderImages.find(
                     (p) => p.id === member.avatar
                   );
@@ -111,7 +141,7 @@ export default function MembersPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
-                        {member.nomeCongregacao || 'Não informada'}
+                        {member.congregacao || 'Não informada'}
                       </TableCell>
                       <TableCell className="text-right">
                          <div className="flex items-center justify-end gap-2">

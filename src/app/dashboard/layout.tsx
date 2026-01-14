@@ -46,12 +46,11 @@ export default function DashboardLayout({
 
   const isAdmin = userRole === 'Administrador';
   const isPastor = userRole === 'Pastor Dirigente/Local';
-  const isMember = userRole === 'Membro';
-
-  // These will now default to `true` during loading, and only be `false` if the user is a 'Membro'
-  const canSeeAdminMenus = !isLoading && !isMember; 
-  const canSeeCardStudio = !isLoading && isAdmin;
-  const canSeeSettings = !isLoading && (isAdmin || isPastor);
+  
+  // New logic: Menus are visible during loading, and hidden only when we confirm the user is a 'Membro'.
+  const canSeeAdminMenus = isLoading || isAdmin || isPastor;
+  const canSeeCardStudio = isLoading || isAdmin;
+  const canSeeSettings = isLoading || isAdmin || isPastor;
 
 
   const settingsLink = isAdmin
@@ -86,7 +85,7 @@ export default function DashboardLayout({
             </SidebarMenuItem>
             
             {/* Show these menus if loading or if user is NOT a member */}
-            {(isLoading || canSeeAdminMenus) && (
+            {canSeeAdminMenus && (
               <>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild tooltip={{ children: "Mural" }}>
@@ -106,7 +105,7 @@ export default function DashboardLayout({
                 </SidebarMenuItem>
                 
                 {/* Show Card Studio only if loading or if user is Admin */}
-                {(isLoading || canSeeCardStudio) && (
+                {canSeeCardStudio && (
                     <SidebarMenuItem>
                     <SidebarMenuButton asChild tooltip={{ children: "Carteirinhas" }}>
                         <Link href="/dashboard/card-studio">
@@ -121,7 +120,7 @@ export default function DashboardLayout({
           </SidebarMenu>
 
           {/* Show Admin Group if loading or if user is Admin/Pastor */}
-          {(isLoading || canSeeAdminMenus) && (
+          {canSeeAdminMenus && (
             <SidebarGroup>
               <SidebarGroupLabel>Administração</SidebarGroupLabel>
               <SidebarMenu>
@@ -142,7 +141,7 @@ export default function DashboardLayout({
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                  {/* Show Manage Admins only if loading or if user is Admin */}
-                {(isLoading || isAdmin) && (
+                {isAdmin && (
                   <SidebarMenuItem>
                     <SidebarMenuButton asChild tooltip={{ children: "Gerenciar Administradores" }}>
                       <Link href="#">
@@ -198,7 +197,7 @@ export default function DashboardLayout({
         <SidebarFooter className="border-t border-sidebar-border">
            <SidebarMenu>
              {/* Show Settings only if loading or if user is Admin/Pastor */}
-            {(isLoading || canSeeSettings) && (
+            {canSeeSettings && (
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip={{ children: "Configurações" }}>
                   <Link href={settingsLink}>

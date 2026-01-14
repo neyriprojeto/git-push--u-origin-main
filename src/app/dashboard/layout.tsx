@@ -23,6 +23,7 @@ import { doc } from "firebase/firestore";
 
 interface UserData {
   cargo?: string;
+  congregacao?: string;
 }
 
 export default function DashboardLayout({
@@ -40,10 +41,19 @@ export default function DashboardLayout({
   const { data: userData, isLoading: isUserDataLoading } = useDoc<UserData>(userRef);
 
   const userRole = userData?.cargo;
+  const userCongregacao = userData?.congregacao;
   const isLoading = isUserLoading || isUserDataLoading;
 
   const canManageUsers = userRole === 'Administrador' || userRole === 'Pastor Dirigente/Local';
+  const isAdmin = userRole === 'Administrador';
+  const isPastor = userRole === 'Pastor Dirigente/Local';
   const isMember = userRole === 'Membro';
+
+  const settingsLink = isAdmin
+    ? "/dashboard/settings/congregations"
+    : isPastor
+    ? `/dashboard/settings/congregations/${userCongregacao}`
+    : "#";
 
   return (
     <SidebarProvider>
@@ -63,7 +73,7 @@ export default function DashboardLayout({
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip={{ children: "Início" }}>
-                <Link href={isMember && user ? `/dashboard/members/${user.uid}` : "/dashboard"}>
+                <Link href={user ? `/dashboard/members/${user.uid}` : "/dashboard"}>
                   <Home />
                   <span>Início</span>
                 </Link>
@@ -88,14 +98,16 @@ export default function DashboardLayout({
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip={{ children: "Carteirinhas" }}>
-                    <Link href="/dashboard/card-studio">
-                      <CreditCard />
-                      <span>Carteirinhas</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                {isAdmin && (
+                    <SidebarMenuItem>
+                    <SidebarMenuButton asChild tooltip={{ children: "Carteirinhas" }}>
+                        <Link href="/dashboard/card-studio">
+                        <CreditCard />
+                        <span>Carteirinhas</span>
+                        </Link>
+                    </SidebarMenuButton>
+                    </SidebarMenuItem>
+                )}
               </>
             )}
           </SidebarMenu>
@@ -120,14 +132,16 @@ export default function DashboardLayout({
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip={{ children: "Gerenciar Administradores" }}>
-                    <Link href="#">
-                      <UserCog />
-                      <span>Gerenciar Admins</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                {isAdmin && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild tooltip={{ children: "Gerenciar Administradores" }}>
+                      <Link href="#">
+                        <UserCog />
+                        <span>Gerenciar Admins</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
               </SidebarMenu>
             </SidebarGroup>
           )}
@@ -173,14 +187,16 @@ export default function DashboardLayout({
         </SidebarContent>
         <SidebarFooter className="border-t border-sidebar-border">
            <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip={{ children: "Configurações" }}>
-                <Link href="/dashboard/settings/congregations">
-                  <Settings />
-                  <span>Configurações</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+            {(isAdmin || isPastor) && (
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip={{ children: "Configurações" }}>
+                  <Link href={settingsLink}>
+                    <Settings />
+                    <span>Configurações</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            )}
           </SidebarMenu>
         </SidebarFooter>
       </Sidebar>

@@ -32,16 +32,16 @@ export default function DashboardPage() {
 
   useEffect(() => {
     // Quando os dados do usuário carregarem, verificamos o cargo
-    if (!isUserDataLoading && userData?.cargo === 'Membro' && user) {
-      // Se for membro, redireciona para o próprio perfil
+    if (!isUserDataLoading && user && (userData?.cargo === 'Membro' || userData?.cargo === 'Pastor Dirigente/Local')) {
+      // Se for membro ou pastor, redireciona para o próprio perfil
       router.replace(`/dashboard/members/${user.uid}`);
     }
   }, [userData, isUserDataLoading, user, router]);
 
   const isLoading = isUserLoading || isUserDataLoading;
 
-  if (isLoading || userData?.cargo === 'Membro') {
-    // Mostra um loader enquanto carrega ou enquanto redireciona
+  // Mostra um loader enquanto carrega ou enquanto redireciona para membros/pastores
+  if (isLoading || userData?.cargo === 'Membro' || userData?.cargo === 'Pastor Dirigente/Local') {
     return (
       <div className="flex-1 h-screen flex items-center justify-center">
         <Loader2 className="h-16 w-16 animate-spin" />

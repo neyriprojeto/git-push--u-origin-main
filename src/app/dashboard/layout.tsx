@@ -45,8 +45,10 @@ export default function DashboardLayout({
 
   // Mostra menus de admin/pastor durante o carregamento ou se o usuário não for 'Membro'.
   const canSeeAdminMenus = isLoading || (userRole && userRole !== 'Membro');
-  // Mostra features de admin completo APENAS se o cargo for 'Administrador'.
-  const canSeeFullAdminFeatures = userRole === 'Administrador';
+  
+  // Condição estrita: Só mostra features de admin completo se o cargo for exatamente 'Administrador'.
+  // Não considera o estado de carregamento para evitar exibição indevida.
+  const isFullAdmin = !isLoading && userRole === 'Administrador';
 
   // Para membros, "Início" links to their profile. For others, to the main dashboard.
   const homeLink = userRole === 'Membro' && user ? `/dashboard/members/${user.uid}` : '/dashboard';
@@ -105,7 +107,7 @@ export default function DashboardLayout({
             </SidebarMenuItem>
             
             {/* Card Studio only for full admins */}
-            {canSeeFullAdminFeatures && (
+            {isFullAdmin && (
                 <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip={{ children: "Carteirinhas" }}>
                     <Link href="/dashboard/card-studio">
@@ -139,7 +141,7 @@ export default function DashboardLayout({
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                  {/* Manage Admins only for full admins */}
-                {canSeeFullAdminFeatures && (
+                {isFullAdmin && (
                   <SidebarMenuItem>
                     <SidebarMenuButton asChild tooltip={{ children: "Gerenciar Administradores" }}>
                       <Link href="#">

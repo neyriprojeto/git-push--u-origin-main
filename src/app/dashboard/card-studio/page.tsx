@@ -99,19 +99,6 @@ export default function CardStudioPage() {
     const userRef = useMemoFirebase(() => (firestore && authUser ? doc(firestore, 'users', authUser.uid) : null), [firestore, authUser]);
     const { data: userData, isLoading: isUserDataLoading } = useDoc(userRef);
 
-    useEffect(() => {
-        // Wait until user data is fully loaded before checking permissions.
-        if (isUserLoading || isUserDataLoading) {
-            return; // Don't do anything while loading.
-        }
-
-        // After loading, if the user is not an admin, redirect them.
-        if (userData?.cargo !== 'Administrador') {
-            router.push('/dashboard');
-        }
-    }, [isUserLoading, isUserDataLoading, userData, router]);
-
-
     const avatarPlaceholder = PlaceHolderImages.find((p) => p.id === member.avatar);
     const qrCodePlaceholder = PlaceHolderImages.find((p) => p.id === 'qr-code-placeholder');
 
@@ -607,17 +594,18 @@ export default function CardStudioPage() {
         );
     }
     
-    // This check now happens after loading is complete.
+    // Security Guard: After loading, check if the user is an admin.
+    // If not, show an "Access Denied" message. Do not redirect.
     if (userData?.cargo !== 'Administrador') {
          return (
             <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
                 <Card className="border-destructive">
                     <CardHeader>
                         <CardTitle className="text-destructive">Acesso Negado</CardTitle>
-                        <CardContent className='pt-4'>
-                            <p>Você não tem permissão para acessar esta página.</p>
-                        </CardContent>
                     </CardHeader>
+                    <CardContent className='pt-4'>
+                        <p>Você não tem permissão para acessar esta página.</p>
+                    </CardContent>
                 </Card>
             </div>
         );
@@ -886,5 +874,3 @@ export default function CardStudioPage() {
     </>
   );
 }
-
-    

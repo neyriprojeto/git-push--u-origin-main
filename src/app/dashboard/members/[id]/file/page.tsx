@@ -12,14 +12,14 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { format } from 'date-fns';
 
 const DetailItem = ({ label, value }: { label: string; value?: string | null }) => (
-    <div className="border-b border-gray-300 py-1">
+    <div className="border-b border-gray-300 py-1 break-inside-avoid">
         <span className="text-xs font-semibold text-gray-600">{label}:</span>
         <span className="text-sm ml-2">{value || 'Não informado'}</span>
     </div>
 );
 
 const DetailItemGroup = ({ children }: { children: React.ReactNode }) => (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">{children}</div>
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 break-inside-avoid">{children}</div>
 );
 
 export default function MemberFilePage({ params }: { params: { id: string } }) {
@@ -42,27 +42,26 @@ export default function MemberFilePage({ params }: { params: { id: string } }) {
             </p>
 
             <div 
-                className="w-full max-w-4xl flip-card-container cursor-pointer"
-                style={{ height: '1100px' }}
+                className="w-full max-w-2xl flip-card-container cursor-pointer"
                 onClick={() => setIsFlipped(!isFlipped)}
             >
-                <div className={cn("flip-card w-full h-full", { 'flipped': isFlipped })}>
+                <div className={cn("flip-card w-full aspect-[1/1.41]", { 'flipped': isFlipped })}>
                     {/* Front Side */}
                     <div className="flip-card-front">
-                        <Card className="h-full w-full p-6 md:p-8">
-                            <div className="flex justify-between items-start mb-6">
-                                <div className="w-24 h-32 border-2 border-gray-300 flex items-center justify-center">
+                        <Card className="h-full w-full p-6 md:p-8 flex flex-col">
+                             <div className="flex justify-between items-start mb-6">
+                                <div className="w-24 h-32 border-2 border-gray-300 flex items-center justify-center shrink-0">
                                     {avatar ? (
                                          <Image src={avatar.imageUrl} alt={member.name} width={96} height={128} className="object-cover w-full h-full" />
                                     ) : (
                                         <span className="text-xs text-gray-400">Foto 3x4</span>
                                     )}
                                 </div>
-                                <div className="text-center">
+                                <div className="text-center px-4">
                                     <h2 className="text-xl font-bold">Ficha de Membro</h2>
                                     <p className="text-lg">Nº: {member.recordNumber}</p>
                                 </div>
-                                <div className="w-24 h-24 flex items-center justify-center">
+                                <div className="w-24 h-24 flex items-center justify-center shrink-0">
                                     <AppLogo className="w-16 h-16 text-gray-300"/>
                                 </div>
                             </div>
@@ -87,10 +86,9 @@ export default function MemberFilePage({ params }: { params: { id: string } }) {
                                     <DetailItem label="Tel" value={member.phone} />
                                     <DetailItem label="Whatsapp" value={member.whatsapp} />
                                 </DetailItemGroup>
-                                <DetailItemGroup>
-                                    <DetailItem label="End" value={member.address} />
-                                    <DetailItem label="Nº" value={member.addressNumber} />
-                                </DetailItemGroup>
+                                <div className='grid grid-cols-1'>
+                                    <DetailItem label="End" value={`${member.address}, ${member.addressNumber}`} />
+                                </div>
                                  <DetailItemGroup>
                                     <DetailItem label="Bairro" value={member.addressDistrict} />
                                     <DetailItem label="CEP" value={member.addressCep} />
@@ -119,8 +117,8 @@ export default function MemberFilePage({ params }: { params: { id: string } }) {
 
                                 <div className="mt-8">
                                      <h3 className="text-lg font-bold text-center mb-2">Observações</h3>
-                                     <div className="h-32 border border-gray-300 rounded-md p-2 text-sm">
-                                         {member.observations}
+                                     <div className="h-32 border border-gray-300 rounded-md p-2 text-sm bg-gray-50">
+                                         {member.observations || <span className='text-gray-400'>Nenhuma observação.</span>}
                                      </div>
                                 </div>
                             </div>

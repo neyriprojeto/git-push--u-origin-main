@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -121,4 +122,11 @@ body {
 .flip-card-back {
   transform: rotateY(180deg);
   z-index: 1;
+}
+
+@media print {
+    body {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
 }

@@ -44,12 +44,11 @@ export default function DashboardLayout({
   const userRole = userData?.cargo;
 
   // Assume admin access during load to prevent menu flickering for admins.
-  // Menus are only hidden once the role is confirmed to be restricted (e.g., 'Membro').
   const canSeeAdminMenus = isLoading || (userRole && userRole !== 'Membro');
   const canSeeFullAdminFeatures = isLoading || userRole === 'Administrador';
 
   // For members, "Início" links to their profile. For others, to the main dashboard.
-  const homeLink = (userRole === 'Membro' || userRole === 'Pastor Dirigente/Local') && user ? `/dashboard/members/${user.uid}` : '/dashboard';
+  const homeLink = userRole === 'Membro' && user ? `/dashboard/members/${user.uid}` : '/dashboard';
 
   const settingsLink = userRole === 'Administrador'
     ? "/dashboard/settings/congregations"

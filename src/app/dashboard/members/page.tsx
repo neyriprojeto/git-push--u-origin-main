@@ -36,7 +36,7 @@ type Member = {
   cargo: string;
   status: 'Ativo' | 'Inativo' | 'Pendente';
   dataBatismo?: string; 
-  congregacao?: string; // Corrigido de nomeCongregacao para congregacao
+  congregacao?: string;
 };
 
 
@@ -69,14 +69,9 @@ export default function MembersPage() {
        return query(collection(firestore, 'users'), where('cargo', '!=', 'Administrador'));
     }
 
-    // Se for um membro comum, não deve ver ninguém
-    if (currentUserData.cargo === 'Membro') {
-      // Retorna uma query que nunca terá resultados
-      return query(collection(firestore, 'users'), where('id', '==', 'non-existent-user'));
-    }
-
-    // Se não for nenhum dos anteriores (ou carregando), não retorna nada
-    return null;
+    // Se for um membro comum ou qualquer outro caso, não deve ver ninguém.
+    // Retorna uma query que nunca terá resultados para garantir que a lista fique vazia.
+    return query(collection(firestore, 'users'), where('id', '==', 'non-existent-user-to-prevent-listing'));
 
   }, [firestore, currentUserData]);
   

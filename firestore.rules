@@ -6,188 +6,124 @@
  * and public-facing church information is readable by anyone.
  *
  * Data Structure:
- * - /members/{memberId}: Contains sensitive, private information about each church member.
+ * - /users/{userId}: Contains all member data, previously in /members. Now, the user's auth UID is the document ID.
  * - /groups/{groupId}: Represents collaborative groups, with access controlled by a members map.
  * - /churchInfo/{churchInfoId}: A singleton collection for publicly readable church information.
  * - /congregacoes/{congregacaoId}: A public list of church congregations.
+ * - /cardTemplates/{templateId}: Stores the customizable template for member ID cards.
  *
  * Key Security Decisions:
- * - Default Secure Posture: Access to the /members collection is completely locked down by
- *   default. This is a critical security measure because the provided data model does not
- *   specify an administrative role or a clear link between a 'Member' document and an
- *   authenticated Firebase user. These rules must be updated once an admin system is designed.
- * - Group Management: Access to /groups is controlled by a denormalized `members` map on
- *   each group document. A user must have the 'admin' role within that map to modify or
- *   delete the group. This avoids slow and costly lookups in other collections.
- * - Public Information: /churchInfo and /congregacoes are publicly readable to allow anonymous
- *   users to view general church details and for new users to register. Writes are disabled
- *   pending the definition of an admin role.
- *
- * Denormalization for Authorization: To ensure performant and secure access control, this
- * ruleset relies on denormalized data. Specifically, the `/groups/{groupId}` documents are
- * expected to contain a `members` map (e.g., `{ members: { 'user_uid_1': 'admin', 'user_uid_2': 'member' } }`)
- * which is used directly in the rules to grant role-based permissions without needing to
- * query other collections.
+ * - Centralized User Data: All member-specific data is stored in `/users/{userId}`, where `{userId}`
+ *   matches the Firebase Auth UID. This creates a direct ownership link.
+ * - Role-Based Access: A `cargo` (role) field within each user's document dictates permissions.
+ *   - 'Administrador': Can read/write all data across the system.
+ *   - 'Pastor Dirigente/Local': Can read/write data for users within their own `congregacao`.
+ *   - 'Membro': Can only read/write their *own* user document.
+ * - Secure Defaults: Listing users is restricted to Admins and Pastors. Public registration is allowed
+ *   (create a new user document), but the `status` is set to 'Pendente' by default via client-side logic,
+ *   requiring admin/pastor approval.
+ * - Performant Rules: Denormalization is used (e.g., `congregacao` on the user document) to avoid
+ *   cross-collection `get()` calls in rules where possible, ensuring they remain fast and scalable.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions for reusable logic
+    // =================================
+    // Helper Functions
+    // =================================
+
     /**
-     * isSignedIn
      * Checks if the user is authenticated.
      */
     function isSignedIn() {
       return request.auth != null;
     }
-    
+
     /**
-     * getUserData
-     * Fetches the user document data for a given userId.
+     * Fetches the user document data for the requesting user.
+     * Caches the result for subsequent calls within the same rule evaluation.
      */
-    function getUserData(userId) {
-      return get(/databases/$(database)/documents/users/$(userId)).data;
-    }
-    
-    /**
-     * isPastorDirigente
-     * Checks if the user has the role of 'Pastor Dirigente/Local'.
-     */
-    function isPastorDirigente(userId) {
-        return getUserData(userId).cargo == 'Pastor Dirigente/Local';
+    function getRequestingUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
 
     /**
-     * isPastorOfSameCongregation
-     * Checks if the requesting pastor belongs to the same congregation as the target user.
-     * Assumes the requesting user is a 'Pastor Dirigente/Local'.
-     */
-    function isPastorOfSameCongregation(targetUserId) {
-      let requestingUserData = getUserData(request.auth.uid);
-      let targetUserData = getUserData(targetUserId);
-      return requestingUserData.congregacao == targetUserData.congregacao;
-    }
-
-
-    /**
-     * isGroupMember
-     * Checks if the requesting user is listed in the group's 'members' map.
-     * This requires a 'get' call to the document being requested.
-     */
-    function isGroupMember(groupId) {
-      return isSignedIn() && get(/databases/$(database)/documents/groups/$(groupId)).data.members[request.auth.uid] != null;
-    }
-
-    /**
-     * isGroupAdmin
-     * Checks if the requesting user has the 'admin' role in the group's 'members' map.
-     */
-    function isGroupAdmin(groupId) {
-      return isSignedIn() && get(/databases/$(database)/documents/groups/$(groupId)).data.members[request.auth.uid] == 'admin';
-    }
-
-    /**
-     * isNewGroupCreatorAndAdmin
-     * Validates that on group creation, the creating user is making themselves an admin.
-     * This establishes initial ownership and control over the new group.
-     */
-    function isNewGroupCreatorAndAdmin() {
-      return isSignedIn() && request.resource.data.members[request.auth.uid] == 'admin';
-    }
-    
-    /**
-     * isAdmin
-     * Checks if the user has the 'Administrador' role.
+     * Checks if the requesting user has the 'Administrador' role.
      */
     function isAdmin() {
-      return isSignedIn() && getUserData(request.auth.uid).cargo == 'Administrador';
+      return isSignedIn() && getRequestingUserData().cargo == 'Administrador';
     }
 
-
     /**
-     * @description
-     *   [LOCKED] Manages sensitive information for church members.
-     *   CRITICAL: Access is fully denied because no administrative role or ownership
-     *   link to `request.auth.uid` is defined in the data model. This is the most
-     *   secure default to protect Personally Identifiable Information (PII).
-     * @path
-     *   /members/{memberId}
-     * @allow
-     *   No operations are permitted.
-     * @deny
-     *   (get, list, create, update, delete) Any user, signed in or not, attempting any
-     *   operation will be denied.
-     * @principle
-     *   Defaults to a secure-off posture for sensitive data when authorization logic
-     *   is undefined.
+     * Checks if the requesting user is a 'Pastor Dirigente/Local'.
      */
-    match /members/{memberId} {
-      // TODO: Define an admin role or user ownership model to grant access.
-      allow get: if false;
-      allow list: if false;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+    function isPastor() {
+      return isSignedIn() && getRequestingUserData().cargo == 'Pastor Dirigente/Local';
     }
-    
+
+    /**
+     * Checks if the requesting user is trying to access their own document.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * Checks if a Pastor is accessing a member of their own congregation.
+     * Assumes the requesting user is a Pastor.
+     */
+    function isPastorOfSameCongregation(targetUserData) {
+      let requestingUserData = getRequestingUserData();
+      // Ensure both pastor and target have a congregation, and they match.
+      return 'congregacao' in requestingUserData &&
+             'congregacao' in targetUserData &&
+             requestingUserData.congregacao == targetUserData.congregacao;
+    }
+
+    // =================================
+    // Collection Rules
+    // =================================
+
     /**
      * @description
-     *   Manages user documents, which now include member data.
-     *   - Public users can create their own document (register).
-     *   - Admins can manage all users.
-     *   - Users can read/update their own data.
-     *   - Congregation Pastors can read/update members of their own congregation.
-     * @path
-     *   /users/{userId}
+     *   Manages user documents, which store all member data. Access is strictly controlled
+     *   by ownership and role.
+     *   - `get`: A user can read their own data. An admin can read anyone's data. A pastor can read
+     *            data of members in their own congregation.
+     *   - `list`: Only admins and pastors can list users (client-side queries must enforce
+     *             congregation filtering for pastors).
+     *   - `update`: A user can update their own data. An admin can update anyone's data. A pastor
+     *               can update data of members in their own congregation.
+     *   - `create`: Anyone can create their own user document (i.e., register). The document ID
+     *               must match their auth UID.
+     *   - `delete`: Only admins can delete users.
+     * @path /users/{userId}
      */
     match /users/{userId} {
-        allow get: if (isSignedIn() && request.auth.uid == userId) || isAdmin() || (isPastorDirigente(request.auth.uid) && isPastorOfSameCongregation(userId));
-        allow list: if isAdmin() || isPastorDirigente(request.auth.uid); // Admins can list all, Pastors can list within their congregation (enforced by query)
-        allow update: if (request.auth.uid == userId) || isAdmin() || (isPastorDirigente(request.auth.uid) && isPastorOfSameCongregation(userId));
-        allow create: if true; // Allow public registration
-        allow delete: if isAdmin() || (isPastorDirigente(request.auth.uid) && isPastorOfSameCongregation(userId));
+      allow get: if isOwner(userId) || isAdmin() || (isPastor() && isPastorOfSameCongregation(resource.data));
+      allow list: if isAdmin() || isPastor();
+      allow update: if isOwner(userId) || isAdmin() || (isPastor() && isPastorOfSameCongregation(resource.data));
+      allow create: if isOwner(userId); // Public registration, but must create own document
+      allow delete: if isAdmin();
     }
 
 
     /**
      * @description
-     *   Manages church groups. Access is controlled by a 'members' map within each
-     *   group document. Users with an 'admin' role can manage the group.
-     * @path
-     *   /groups/{groupId}
-     * @allow
-     *   (get) A signed-in user who is part of the group's 'members' map can read it.
-     *   (create) Any signed-in user can create a group, provided they set themselves as an admin.
-     *   (update, delete) A user with the 'admin' role for that specific group can modify or delete it.
-     * @deny
-     *   (get) A user not in the 'members' map cannot read group details.
-     *   (list) Listing all groups is disabled to prevent enumeration.
-     *   (update) A regular member (non-admin) cannot update the group.
-     * @principle
-     *   Enforces collaborative, role-based access using a denormalized map of members on
-     *   the document itself.
+     *   Manages church groups. This is a placeholder and is currently locked down.
+     *   To enable, define a 'members' map on the group document with user UIDs and roles.
+     * @path /groups/{groupId}
      */
     match /groups/{groupId} {
-      allow get: if isGroupMember(groupId);
-      allow list: if false;
-      allow create: if isNewGroupCreatorAndAdmin();
-      allow update: if isGroupAdmin(groupId) && resource != null;
-      allow delete: if isGroupAdmin(groupId) && resource != null;
+      allow read, write: if false; // Locked until feature is fully implemented.
     }
     
     /**
      * @description
-     *   Manages the list of congregations (church branches). This data is public
-     *   to allow new users to select a congregation during registration.
-     * @path
-     *   /congregacoes/{congregacaoId}
-     * @allow
-     *   (get, list) Anyone, including anonymous users, can read the list of congregations.
-     *   (create, update, delete) Only admins can manage congregations.
-     * @principle
-     *   Provides public read access for non-sensitive directory data while securing
-     *   write operations to administrative users.
+     *   Manages the list of congregations. Publicly readable for registration forms.
+     *   Only Admins can create, update, or delete congregations.
+     * @path /congregacoes/{congregacaoId}
      */
     match /congregacoes/{congregacaoId} {
         allow get, list: if true;
@@ -196,36 +132,23 @@ service cloud.firestore {
 
     /**
      * @description
-     *   Stores singular, public-facing information about the church, such as the
-     *   pastor's message and banner images. This data is intended for public consumption.
-     * @path
-     *   /churchInfo/{churchInfoId}
-     * @allow
-     *   (get, list) Anyone, including anonymous users, can read the church information.
-     * @deny
-     *   (create, update, delete) All write operations are denied because an admin role for
-     *   managing this data has not been specified.
-     * @principle
-     *   Provides public read access for non-sensitive data while securing write
-     *   operations until an administrative role is explicitly defined.
+     *   Stores singular, public-facing information about the church (e.g., banner URLs).
+     *   Readable by anyone, but only writable by an Admin.
+     * @path /churchInfo/{churchInfoId}
      */
     match /churchInfo/{churchInfoId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if isAdmin();
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
     }
     
     /**
      * @description
      *   Manages the customizable card template for member IDs.
-     *   Only authenticated users (admins) can read and write the template.
-     * @path
-     *   /cardTemplates/{templateId}
+     *   This is a highly administrative function, so only Admins can access it.
+     * @path /cardTemplates/{templateId}
      */
     match /cardTemplates/{templateId} {
-      allow get, list, create, update, delete: if isAdmin();
+      allow read, write: if isAdmin();
     }
   }
 }

@@ -1,24 +1,25 @@
 
 'use client';
 
-import React, { useState } from 'react';
-import { notFound, useParams } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
+import { notFound, useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useFirestore, useDoc, useMemoFirebase, useUser } from '@/firebase';
 import { doc } from 'firebase/firestore';
-import { Loader2, Printer } from 'lucide-react';
+import { Loader2, Printer, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
 // Define a interface para o objeto de membro para garantir a tipagem
 interface Member {
     id: string;
-    name: string;
+    nome: string;
     avatar?: string;
     recordNumber?: string;
-    birthDate?: string | Date;
+    dataNascimento?: string | Date;
     naturalness?: string;
     nationality?: string;
     maritalStatus?: string;
@@ -28,14 +29,14 @@ interface Member {
     email?: string;
     phone?: string;
     whatsapp?: string;
-    address?: string;
-    addressNumber?: string;
-    addressDistrict?: string;
-    addressCity?: string;
-    addressCep?: string;
-    baptismDate?: string | Date;
-    memberSince?: string | Date;
-    congregation?: string;
+    logradouro?: string;
+    numero?: string;
+    bairro?: string;
+    cidade?: string;
+    cep?: string;
+    dataBatismo?: string | Date;
+    dataMembro?: string | Date;
+    congregacao?: string;
     originChurch?: string;
     responsiblePastor?: string;
     cargo?: string;
@@ -67,6 +68,7 @@ const DetailItem = ({ label, value }: { label: string; value?: string | null | D
 
 export default function MemberFilePage() {
     const params = useParams();
+    const router = useRouter();
     const memberId = params.id as string;
     const [isFlipped, setIsFlipped] = useState(false);
     const firestore = useFirestore();
@@ -81,7 +83,28 @@ export default function MemberFilePage() {
     const churchInfoRef = useMemoFirebase(() => (firestore ? doc(firestore, 'churchInfo', 'main') : null), [firestore]);
     const { data: churchInfo, isLoading: churchInfoLoading } = useDoc<{ fichaLogoUrl?: string }>(churchInfoRef);
     
-    const isLoading = memberLoading || churchInfoLoading || isUserLoading || currentUserLoading;
+    const [hasAccess, setHasAccess] = useState<boolean | null>(null);
+
+    useEffect(() => {
+        if (currentUserLoading || memberLoading) return;
+
+        if (!currentUser || !member) {
+            setHasAccess(false);
+            return;
+        }
+
+        if (currentUser.cargo === 'Administrador') {
+            setHasAccess(true);
+        } else if (currentUser.cargo === 'Pastor Dirigente/Local' && currentUser.congregacao === member.congregacao) {
+            setHasAccess(true);
+        } else {
+            setHasAccess(false);
+        }
+
+    }, [currentUser, member, currentUserLoading, memberLoading]);
+
+
+    const isLoading = memberLoading || churchInfoLoading || isUserLoading || currentUserLoading || hasAccess === null;
 
     if (isLoading) {
         return (
@@ -94,22 +117,36 @@ export default function MemberFilePage() {
     if (!member) {
         notFound();
     }
+
+    if (!hasAccess) {
+        return (
+            <div className="w-full min-h-screen bg-secondary p-4 flex justify-center items-center">
+                <Card className="border-destructive">
+                    <CardHeader className='text-center'>
+                        <ShieldAlert className="mx-auto h-12 w-12 text-destructive mb-4" />
+                        <CardTitle className="text-destructive">Acesso Negado</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p>Você não tem permissão para visualizar esta ficha.</p>
+                        <Button onClick={() => router.back()} className='w-full mt-6'>Voltar</Button>
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    }
     
-    const canPrint = currentUser?.cargo === 'Administrador' || currentUser?.cargo === 'Pastor Dirigente/Local';
     const avatar = PlaceHolderImages.find((p) => p.id === member.avatar);
     const defaultFichaLogo = PlaceHolderImages.find((p) => p.id === 'church-logo');
     const fichaLogoUrl = churchInfo?.fichaLogoUrl || defaultFichaLogo?.imageUrl;
 
     return (
         <div className="w-full min-h-screen bg-secondary p-4 flex flex-col justify-center items-center font-serif print:bg-white print:p-0">
-            {canPrint && (
-                <div className="w-full max-w-5xl mb-4 flex justify-end print:hidden">
-                    <Button onClick={() => window.print()}>
-                        <Printer className="mr-2 h-4 w-4" />
-                        Imprimir / Salvar PDF
-                    </Button>
-                </div>
-            )}
+            <div className="w-full max-w-5xl mb-4 flex justify-end print:hidden">
+                <Button onClick={() => window.print()}>
+                    <Printer className="mr-2 h-4 w-4" />
+                    Imprimir / Salvar PDF
+                </Button>
+            </div>
             <div 
               className="w-full max-w-5xl cursor-pointer"
               onClick={() => setIsFlipped(!isFlipped)}
@@ -124,7 +161,7 @@ export default function MemberFilePage() {
                             <div className="flex justify-between items-start pb-[1vw] md:pb-4 border-b border-black gap-4">
                                 <div className="w-[12vw] h-[16vw] md:w-24 md:h-32 border border-gray-300 flex items-center justify-center shrink-0 bg-gray-100">
                                     {avatar ? (
-                                        <Image src={avatar.imageUrl} alt={member.name} width={96} height={128} className="object-cover w-full h-full" />
+                                        <Image src={avatar.imageUrl} alt={member.nome} width={96} height={128} className="object-cover w-full h-full" />
                                     ) : (
                                         <span className="text-[1.2vw] md:text-xs text-gray-400 text-center">Foto 3x4</span>
                                     )}
@@ -144,8 +181,8 @@ export default function MemberFilePage() {
 
                             {/* Content */}
                             <div className="flex-grow pt-[2vw] md:pt-6 grid grid-cols-12 gap-x-[2vw] md:gap-x-8 gap-y-[1vw] md:gap-y-4 font-sans text-[1.5vw] md:text-sm">
-                                <div className="col-span-8"><DetailItem label="Nome" value={member.name} /></div>
-                                <div className="col-span-4"><DetailItem label="Data Nasc" value={member.birthDate} /></div>
+                                <div className="col-span-8"><DetailItem label="Nome" value={member.nome} /></div>
+                                <div className="col-span-4"><DetailItem label="Data Nasc" value={member.dataNascimento} /></div>
 
                                 <div className="col-span-4"><DetailItem label="Naturalidade" value={member.naturalness} /></div>
                                 <div className="col-span-4"><DetailItem label="Nacionalidade" value={member.nationality} /></div>
@@ -160,12 +197,12 @@ export default function MemberFilePage() {
                                 <div className="col-span-6"><DetailItem label="Tel" value={member.phone} /></div>
                                 <div className="col-span-6"><DetailItem label="Whatsapp" value={member.whatsapp} /></div>
 
-                                <div className="col-span-8"><DetailItem label="End" value={member.address} /></div>
-                                <div className="col-span-4"><DetailItem label="Nº" value={member.addressNumber} /></div>
+                                <div className="col-span-8"><DetailItem label="End" value={member.logradouro} /></div>
+                                <div className="col-span-4"><DetailItem label="Nº" value={member.numero} /></div>
 
-                                <div className="col-span-5"><DetailItem label="Bairro" value={member.addressDistrict} /></div>
-                                <div className="col-span-4"><DetailItem label="Cidade" value={member.addressCity} /></div>
-                                <div className="col-span-3"><DetailItem label="CEP" value={member.addressCep} /></div>
+                                <div className="col-span-5"><DetailItem label="Bairro" value={member.bairro} /></div>
+                                <div className="col-span-4"><DetailItem label="Cidade" value={member.cidade} /></div>
+                                <div className="col-span-3"><DetailItem label="CEP" value={member.cep} /></div>
 
                             </div>
                         </div>
@@ -180,10 +217,10 @@ export default function MemberFilePage() {
 
                                 {/* Content */}
                                 <div className="flex-grow pt-[2vw] md:pt-6 grid grid-cols-12 gap-x-[2vw] md:gap-x-8 gap-y-[1vw] md:gap-y-4 font-sans text-[1.5vw] md:text-sm">
-                                    <div className="col-span-6"><DetailItem label="Data de Batismo" value={member.baptismDate} /></div>
-                                    <div className="col-span-6"><DetailItem label="Data de Membresia" value={member.memberSince} /></div>
+                                    <div className="col-span-6"><DetailItem label="Data de Batismo" value={member.dataBatismo} /></div>
+                                    <div className="col-span-6"><DetailItem label="Data de Membresia" value={member.dataMembro} /></div>
                                     
-                                    <div className="col-span-12"><DetailItem label="Congregação" value={member.congregation}/></div>
+                                    <div className="col-span-12"><DetailItem label="Congregação" value={member.congregacao}/></div>
                                     
                                     <div className="col-span-12"><DetailItem label="Igreja de Origem" value={member.originChurch} /></div>
                                     <div className="col-span-12"><DetailItem label="Pastor Responsável" value={member.responsiblePastor} /></div>

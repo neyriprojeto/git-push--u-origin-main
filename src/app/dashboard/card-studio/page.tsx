@@ -21,8 +21,9 @@ import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-cr
 import 'react-image-crop/dist/ReactCrop.css';
 import { uploadArquivo } from '@/lib/cloudinary';
 import { useToast } from '@/hooks/use-toast';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
-import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { doc, setDoc } from 'firebase/firestore';
+import { useFirestore, useDoc, useMemoFirebase, useUser } from '@/firebase';
+import { useRouter } from 'next/navigation';
 
 
 type ElementStyle = {
@@ -92,6 +93,20 @@ export default function CardStudioPage() {
     const member = members[0]; // Using a sample member
     const { toast } = useToast();
     const firestore = useFirestore();
+    const { user: authUser, isUserLoading } = useUser();
+    const router = useRouter();
+
+    const userRef = useMemoFirebase(() => (firestore && authUser ? doc(firestore, 'users', authUser.uid) : null), [firestore, authUser]);
+    const { data: userData, isLoading: isUserDataLoading } = useDoc(userRef);
+
+    useEffect(() => {
+        // Redirect if user is not an admin
+        if (!isUserDataLoading && userData?.cargo !== 'Administrador') {
+            router.push('/dashboard');
+        }
+    }, [isUserDataLoading, userData, router]);
+
+
     const avatarPlaceholder = PlaceHolderImages.find((p) => p.id === member.avatar);
     const qrCodePlaceholder = PlaceHolderImages.find((p) => p.id === 'qr-code-placeholder');
 
@@ -575,6 +590,31 @@ export default function CardStudioPage() {
         const size = elements[selectedElement]?.size.fontSize || elements[selectedElement]?.size.width;
         if (!size) return 'auto';
         return `${size.toFixed(0)} ${elements[selectedElement]?.size.fontSize ? 'px' : 'px'}`
+    }
+
+    const isLoadingPage = isUserLoading || isUserDataLoading;
+
+    if (isLoadingPage) {
+        return (
+            <div className="flex-1 h-screen flex items-center justify-center">
+                <Loader2 className="h-16 w-16 animate-spin" />
+            </div>
+        );
+    }
+    
+    if (userData?.cargo !== 'Administrador') {
+         return (
+            <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+                <Card className="border-destructive">
+                    <CardHeader>
+                        <CardTitle className="text-destructive">Acesso Negado</CardTitle>
+                        <CardContent className='pt-4'>
+                            <p>Você não tem permissão para acessar esta página.</p>
+                        </CardContent>
+                    </CardHeader>
+                </Card>
+            </div>
+        );
     }
 
 

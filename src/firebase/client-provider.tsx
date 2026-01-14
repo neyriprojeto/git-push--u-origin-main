@@ -3,6 +3,7 @@
 import React, { useState, useEffect, type ReactNode } from 'react';
 import { FirebaseProvider } from '@/firebase/provider';
 import { initializeFirebase, type FirebaseServices } from '@/firebase';
+import { seedAdminUser } from '@/firebase/seed-admin';
 
 interface FirebaseClientProviderProps {
   children: ReactNode;
@@ -17,6 +18,10 @@ export function FirebaseClientProvider({ children }: FirebaseClientProviderProps
       try {
         const services = await initializeFirebase();
         setFirebaseServices(services);
+        // Seed the admin user after services are initialized
+        if (services.firestore) {
+            await seedAdminUser(services.firestore);
+        }
       } catch (error) {
         console.error("Failed to initialize Firebase:", error);
       } finally {
@@ -28,7 +33,11 @@ export function FirebaseClientProvider({ children }: FirebaseClientProviderProps
 
   if (loading || !firebaseServices) {
     // You can render a loading spinner or some placeholder here
-    return <div>Carregando...</div>; 
+    return (
+        <div className="flex h-screen w-full items-center justify-center">
+            Carregando...
+        </div>
+    );
   }
 
   return (

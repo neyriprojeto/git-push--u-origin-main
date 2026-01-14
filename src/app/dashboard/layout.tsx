@@ -46,10 +46,14 @@ export default function DashboardLayout({
 
   const isAdmin = userRole === 'Administrador';
   const isPastor = userRole === 'Pastor Dirigente/Local';
-  const canManageUsers = isAdmin || isPastor;
   const isMember = userRole === 'Membro';
 
-  // Encode the congregation name to handle special characters in the URL
+  // These will now default to `true` during loading, and only be `false` if the user is a 'Membro'
+  const canSeeAdminMenus = !isLoading && !isMember; 
+  const canSeeCardStudio = !isLoading && isAdmin;
+  const canSeeSettings = !isLoading && (isAdmin || isPastor);
+
+
   const settingsLink = isAdmin
     ? "/dashboard/settings/congregations"
     : isPastor && userCongregacao
@@ -81,7 +85,8 @@ export default function DashboardLayout({
               </SidebarMenuButton>
             </SidebarMenuItem>
             
-            {!isLoading && !isMember && (
+            {/* Show these menus if loading or if user is NOT a member */}
+            {(isLoading || canSeeAdminMenus) && (
               <>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild tooltip={{ children: "Mural" }}>
@@ -99,7 +104,9 @@ export default function DashboardLayout({
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-                {isAdmin && (
+                
+                {/* Show Card Studio only if loading or if user is Admin */}
+                {(isLoading || canSeeCardStudio) && (
                     <SidebarMenuItem>
                     <SidebarMenuButton asChild tooltip={{ children: "Carteirinhas" }}>
                         <Link href="/dashboard/card-studio">
@@ -113,7 +120,8 @@ export default function DashboardLayout({
             )}
           </SidebarMenu>
 
-          {!isLoading && canManageUsers && (
+          {/* Show Admin Group if loading or if user is Admin/Pastor */}
+          {(isLoading || canSeeAdminMenus) && (
             <SidebarGroup>
               <SidebarGroupLabel>Administração</SidebarGroupLabel>
               <SidebarMenu>
@@ -133,7 +141,8 @@ export default function DashboardLayout({
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-                {isAdmin && (
+                 {/* Show Manage Admins only if loading or if user is Admin */}
+                {(isLoading || isAdmin) && (
                   <SidebarMenuItem>
                     <SidebarMenuButton asChild tooltip={{ children: "Gerenciar Administradores" }}>
                       <Link href="#">
@@ -188,7 +197,8 @@ export default function DashboardLayout({
         </SidebarContent>
         <SidebarFooter className="border-t border-sidebar-border">
            <SidebarMenu>
-            {!isLoading && (isAdmin || isPastor) && (
+             {/* Show Settings only if loading or if user is Admin/Pastor */}
+            {(isLoading || canSeeSettings) && (
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip={{ children: "Configurações" }}>
                   <Link href={settingsLink}>

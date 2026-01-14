@@ -20,12 +20,10 @@ function Calendar({
   ...props
 }: CalendarProps) {
 
-   const handleFormatWeekdayName = (day: Date) => {
-    return format(day, "EEEEE", { locale: ptBR });
+   const formatWeekdayName = (day: Date) => {
+    // Retorna a primeira letra do dia da semana em maiúsculo
+    return ptBR.localize?.day(day.getDay(), { width: 'short' }).charAt(0).toUpperCase() ?? '';
   };
-
-  const { format } = new Intl.DateTimeFormat('pt-BR', { weekday: 'narrow' });
-  const formatWeekdayName = (date: Date) => format(date);
 
 
   return (
@@ -38,7 +36,7 @@ function Calendar({
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4",
         caption: "flex justify-center pt-1 relative items-center",
-        caption_label: "text-sm font-medium",
+        caption_label: "text-sm font-medium hidden",
         caption_dropdowns: "flex justify-center gap-1",
         nav: "space-x-1 flex items-center",
         nav_button: cn(

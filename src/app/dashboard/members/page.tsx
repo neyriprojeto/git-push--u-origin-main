@@ -69,7 +69,13 @@ export default function MembersPage() {
        return query(collection(firestore, 'users'), where('cargo', '!=', 'Administrador'));
     }
 
-    // Se não for nenhum dos dois, não retorna nada por enquanto (ou pode retornar uma query vazia)
+    // Se for um membro comum, não deve ver ninguém
+    if (currentUserData.cargo === 'Membro') {
+      // Retorna uma query que nunca terá resultados
+      return query(collection(firestore, 'users'), where('id', '==', 'non-existent-user'));
+    }
+
+    // Se não for nenhum dos anteriores (ou carregando), não retorna nada
     return null;
 
   }, [firestore, currentUserData]);
@@ -165,7 +171,7 @@ export default function MembersPage() {
               ) : (
                  <TableRow>
                   <TableCell colSpan={5} className="text-center h-24">
-                    Nenhum membro encontrado.
+                    Nenhum membro encontrado ou você não tem permissão para visualizar.
                   </TableCell>
                 </TableRow>
               )}

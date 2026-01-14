@@ -1,3 +1,5 @@
+'use client';
+
 import Link from "next/link";
 import {
   SidebarProvider,
@@ -13,15 +15,34 @@ import {
   SidebarGroupLabel,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { Home, MessageSquare, Users, UserCog, Settings, CreditCard, LayoutGrid, Radio, Share2, Mail, Youtube, Instagram, Globe, UserPlus, Building } from "lucide-react";
+import { Home, LayoutGrid, CreditCard, Users, UserPlus, UserCog, Settings, Mail, Instagram, Youtube, Globe, Radio } from "lucide-react";
 import { AppLogo } from "@/components/icons";
-import { Button } from "@/components/ui/button";
+import { useUser, useDoc, useFirestore, useMemoFirebase } from "@/firebase";
+import { doc } from "firebase/firestore";
+
+interface UserData {
+  cargo?: string;
+}
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
+
+  const userRef = useMemoFirebase(
+    () => (firestore && user ? doc(firestore, 'users', user.uid) : null),
+    [firestore, user]
+  );
+  const { data: userData, isLoading: isUserDataLoading } = useDoc<UserData>(userRef);
+
+  const userRole = userData?.cargo;
+  const isLoading = isUserLoading || isUserDataLoading;
+
+  const canManageUsers = userRole === 'Administrador' || userRole === 'Pastor Dirigente/Local';
+
   return (
     <SidebarProvider>
       <Sidebar>
@@ -35,7 +56,6 @@ export default function DashboardLayout({
             </Link>
             <SidebarTrigger className="md:hidden"/>
           </div>
-
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>
@@ -73,35 +93,37 @@ export default function DashboardLayout({
               </SidebarMenuItem>
           </SidebarMenu>
 
-          <SidebarGroup>
-            <SidebarGroupLabel>Administração</SidebarGroupLabel>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip={{ children: "Membros" }}>
-                  <Link href="/dashboard/members">
-                    <Users />
-                    <span>Membros</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-               <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip={{ children: "Cadastrar Membro" }}>
-                  <Link href="/dashboard/members/new">
-                    <UserPlus />
-                    <span>Cadastrar Membro</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip={{ children: "Gerenciar Administradores" }}>
-                  <Link href="#">
-                    <UserCog />
-                    <span>Gerenciar Admins</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroup>
+          {!isLoading && canManageUsers && (
+            <SidebarGroup>
+              <SidebarGroupLabel>Administração</SidebarGroupLabel>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip={{ children: "Membros" }}>
+                    <Link href="/dashboard/members">
+                      <Users />
+                      <span>Membros</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                 <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip={{ children: "Cadastrar Membro" }}>
+                    <Link href="/dashboard/members/new">
+                      <UserPlus />
+                      <span>Cadastrar Membro</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip={{ children: "Gerenciar Administradores" }}>
+                    <Link href="#">
+                      <UserCog />
+                      <span>Gerenciar Admins</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroup>
+          )}
           
           <SidebarGroup>
             <SidebarGroupLabel>Links Externos</SidebarGroupLabel>

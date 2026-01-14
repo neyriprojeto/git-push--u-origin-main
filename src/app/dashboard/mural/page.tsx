@@ -19,11 +19,27 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { PlusCircle } from 'lucide-react';
+import { useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
+
+interface UserData {
+  cargo?: string;
+}
 
 export default function MuralPage() {
   const [posts, setPosts] = useState<Post[]>(initialPosts);
   const [newPostTitle, setNewPostTitle] = useState('');
   const [newPostContent, setNewPostContent] = useState('');
+  
+  const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
+  const userRef = useMemoFirebase(
+    () => (firestore && user ? doc(firestore, 'users', user.uid) : null),
+    [firestore, user]
+  );
+  const { data: userData, isLoading: isUserDataLoading } = useDoc<UserData>(userRef);
+
+  const canPost = userData?.cargo === 'Administrador';
 
   const handleAddPost = () => {
     if (newPostTitle.trim() === '' || newPostContent.trim() === '') return;
@@ -55,39 +71,42 @@ export default function MuralPage() {
         </div>
       </div>
 
-      {/* Form to add new post - This would be visible only to admins */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Nova Postagem</CardTitle>
-          <CardDescription>Crie um novo aviso para todos os membros.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="title">Título</Label>
-            <Input 
-              id="title" 
-              placeholder="Título do aviso" 
-              value={newPostTitle}
-              onChange={(e) => setNewPostTitle(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="content">Conteúdo</Label>
-            <Textarea 
-              id="content" 
-              placeholder="Escreva sua mensagem aqui..." 
-              value={newPostContent}
-              onChange={(e) => setNewPostContent(e.target.value)}
-            />
-          </div>
-        </CardContent>
-        <CardFooter>
-          <Button onClick={handleAddPost}>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Publicar
-          </Button>
-        </CardFooter>
-      </Card>
+      {/* Form to add new post - This is visible only to admins */}
+      {canPost && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Nova Postagem</CardTitle>
+            <CardDescription>Crie um novo aviso para todos os membros.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="title">Título</Label>
+              <Input 
+                id="title" 
+                placeholder="Título do aviso" 
+                value={newPostTitle}
+                onChange={(e) => setNewPostTitle(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="content">Conteúdo</Label>
+              <Textarea 
+                id="content" 
+                placeholder="Escreva sua mensagem aqui..." 
+                value={newPostContent}
+                onChange={(e) => setNewPostContent(e.target.value)}
+              />
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button onClick={handleAddPost}>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Publicar
+            </Button>
+          </CardFooter>
+        </Card>
+      )}
+
 
       {/* List of posts */}
       <div className="space-y-4">

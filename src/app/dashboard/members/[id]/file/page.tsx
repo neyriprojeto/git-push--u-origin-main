@@ -7,9 +7,10 @@ import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { useFirestore, useDoc, useMemoFirebase, useUser } from '@/firebase';
 import { doc } from 'firebase/firestore';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Printer } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 // Define a interface para o objeto de membro para garantir a tipagem
 interface Member {
@@ -37,6 +38,7 @@ interface Member {
     congregation?: string;
     originChurch?: string;
     responsiblePastor?: string;
+    cargo?: string;
 }
 
 
@@ -67,14 +69,20 @@ export default function MemberFilePage({ params }: { params: { id: string } }) {
     const memberId = params.id;
     const [isFlipped, setIsFlipped] = useState(false);
     const firestore = useFirestore();
+    const { user: authUser, isUserLoading } = useUser();
     
     const memberRef = useMemoFirebase(() => (firestore ? doc(firestore, 'users', memberId) : null), [firestore, memberId]);
     const { data: member, isLoading: memberLoading } = useDoc<Member>(memberRef);
     
+    const currentUserRef = useMemoFirebase(() => (firestore && authUser ? doc(firestore, 'users', authUser.uid) : null), [firestore, authUser]);
+    const { data: currentUser, isLoading: currentUserLoading } = useDoc<Member>(currentUserRef);
+    
     const churchInfoRef = useMemoFirebase(() => (firestore ? doc(firestore, 'churchInfo', 'main') : null), [firestore]);
     const { data: churchInfo, isLoading: churchInfoLoading } = useDoc<{ fichaLogoUrl?: string }>(churchInfoRef);
     
-    if (memberLoading || churchInfoLoading) {
+    const isLoading = memberLoading || churchInfoLoading || isUserLoading || currentUserLoading;
+
+    if (isLoading) {
         return (
             <div className="w-full min-h-screen bg-secondary p-4 flex justify-center items-center">
                 <Loader2 className="h-16 w-16 animate-spin" />
@@ -86,12 +94,21 @@ export default function MemberFilePage({ params }: { params: { id: string } }) {
         notFound();
     }
     
+    const canPrint = currentUser?.cargo === 'Administrador' || currentUser?.cargo === 'Pastor Dirigente/Local';
     const avatar = PlaceHolderImages.find((p) => p.id === member.avatar);
     const defaultFichaLogo = PlaceHolderImages.find((p) => p.id === 'church-logo');
     const fichaLogoUrl = churchInfo?.fichaLogoUrl || defaultFichaLogo?.imageUrl;
 
     return (
-        <div className="w-full min-h-screen bg-secondary p-4 flex justify-center items-center font-serif">
+        <div className="w-full min-h-screen bg-secondary p-4 flex flex-col justify-center items-center font-serif print:bg-white print:p-0">
+            {canPrint && (
+                <div className="w-full max-w-5xl mb-4 flex justify-end print:hidden">
+                    <Button onClick={() => window.print()}>
+                        <Printer className="mr-2 h-4 w-4" />
+                        Imprimir / Salvar PDF
+                    </Button>
+                </div>
+            )}
             <div 
               className="w-full max-w-5xl cursor-pointer"
               onClick={() => setIsFlipped(!isFlipped)}

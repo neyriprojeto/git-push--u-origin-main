@@ -2,7 +2,6 @@
 
 'use client';
 
-import { members, Member } from "@/data/members";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -22,11 +21,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { AppLogo } from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
-import { User, CreditCard, FileText, MessageSquare, BookOpen, RefreshCw } from "lucide-react";
+import { User, CreditCard, FileText, MessageSquare, BookOpen, RefreshCw, Loader2 } from "lucide-react";
 import { bibleVerses } from "@/data/bible-verses";
 import { useState, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { useDoc, useFirestore, useMemoFirebase } from "@/firebase";
+import { doc } from "firebase/firestore";
 
 type Verse = {
   book: string;
@@ -35,12 +36,57 @@ type Verse = {
   text: string;
 };
 
+// Interface correspondente aos dados no Firestore
+interface Member {
+    id: string;
+    nome: string;
+    email?: string;
+    avatar?: string;
+    recordNumber?: string;
+    status: 'Ativo' | 'Inativo' | 'Pendente';
+    gender?: 'Masculino' | 'Feminino';
+    dataNascimento?: string | { seconds: number; nanoseconds: number };
+    maritalStatus?: 'Solteiro(a)' | 'Casado(a)' | 'Divorciado(a)' | 'Viúvo(a)';
+    cpf?: string;
+    rg?: string;
+    naturalness?: string;
+    nationality?: string;
+    phone?: string;
+    whatsapp?: string;
+    cargo: string;
+    dataMembro?: string | { seconds: number; nanoseconds: number };
+    address?: string;
+    congregation?: string;
+}
+
+
+const formatDate = (dateValue?: string | { seconds: number; nanoseconds: number }) => {
+    if (!dateValue) return 'Não informado';
+    try {
+        if (typeof dateValue === 'string') {
+            return format(new Date(dateValue), 'dd/MM/yyyy');
+        }
+        if (dateValue && typeof dateValue === 'object' && 'seconds' in dateValue) {
+            return format(new Date(dateValue.seconds * 1000), 'dd/MM/yyyy');
+        }
+    } catch {
+        return 'Data inválida';
+    }
+    return 'Não informado';
+}
+
+
 export default function MemberProfilePage({
   params,
 }: {
   params: { id: string };
 }) {
-  const member = members.find((m) => m.id === params.id);
+  const memberId = params.id;
+  const firestore = useFirestore();
+
+  const memberRef = useMemoFirebase(() => (firestore ? doc(firestore, 'users', memberId) : null), [firestore, memberId]);
+  const { data: member, isLoading: memberLoading } = useDoc<Member>(memberRef);
+
   const [verse, setVerse] = useState<Verse | null>(null);
   const [isCardFlipped, setIsCardFlipped] = useState(false);
 
@@ -52,6 +98,14 @@ export default function MemberProfilePage({
   useEffect(() => {
     selectRandomVerse();
   }, [selectRandomVerse]);
+
+  if (memberLoading) {
+      return (
+          <div className="flex-1 h-screen flex items-center justify-center bg-secondary">
+              <Loader2 className="h-16 w-16 animate-spin" />
+          </div>
+      )
+  }
 
   if (!member) {
     notFound();
@@ -70,7 +124,7 @@ export default function MemberProfilePage({
           </div>
           <Avatar>
              {avatar && <AvatarImage src={avatar.imageUrl} />}
-            <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
+            <AvatarFallback>{member.nome.charAt(0)}</AvatarFallback>
           </Avatar>
         </div>
       </div>
@@ -120,14 +174,14 @@ export default function MemberProfilePage({
           <TabsContent value="inicio">
             <Card>
               <CardHeader>
-                <CardTitle>Bem-vindo(a), {member.name.split(' ')[0]}!</CardTitle>
+                <CardTitle>Bem-vindo(a), {member.nome.split(' ')[0]}!</CardTitle>
                 <CardDescription>
                     Este é o seu espaço central para interagir com as funcionalidades da igreja. Use o menu de navegação para explorar.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                   <div className="flex gap-2 mt-1">
-                    <Badge variant="secondary">{member.role}</Badge>
+                    <Badge variant="secondary">{member.cargo}</Badge>
                     <Badge variant={member.status === "Ativo" ? "default" : "destructive"}>{member.status}</Badge>
                   </div>
               </CardContent>
@@ -174,12 +228,12 @@ export default function MemberProfilePage({
                                   <Avatar className="h-16 w-16 border">
                                       {avatar && <AvatarImage src={avatar.imageUrl} alt={avatar.description} data-ai-hint={avatar.imageHint} />}
                                       <AvatarFallback className="text-2xl">
-                                          {member.name.charAt(0)}
+                                          {member.nome.charAt(0)}
                                       </AvatarFallback>
                                   </Avatar>
                                   <div className="border-b pb-1 flex-1">
                                       <Label className="text-xs text-muted-foreground">NOME</Label>
-                                      <p className="font-bold text-sm">{member.name}</p>
+                                      <p className="font-bold text-sm">{member.nome}</p>
                                   </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
@@ -189,15 +243,15 @@ export default function MemberProfilePage({
                                     </div>
                                     <div className="border-b pb-1">
                                       <Label className="text-xs text-muted-foreground">CARGO</Label>
-                                      <p className="font-bold text-sm">{member.role}</p>
+                                      <p className="font-bold text-sm">{member.cargo}</p>
                                     </div>
                                     <div className="border-b pb-1">
                                       <Label className="text-xs text-muted-foreground">NASCIMENTO</Label>
-                                      <p className="font-bold text-sm">{member.birthDate ? format(new Date(member.birthDate), 'dd/MM/yyyy') : 'N/A'}</p>
+                                      <p className="font-bold text-sm">{formatDate(member.dataNascimento)}</p>
                                     </div>
                                      <div className="border-b pb-1">
                                       <Label className="text-xs text-muted-foreground">MEMBRO DESDE</Label>
-                                      <p className="font-bold text-sm">{member.memberSince ? format(new Date(member.memberSince), 'dd/MM/yyyy') : 'N/A'}</p>
+                                      <p className="font-bold text-sm">{formatDate(member.dataMembro)}</p>
                                     </div>
                                 </div>
                             </div>
@@ -265,19 +319,19 @@ export default function MemberProfilePage({
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div className="space-y-1">
                       <p className="font-medium text-muted-foreground">Nome Completo</p>
-                      <p>{member.name}</p>
+                      <p>{member.nome}</p>
                     </div>
                     <div className="space-y-1">
                       <p className="font-medium text-muted-foreground">Email</p>
-                      <p>{member.email}</p>
+                      <p>{member.email || 'Não informado'}</p>
                     </div>
                      <div className="space-y-1">
                       <p className="font-medium text-muted-foreground">Data de Nascimento</p>
-                      <p>{member.birthDate ? format(new Date(member.birthDate), 'dd/MM/yyyy') : 'Não informado'}</p>
+                      <p>{formatDate(member.dataNascimento)}</p>
                     </div>
                     <div className="space-y-1">
                       <p className="font-medium text-muted-foreground">Telefone</p>
-                      <p>{member.phone}</p>
+                      <p>{member.phone || 'Não informado'}</p>
                     </div>
                      <div className="space-y-1">
                       <p className="font-medium text-muted-foreground">WhatsApp</p>
@@ -285,7 +339,7 @@ export default function MemberProfilePage({
                     </div>
                     <div className="space-y-1">
                       <p className="font-medium text-muted-foreground">Endereço</p>
-                      <p>{member.address}</p>
+                      <p>{member.address || 'Não informado'}</p>
                     </div>
                     <div className="space-y-1">
                       <p className="font-medium text-muted-foreground">Gênero</p>
@@ -313,11 +367,11 @@ export default function MemberProfilePage({
                     </div>
                      <div className="space-y-1">
                       <p className="font-medium text-muted-foreground">Nº da Ficha</p>
-                      <p>{member.recordNumber}</p>
+                      <p>{member.recordNumber || 'Não informado'}</p>
                     </div>
                      <div className="space-y-1">
                       <p className="font-medium text-muted-foreground">Membro Desde</p>
-                      <p>{member.memberSince ? format(new Date(member.memberSince), 'dd/MM/yyyy') : 'Não informado'}</p>
+                      <p>{formatDate(member.dataMembro)}</p>
                     </div>
                  </div>
               </CardContent>

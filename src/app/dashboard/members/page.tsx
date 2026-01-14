@@ -1,4 +1,5 @@
 
+'use client';
 
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -19,13 +20,32 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { members, Member } from "@/data/members";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { Eye, FileText } from "lucide-react";
+import { Eye, FileText, Loader2 } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { collection, query, where } from "firebase/firestore";
+
+// Definição do tipo para os dados que esperamos do Firestore
+type Member = {
+  id: string;
+  nome: string;
+  avatar?: string; // a imagem do avatar virá de outro lugar
+  cargo: string;
+  status: 'Ativo' | 'Inativo' | 'Pendente';
+  dataBatismo?: string; // Supondo que seja uma string
+  nomeCongregacao?: string;
+  // Adicione outros campos que você espera receber do Firestore
+};
+
 
 export default function MembersPage() {
-  const displayMembers = members.filter(m => m.role !== 'Administrador');
+  const firestore = useFirestore();
+  const membersCollection = useMemoFirebase(
+    () => (firestore ? query(collection(firestore, 'users'), where('cargo', '!=', 'Administrador')) : null),
+    [firestore]
+  );
+  const { data: members, isLoading } = useCollection<Member>(membersCollection);
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -39,7 +59,7 @@ export default function MembersPage() {
         <CardHeader>
           <CardTitle>Membros</CardTitle>
           <CardDescription>
-            Uma lista de todos os membros da igreja.
+            Uma lista de todos os membros da igreja cadastrados no sistema.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -49,61 +69,76 @@ export default function MembersPage() {
                 <TableHead>Nome</TableHead>
                 <TableHead>Cargo</TableHead>
                 <TableHead className="hidden md:table-cell">Status</TableHead>
-                <TableHead className="hidden md:table-cell">Membro desde</TableHead>
+                <TableHead className="hidden md:table-cell">Congregação</TableHead>
                 <TableHead>
                   <span className="sr-only">Ações</span>
                 </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {displayMembers.map((member: Member) => {
-                const avatar = PlaceHolderImages.find(
-                  (p) => p.id === member.avatar
-                );
-                return (
-                  <TableRow key={member.id}>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-9 w-9">
-                          {avatar && <AvatarImage src={avatar.imageUrl} alt={avatar.description} data-ai-hint={avatar.imageHint} />}
-                          <AvatarFallback>
-                            {member.name.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="grid gap-0.5">
-                            <span className="font-medium">{member.name}</span>
-                            <span className="text-xs text-muted-foreground md:hidden">{member.role}</span>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center h-24">
+                     <Loader2 className="mx-auto h-6 w-6 animate-spin" />
+                  </TableCell>
+                </TableRow>
+              ) : members && members.length > 0 ? (
+                members.map((member) => {
+                  // O avatar ainda pode vir de um placeholder, se não estiver no Firestore
+                  const avatar = PlaceHolderImages.find(
+                    (p) => p.id === member.avatar
+                  );
+                  return (
+                    <TableRow key={member.id}>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-9 w-9">
+                            {avatar && <AvatarImage src={avatar.imageUrl} alt={avatar.description} data-ai-hint={avatar.imageHint} />}
+                            <AvatarFallback>
+                              {member.nome ? member.nome.charAt(0) : '?'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="grid gap-0.5">
+                              <span className="font-medium">{member.nome}</span>
+                              <span className="text-xs text-muted-foreground md:hidden">{member.cargo}</span>
+                          </div>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">{member.role}</TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      <Badge variant={member.status === "Ativo" ? "default" : "secondary"}>
-                        {member.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {new Date(member.memberSince).toLocaleDateString('pt-BR')}
-                    </TableCell>
-                    <TableCell className="text-right">
-                       <div className="flex items-center justify-end gap-2">
-                          <Button asChild variant="ghost" size="icon">
-                            <Link href={`/dashboard/members/${member.id}`}>
-                              <Eye className="h-4 w-4" />
-                              <span className="sr-only">Ver Perfil</span>
-                            </Link>
-                          </Button>
-                           <Button asChild variant="ghost" size="icon">
-                            <Link href={`/dashboard/members/${member.id}/file`}>
-                              <FileText className="h-4 w-4" />
-                              <span className="sr-only">Ver Ficha</span>
-                            </Link>
-                          </Button>
-                       </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">{member.cargo}</TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <Badge variant={member.status === "Ativo" ? "default" : "secondary"}>
+                          {member.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {member.nomeCongregacao || 'Não informada'}
+                      </TableCell>
+                      <TableCell className="text-right">
+                         <div className="flex items-center justify-end gap-2">
+                            <Button asChild variant="ghost" size="icon">
+                              <Link href={`/dashboard/members/${member.id}`}>
+                                <Eye className="h-4 w-4" />
+                                <span className="sr-only">Ver Perfil</span>
+                              </Link>
+                            </Button>
+                             <Button asChild variant="ghost" size="icon">
+                              <Link href={`/dashboard/members/${member.id}/file`}>
+                                <FileText className="h-4 w-4" />
+                                <span className="sr-only">Ver Ficha</span>
+                              </Link>
+                            </Button>
+                         </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              ) : (
+                 <TableRow>
+                  <TableCell colSpan={5} className="text-center h-24">
+                    Nenhum membro encontrado.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>

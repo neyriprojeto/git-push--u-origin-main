@@ -40,6 +40,7 @@ const formSchema = z.object({
   // Dados de Membro
   cargo: z.string({ required_error: 'O cargo é obrigatório.' }),
   congregacao: z.string({ required_error: 'A congregação é obrigatória.' }),
+  dataBatismo: z.date().optional(),
 
   // Endereço
   cep: z.string().optional(),
@@ -306,6 +307,50 @@ export default function RegisterPage() {
                                 </FormItem>
                             )}
                             />
+                             <FormField
+                                control={form.control}
+                                name="dataBatismo"
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-col pt-2">
+                                    <FormLabel>Data de Batismo</FormLabel>
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                        <FormControl>
+                                            <Button
+                                            variant={"outline"}
+                                            className={cn(
+                                                "w-full justify-start text-left font-normal",
+                                                !field.value && "text-muted-foreground"
+                                            )}
+                                            >
+                                            <CalendarIcon className="mr-2 h-4 w-4" />
+                                            {field.value ? (
+                                                format(field.value, "dd/MM/yyyy", { locale: ptBR })
+                                            ) : (
+                                                <span>Escolha uma data</span>
+                                            )}
+                                            </Button>
+                                        </FormControl>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0" align="start">
+                                            <Calendar
+                                                mode="single"
+                                                captionLayout="dropdown-nav"
+                                                fromYear={1920}
+                                                toYear={new Date().getFullYear()}
+                                                selected={field.value}
+                                                onSelect={field.onChange}
+                                                disabled={(date) =>
+                                                date > new Date() || date < new Date("1900-01-01")
+                                                }
+                                                initialFocus
+                                            />
+                                        </PopoverContent>
+                                    </Popover>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                                />
                         </div>
                     </div>
 
@@ -408,5 +453,6 @@ export default function RegisterPage() {
     </div>
   );
 }
+
 
     

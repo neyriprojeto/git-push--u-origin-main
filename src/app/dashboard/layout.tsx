@@ -40,23 +40,22 @@ export default function DashboardLayout({
   );
   const { data: userData, isLoading: isUserDataLoading } = useDoc<UserData>(userRef);
 
-  const userRole = userData?.cargo;
-  const userCongregacao = userData?.congregacao;
   const isLoading = isUserLoading || isUserDataLoading;
+  const userRole = userData?.cargo;
 
   const isAdmin = userRole === 'Administrador';
   const isPastor = userRole === 'Pastor Dirigente/Local';
-  
-  // New logic: Menus are visible during loading, and hidden only when we confirm the user is a 'Membro'.
+  const isMember = userRole === 'Membro';
+
+  // Define visibility based on roles. During load, assume admin to prevent flicker.
   const canSeeAdminMenus = isLoading || isAdmin || isPastor;
-  const canSeeCardStudio = isLoading || isAdmin;
-  const canSeeSettings = isLoading || isAdmin || isPastor;
+  const canSeeFullAdminFeatures = isLoading || isAdmin;
 
 
   const settingsLink = isAdmin
     ? "/dashboard/settings/congregations"
-    : isPastor && userCongregacao
-    ? `/dashboard/settings/congregations/${encodeURIComponent(userCongregacao)}`
+    : isPastor && userData?.congregacao
+    ? `/dashboard/settings/congregations/${encodeURIComponent(userData.congregacao)}`
     : "#";
 
   return (
@@ -84,7 +83,7 @@ export default function DashboardLayout({
               </SidebarMenuButton>
             </SidebarMenuItem>
             
-            {/* Show these menus if loading or if user is NOT a member */}
+            {/* General menus visible to Admins and Pastors */}
             {canSeeAdminMenus && (
               <>
                 <SidebarMenuItem>
@@ -95,31 +94,33 @@ export default function DashboardLayout({
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip={{ children: "Mensagens" }}>
-                    <Link href="#">
-                      <Mail />
-                      <span>Mensagens</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                
-                {/* Show Card Studio only if loading or if user is Admin */}
-                {canSeeCardStudio && (
-                    <SidebarMenuItem>
-                    <SidebarMenuButton asChild tooltip={{ children: "Carteirinhas" }}>
-                        <Link href="/dashboard/card-studio">
-                        <CreditCard />
-                        <span>Carteirinhas</span>
-                        </Link>
-                    </SidebarMenuButton>
-                    </SidebarMenuItem>
-                )}
               </>
+            )}
+
+             {/* Messages menu visible to all authenticated users */}
+             <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip={{ children: "Mensagens" }}>
+                <Link href="#">
+                  <Mail />
+                  <span>Mensagens</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            
+            {/* Card Studio only for full admins */}
+            {canSeeFullAdminFeatures && (
+                <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip={{ children: "Carteirinhas" }}>
+                    <Link href="/dashboard/card-studio">
+                    <CreditCard />
+                    <span>Carteirinhas</span>
+                    </Link>
+                </SidebarMenuButton>
+                </SidebarMenuItem>
             )}
           </SidebarMenu>
 
-          {/* Show Admin Group if loading or if user is Admin/Pastor */}
+          {/* Admin Group for Admins and Pastors */}
           {canSeeAdminMenus && (
             <SidebarGroup>
               <SidebarGroupLabel>Administração</SidebarGroupLabel>
@@ -140,8 +141,8 @@ export default function DashboardLayout({
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-                 {/* Show Manage Admins only if loading or if user is Admin */}
-                {isAdmin && (
+                 {/* Manage Admins only for full admins */}
+                {canSeeFullAdminFeatures && (
                   <SidebarMenuItem>
                     <SidebarMenuButton asChild tooltip={{ children: "Gerenciar Administradores" }}>
                       <Link href="#">
@@ -196,8 +197,8 @@ export default function DashboardLayout({
         </SidebarContent>
         <SidebarFooter className="border-t border-sidebar-border">
            <SidebarMenu>
-             {/* Show Settings only if loading or if user is Admin/Pastor */}
-            {canSeeSettings && (
+             {/* Settings for Admins and Pastors */}
+            {canSeeAdminMenus && (
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip={{ children: "Configurações" }}>
                   <Link href={settingsLink}>

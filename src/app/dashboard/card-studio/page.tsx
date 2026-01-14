@@ -114,19 +114,20 @@ export default function CardStudioPage() {
         'Congregação': { position: { top: 18, left: 50 }, size: { fontSize: 14 }, text: 'SEDE', fontWeight: 'normal', textAlign: 'center' },
         'Endereço': { position: { top: 23, left: 50 }, size: { fontSize: 8 }, text: 'Rua Presidente Prudente, N°28\nEldorado, Diadema-SP', textAlign: 'center' },
         'Foto do Membro': { position: { top: 40, left: 15 }, size: { width: 80, height: 100 }, src: avatarPlaceholder?.imageUrl },
-        'Nome': { position: { top: 60, left: 50 }, size: { fontSize: 11 }, text: `Nome: ${member.name}`, fontWeight: 'bold', textAlign: 'center' },
-        'RG': { position: { top: 68, left: 50 }, size: { fontSize: 10 }, text: `RG: ${member.rg}`, textAlign: 'center' },
-        'CPF': { position: { top: 74, left: 50 }, size: { fontSize: 10 }, text: `CPF: ${member.cpf}`, textAlign: 'center' },
-        'Cargo': { position: { top: 80, left: 50 }, size: { fontSize: 10 }, text: `Cargo: ${member.role}`, textAlign: 'center' },
+        'Nome': { position: { top: 60, left: 40 }, size: { fontSize: 11 }, text: `Nome: ${member.name}`, fontWeight: 'bold', textAlign: 'left' },
+        'Nº Reg.': { position: { top: 68, left: 40 }, size: { fontSize: 10 }, text: `Nº Reg.: ${member.recordNumber}`, textAlign: 'left' },
+        'RG': { position: { top: 68, left: 75 }, size: { fontSize: 10 }, text: `RG: ${member.rg}`, textAlign: 'left' },
+        'CPF': { position: { top: 74, left: 40 }, size: { fontSize: 10 }, text: `CPF: ${member.cpf}`, textAlign: 'left' },
+        'Cargo': { position: { top: 80, left: 40 }, size: { fontSize: 10 }, text: `Cargo: ${member.role}`, textAlign: 'left' },
         'Data de Nascimento': { position: { top: 85, left: 10 }, size: { fontSize: 10 }, text: `Nasc: ${new Date(member.birthDate).toLocaleDateString('pt-BR')}`, textAlign: 'left' },
         'Data de Batismo': { position: { top: 85, left: 90 }, size: { fontSize: 10 }, text: `Batismo: ${new Date().toLocaleDateString('pt-BR')}`, textAlign: 'right' },
-        'Logo Igreja': { position: { top: 40, left: 80 }, size: { width: 60, height: 60 }, src: '' },
+        'Logo Igreja': { position: { top: 38, left: 80 }, size: { width: 70, height: 70 }, src: '' },
         
         // --- Verso ---
-        'Logo Convenção 1': { position: { top: 15, left: 25 }, size: { width: 70, height: 70 }, src: '' },
-        'Logo Convenção 2': { position: { top: 15, left: 75 }, size: { width: 70, height: 70 }, src: '' },
+        'Logo Convenção 1': { position: { top: 15, left: 25 }, size: { width: 80, height: 80 }, src: '' },
+        'Logo Convenção 2': { position: { top: 15, left: 75 }, size: { width: 80, height: 80 }, src: '' },
         'QR Code': { position: { top: 45, left: 25 }, size: { width: 80, height: 80 }, src: qrCodePlaceholder?.imageUrl },
-        'Assinatura': { position: { top: 70, left: 65 }, size: { width: 140, height: 50 }, src: '' },
+        'Assinatura': { position: { top: 70, left: 65 }, size: { width: 150, height: 60 }, src: '' },
         'Assinatura Pastor': { position: { top: 82, left: 50 }, size: { fontSize: 10 }, text: 'Assinatura Pastor Presidente', textAlign: 'center' },
         'Validade': { position: { top: 88, left: 50 }, size: { fontSize: 10 }, text: 'Validade: 01/01/2026', fontWeight: 'bold', textAlign: 'center' },
         'Membro Desde': { position: { top: 93, left: 50 }, size: { fontSize: 10 }, text: `Membro desde: ${new Date(member.memberSince).toLocaleDateString('pt-BR')}`, fontWeight: 'bold', textAlign: 'center' },
@@ -456,8 +457,9 @@ export default function CardStudioPage() {
              style.transform = 'translateX(-50%)';
         } else if (el.textAlign === 'right') {
             style.transform = 'translateX(-100%)';
+             style.paddingRight = '10px';
         } else {
-            style.transform = 'translateX(0)';
+            // No transform for left-aligned text, it starts at the 'left' value
         }
         
         if (isText) {
@@ -469,11 +471,6 @@ export default function CardStudioPage() {
 
             if (id.includes('Título') || id === 'Nome') {
                 style.whiteSpace = 'nowrap';
-            }
-             if (id === 'Nome') {
-                style.maxWidth = '50%';
-                style.overflow = 'hidden';
-                style.textOverflow = 'ellipsis';
             }
         } else { // isImage
              style.width = el.size.width ? `${el.size.width}px` : 'auto';

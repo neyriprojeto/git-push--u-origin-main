@@ -40,6 +40,7 @@ import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-cr
 import 'react-image-crop/dist/ReactCrop.css';
 import { uploadArquivo } from '@/lib/cloudinary';
 import { Textarea } from "@/components/ui/textarea";
+import Link from "next/link";
 
 
 type Verse = {
@@ -158,6 +159,10 @@ export default function MemberProfilePage() {
   const { toast } = useToast();
 
   const isOwner = authUser?.uid === memberId;
+  
+  const currentUserRef = useMemoFirebase(() => (firestore && authUser ? doc(firestore, 'users', authUser.uid) : null), [firestore, authUser]);
+  const { data: currentUserData, isLoading: isCurrentUserLoading } = useDoc(currentUserRef);
+
 
   // Redirect if a non-owner member tries to access another member's page
   useEffect(() => {
@@ -345,7 +350,7 @@ export default function MemberProfilePage() {
   }
 
 
-  if (memberLoading || isUserLoading) {
+  if (memberLoading || isUserLoading || isCurrentUserLoading) {
       return (
           <div className="flex-1 h-screen flex items-center justify-center bg-secondary">
               <Loader2 className="h-16 w-16 animate-spin" />
@@ -360,6 +365,9 @@ export default function MemberProfilePage() {
 
   const avatar = getAvatar(member.avatar);
   const churchPicture = PlaceHolderImages.find((p) => p.id === "church-banner");
+  
+  const canEdit = isOwner || currentUserData?.cargo === 'Administrador' || (currentUserData?.cargo === 'Pastor Dirigente/Local' && currentUserData?.congregacao === member.congregacao);
+  const canManage = currentUserData?.cargo === 'Administrador' || (currentUserData?.cargo === 'Pastor Dirigente/Local');
 
   return (
     <div className="flex-1 space-y-4 bg-secondary">
@@ -427,12 +435,28 @@ export default function MemberProfilePage() {
                 <Badge variant="secondary">{member.cargo}</Badge>
                 <Badge variant={member.status === "Ativo" ? "default" : "destructive"}>{member.status}</Badge>
                 </div>
+                {canManage && (
+                    <div className="flex gap-2 mt-4">
+                         <Button asChild variant="outline" size="sm">
+                            <Link href={`/dashboard/members/${member.id}/file`}>
+                                <FileText className="mr-2 h-4 w-4"/>
+                                Ver Ficha
+                            </Link>
+                        </Button>
+                        <Button asChild variant="outline" size="sm">
+                            <Link href={`/dashboard/members/${member.id}/card`}>
+                                <CreditCard className="mr-2 h-4 w-4"/>
+                                Ver Carteirinha
+                            </Link>
+                        </Button>
+                    </div>
+                )}
             </CardContent>
         </Card>
 
         <Tabs defaultValue="perfil" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="perfil">Meu Perfil</TabsTrigger>
+                <TabsTrigger value="perfil">Minha Carteirinha</TabsTrigger>
                 <TabsTrigger value="dados">Meus Dados</TabsTrigger>
             </TabsList>
             <TabsContent value="perfil">
@@ -552,8 +576,8 @@ export default function MemberProfilePage() {
                                         </Avatar>
                                         <div className="grid gap-2">
                                             <Label>Foto de Perfil</Label>
-                                            <Input id="avatar-upload" type="file" accept="image/*" className="hidden" onChange={onSelectFile} disabled={!isOwner} />
-                                            <Button type="button" variant="outline" onClick={() => document.getElementById('avatar-upload')?.click()} disabled={!isOwner}>
+                                            <Input id="avatar-upload" type="file" accept="image/*" className="hidden" onChange={onSelectFile} disabled={!canEdit} />
+                                            <Button type="button" variant="outline" onClick={() => document.getElementById('avatar-upload')?.click()} disabled={!canEdit}>
                                                 <Upload className="mr-2 h-4 w-4" />
                                                 Alterar Foto
                                             </Button>
@@ -565,7 +589,7 @@ export default function MemberProfilePage() {
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Nome Completo</FormLabel>
-                                                <FormControl><Input {...field} disabled={!isOwner} /></FormControl>
+                                                <FormControl><Input {...field} disabled={!canEdit} /></FormControl>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
@@ -589,7 +613,7 @@ export default function MemberProfilePage() {
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>Telefone</FormLabel>
-                                                    <FormControl><Input {...field} disabled={!isOwner} /></FormControl>
+                                                    <FormControl><Input {...field} disabled={!canEdit} /></FormControl>
                                                     <FormMessage />
                                                 </FormItem>
                                             )}
@@ -600,7 +624,7 @@ export default function MemberProfilePage() {
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>WhatsApp</FormLabel>
-                                                    <FormControl><Input {...field} disabled={!isOwner} /></FormControl>
+                                                    <FormControl><Input {...field} disabled={!canEdit} /></FormControl>
                                                     <FormMessage />
                                                 </FormItem>
                                             )}
@@ -610,17 +634,17 @@ export default function MemberProfilePage() {
                                 <div className="space-y-4">
                                     <h3 className="font-medium text-lg">Endereço</h3>
                                     <div className="grid md:grid-cols-3 gap-4">
-                                        <FormField name="cep" control={form.control} render={({ field }) => (<FormItem><FormLabel>CEP</FormLabel><FormControl><Input {...field} disabled={!isOwner} /></FormControl><FormMessage /></FormItem>)} />
-                                        <FormField name="logradouro" control={form.control} render={({ field }) => (<FormItem className="md:col-span-2"><FormLabel>Logradouro</FormLabel><FormControl><Input {...field} disabled={!isOwner} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField name="cep" control={form.control} render={({ field }) => (<FormItem><FormLabel>CEP</FormLabel><FormControl><Input {...field} disabled={!canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField name="logradouro" control={form.control} render={({ field }) => (<FormItem className="md:col-span-2"><FormLabel>Logradouro</FormLabel><FormControl><Input {...field} disabled={!canEdit} /></FormControl><FormMessage /></FormItem>)} />
                                     </div>
                                     <div className="grid md:grid-cols-4 gap-4">
-                                        <FormField name="numero" control={form.control} render={({ field }) => (<FormItem><FormLabel>Número</FormLabel><FormControl><Input {...field} disabled={!isOwner} /></FormControl><FormMessage /></FormItem>)} />
-                                        <FormField name="bairro" control={form.control} render={({ field }) => (<FormItem><FormLabel>Bairro</FormLabel><FormControl><Input {...field} disabled={!isOwner} /></FormControl><FormMessage /></FormItem>)} />
-                                        <FormField name="cidade" control={form.control} render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><FormControl><Input {...field} disabled={!isOwner} /></FormControl><FormMessage /></FormItem>)} />
-                                        <FormField name="estado" control={form.control} render={({ field }) => (<FormItem><FormLabel>Estado</FormLabel><FormControl><Input {...field} disabled={!isOwner} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField name="numero" control={form.control} render={({ field }) => (<FormItem><FormLabel>Número</FormLabel><FormControl><Input {...field} disabled={!canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField name="bairro" control={form.control} render={({ field }) => (<FormItem><FormLabel>Bairro</FormLabel><FormControl><Input {...field} disabled={!canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField name="cidade" control={form.control} render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><FormControl><Input {...field} disabled={!canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField name="estado" control={form.control} render={({ field }) => (<FormItem><FormLabel>Estado</FormLabel><FormControl><Input {...field} disabled={!canEdit} /></FormControl><FormMessage /></FormItem>)} />
                                     </div>
                                 </div>
-                                {isOwner && (
+                                {canEdit && (
                                     <Button type="submit" disabled={isSubmitting || isUploading}>
                                         {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                                         {isSubmitting ? 'Salvando...' : 'Salvar Alterações'}
@@ -725,3 +749,5 @@ export default function MemberProfilePage() {
     </div>
   );
 }
+
+    

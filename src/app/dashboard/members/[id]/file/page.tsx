@@ -148,12 +148,11 @@ export default function MemberFilePage() {
                 </Button>
             </div>
             <div 
-              className="w-full max-w-5xl cursor-pointer"
-              onClick={() => setIsFlipped(!isFlipped)}
+              className="w-full max-w-5xl"
             >
                 {/* Usando aspect-ratio para manter a proporção de uma folha A5 em paisagem (1.414/1) */}
-                <div className={cn("relative w-full aspect-[1.414/1]")} style={{ perspective: '1000px' }}>
-                    <div className={cn("relative w-full h-full transition-transform duration-700", { '[transform:rotateY(180deg)]': isFlipped })} style={{ transformStyle: 'preserve-3d' }}>
+                <div className={cn("relative w-full aspect-[1.414/1]")}>
+                    <div className={cn("relative w-full h-full")}>
                         
                         {/* Container da Ficha - Frente */}
                         <div className="absolute w-full h-full bg-white shadow-lg p-[2vw] md:p-8 flex flex-col" style={{ backfaceVisibility: 'hidden' }}>
@@ -207,8 +206,8 @@ export default function MemberFilePage() {
                             </div>
                         </div>
 
-                        {/* Container da Ficha - Verso */}
-                        <div className="absolute w-full h-full bg-white shadow-lg p-[2vw] md:p-8 flex flex-col" style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
+                        {/* Container da Ficha - Verso (for printing) */}
+                        <div className="absolute w-full h-full bg-white p-[2vw] md:p-8 flex-col hidden print:flex" style={{ top: '100%', pageBreakBefore: 'always' }}>
                            <div className="flex flex-col h-full">
                                 {/* Header */}
                                 <div className="text-center pb-[1vw] md:pb-4 border-b border-black">
@@ -256,3 +255,5 @@ export default function MemberFilePage() {
         </div>
     );
 }
+
+    

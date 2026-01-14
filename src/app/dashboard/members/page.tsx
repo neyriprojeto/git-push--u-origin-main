@@ -21,7 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { Eye, FileText, Loader2 } from "lucide-react";
+import { Eye, FileText, Loader2, CreditCard } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { collection, query, where } from "firebase/firestore";
@@ -158,6 +158,12 @@ export default function MembersPage() {
                                 <span className="sr-only">Ver Ficha</span>
                               </Link>
                             </Button>
+                             <Button asChild variant="ghost" size="icon">
+                              <Link href={`/dashboard/members/${member.id}/card`}>
+                                <CreditCard className="h-4 w-4" />
+                                <span className="sr-only">Ver Carteirinha</span>
+                              </Link>
+                            </Button>
                          </div>
                       </TableCell>
                     </TableRow>
@@ -177,3 +183,5 @@ export default function MembersPage() {
     </div>
   );
 }
+
+    

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -200,7 +199,7 @@ export default function RegisterPage() {
                                             >
                                             <CalendarIcon className="mr-2 h-4 w-4" />
                                             {field.value ? (
-                                                format(field.value, "dd/MM/yyyy", { locale: ptBR })
+                                                format(field.value, "PPP", { locale: ptBR })
                                             ) : (
                                                 <span>Escolha uma data</span>
                                             )}
@@ -325,7 +324,7 @@ export default function RegisterPage() {
                                             >
                                             <CalendarIcon className="mr-2 h-4 w-4" />
                                             {field.value ? (
-                                                format(field.value, "dd/MM/yyyy", { locale: ptBR })
+                                                format(field.value, "PPP", { locale: ptBR })
                                             ) : (
                                                 <span>Escolha uma data</span>
                                             )}

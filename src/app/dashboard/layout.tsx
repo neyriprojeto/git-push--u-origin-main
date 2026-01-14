@@ -42,22 +42,19 @@ export default function DashboardLayout({
 
   const isLoading = isUserLoading || isUserDataLoading;
   const userRole = userData?.cargo;
-
-  const isAdmin = userRole === 'Administrador';
-  const isPastor = userRole === 'Pastor Dirigente/Local';
   const isMember = userRole === 'Membro';
 
-  // Define visibility based on roles. During load, assume admin to prevent flicker.
-  const canSeeAdminMenus = isLoading || isAdmin || isPastor;
-  const canSeeFullAdminFeatures = isLoading || isAdmin;
+  // Corrected Logic: Assume admin access while loading to prevent menu flickering.
+  // Menus are only hidden if the user is explicitly a 'Membro'.
+  const canSeeAdminMenus = !isMember;
+  const canSeeFullAdminFeatures = userRole === 'Administrador' || isLoading;
 
   // For members, "Início" links to their profile. For others, to the main dashboard.
   const homeLink = isMember && user ? `/dashboard/members/${user.uid}` : '/dashboard';
 
-
-  const settingsLink = isAdmin
+  const settingsLink = userRole === 'Administrador'
     ? "/dashboard/settings/congregations"
-    : isPastor && userData?.congregacao
+    : userRole === 'Pastor Dirigente/Local' && userData?.congregacao
     ? `/dashboard/settings/congregations/${encodeURIComponent(userData.congregacao)}`
     : "#";
 

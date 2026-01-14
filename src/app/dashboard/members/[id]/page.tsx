@@ -186,18 +186,8 @@ export default function MemberProfilePage({
                                       <p className="font-bold text-sm">{member.rg || 'N/A'}</p>
                                     </div>
                                     <div className="border-b pb-1">
-                                      <Label className="text-xs text-muted-foreground">DATA NASC.</Label>
-                                      <p className="font-bold text-sm">{new Date(member.birthDate).toLocaleDateString('pt-BR')}</p>
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="border-b pb-1">
                                       <Label className="text-xs text-muted-foreground">CARGO</Label>
                                       <p className="font-bold text-sm">{member.role}</p>
-                                    </div>
-                                    <div className="border-b pb-1">
-                                      <Label className="text-xs text-muted-foreground">MEMBRO DESDE</Label>
-                                      <p className="font-bold text-sm">{new Date(member.memberSince).toLocaleDateString('pt-BR')}</p>
                                     </div>
                                 </div>
                             </div>
@@ -284,10 +274,6 @@ export default function MemberProfilePage({
                       <p>{member.address}</p>
                     </div>
                     <div className="space-y-1">
-                      <p className="font-medium text-muted-foreground">Data de Nascimento</p>
-                      <p>{new Date(member.birthDate).toLocaleDateString('pt-BR')}</p>
-                    </div>
-                    <div className="space-y-1">
                       <p className="font-medium text-muted-foreground">Gênero</p>
                       <p>{member.gender || 'Não informado'}</p>
                     </div>
@@ -315,10 +301,6 @@ export default function MemberProfilePage({
                       <p className="font-medium text-muted-foreground">Nº da Ficha</p>
                       <p>{member.recordNumber}</p>
                     </div>
-                    <div className="space-y-1">
-                      <p className="font-medium text-muted-foreground">Membro desde</p>
-                      <p>{new Date(member.memberSince).toLocaleDateString('pt-BR')}</p>
-                    </div>
                  </div>
               </CardContent>
             </Card>
@@ -328,3 +310,5 @@ export default function MemberProfilePage({
     </div>
   );
 }
+
+    

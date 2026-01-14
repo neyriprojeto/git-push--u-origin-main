@@ -66,21 +66,6 @@
             "type": "string",
             "description": "The user's CPF."
         },
-        "dataNascimento": {
-            "type": "string",
-            "format": "date",
-            "description": "The user's birth date."
-        },
-        "dataBatismo": {
-            "type": "string",
-            "format": "date",
-            "description": "The user's baptism date."
-        },
-        "dataMembro": {
-            "type": "string",
-            "format": "date",
-            "description": "The date the user became a member."
-        },
         "cep": {
             "type": "string",
             "description": "The user's postal code."
@@ -116,7 +101,6 @@
         "tipo",
         "rg",
         "cpf",
-        "dataNascimento",
         "cargo",
         "status"
       ]
@@ -223,3 +207,5 @@
     }
   }
 }
+
+    

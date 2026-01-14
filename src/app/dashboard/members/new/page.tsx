@@ -33,13 +33,10 @@ const formSchema = z.object({
   nome: z.string().min(2, { message: 'O nome deve ter pelo menos 2 caracteres.' }),
   rg: z.string().min(1, { message: 'O RG é obrigatório.' }),
   cpf: z.string().min(11, { message: 'O CPF deve ter 11 caracteres.' }).max(14, { message: 'O CPF deve ter no máximo 14 caracteres.' }),
-  dataNascimento: z.date({ required_error: 'A data de nascimento é obrigatória.' }),
   
   // Dados de Membro
   cargo: z.string({ required_error: 'O cargo é obrigatório.' }),
   congregacao: z.string({ required_error: 'A congregação é obrigatória.' }),
-  dataBatismo: z.date().optional(),
-  dataMembro: z.date().optional(),
 
   // Endereço
   cep: z.string().optional(),
@@ -180,49 +177,6 @@ export default function NewMemberPage() {
                         </FormItem>
                     )}
                     />
-                     <FormField
-                        control={form.control}
-                        name="dataNascimento"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-col">
-                            <FormLabel>Data de Nascimento</FormLabel>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                <FormControl>
-                                    <Button
-                                    variant={"outline"}
-                                    className={cn(
-                                        "w-full justify-start text-left font-normal",
-                                        !field.value && "text-muted-foreground"
-                                    )}
-                                    >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {field.value ? (
-                                        format(field.value, "dd/MM/yyyy")
-                                    ) : (
-                                        <span>Escolha uma data</span>
-                                    )}
-                                    </Button>
-                                </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0 max-w-[calc(100vw-1rem)] overflow-auto sm:max-w-md" align="start">
-                                <Calendar
-                                    locale={ptBR}
-                                    mode="single"
-                                    selected={field.value}
-                                    onSelect={field.onChange}
-                                    disabled={(date) =>
-                                    date > new Date() || date < new Date("1900-01-01")
-                                    }
-                                    initialFocus
-                                    captionLayout="dropdown"
-                                />
-                                </PopoverContent>
-                            </Popover>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                        />
                 </div>
               </div>
 
@@ -278,88 +232,6 @@ export default function NewMemberPage() {
                         </FormItem>
                       )}
                     />
-                      <FormField
-                        control={form.control}
-                        name="dataBatismo"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-col">
-                            <FormLabel>Data de Batismo</FormLabel>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                <FormControl>
-                                    <Button
-                                    variant={"outline"}
-                                    className={cn(
-                                        "w-full justify-start text-left font-normal",
-                                        !field.value && "text-muted-foreground"
-                                    )}
-                                    >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {field.value ? (
-                                        format(field.value, "dd/MM/yyyy")
-                                    ) : (
-                                        <span>Escolha uma data</span>
-                                    )}
-                                    </Button>
-                                </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0 max-w-[calc(100vw-1rem)] overflow-auto sm:max-w-md" align="start">
-                                <Calendar
-                                    locale={ptBR}
-                                    mode="single"
-                                    selected={field.value}
-                                    onSelect={field.onChange}
-                                    disabled={(date) => date > new Date()}
-                                    initialFocus
-                                    captionLayout="dropdown"
-                                />
-                                </PopoverContent>
-                            </Popover>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                        />
-                         <FormField
-                        control={form.control}
-                        name="dataMembro"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-col">
-                            <FormLabel>Membro Desde</FormLabel>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                <FormControl>
-                                    <Button
-                                    variant={"outline"}
-                                    className={cn(
-                                        "w-full justify-start text-left font-normal",
-                                        !field.value && "text-muted-foreground"
-                                    )}
-                                    >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {field.value ? (
-                                        format(field.value, "dd/MM/yyyy")
-                                    ) : (
-                                        <span>Escolha uma data</span>
-                                    )}
-                                    </Button>
-                                </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0 max-w-[calc(100vw-1rem)] overflow-auto sm:max-w-md" align="start">
-                                <Calendar
-                                    locale={ptBR}
-                                    mode="single"
-                                    selected={field.value}
-                                    onSelect={field.onChange}
-                                    disabled={(date) => date > new Date()}
-                                    initialFocus
-                                    captionLayout="dropdown"
-                                />
-                                </PopoverContent>
-                            </Popover>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                        />
                  </div>
               </div>
 
@@ -460,3 +332,5 @@ export default function NewMemberPage() {
     </div>
   );
 }
+
+    

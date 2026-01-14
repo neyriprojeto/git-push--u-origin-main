@@ -1,3 +1,4 @@
+
 export type Member = {
   id: string; // Identificador único do usuário
   name: string; // Nome Completo

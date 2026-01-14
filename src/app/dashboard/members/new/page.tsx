@@ -189,7 +189,7 @@ export default function NewMemberPage() {
                                         <PopoverContent className="w-auto p-0" align="start">
                                             <Calendar
                                                 mode="single"
-                                                captionLayout="dropdown-nav"
+                                                captionLayout="dropdown-buttons"
                                                 fromYear={1920}
                                                 toYear={new Date().getFullYear()}
                                                 selected={field.value}
@@ -314,7 +314,7 @@ export default function NewMemberPage() {
                                         <PopoverContent className="w-auto p-0" align="start">
                                             <Calendar
                                                 mode="single"
-                                                captionLayout="dropdown-nav"
+                                                captionLayout="dropdown-buttons"
                                                 fromYear={1920}
                                                 toYear={new Date().getFullYear()}
                                                 selected={field.value}

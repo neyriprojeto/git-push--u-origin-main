@@ -36,11 +36,20 @@ export default function LoginPage() {
       await signInWithEmailAndPassword(auth, email, password);
       router.push("/dashboard");
     } catch (error: any) {
-      console.error(error);
+      console.error("Firebase Auth Error:", error.code, error.message);
+      let description = "Verifique suas credenciais e tente novamente.";
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+        description = "E-mail ou senha incorretos. Por favor, verifique e tente novamente.";
+      } else if (error.code === 'auth/invalid-credential') {
+          description = "As credenciais fornecidas são inválidas.";
+      } else if (error.code === 'auth/configuration-not-found') {
+        description = "A configuração de autenticação não foi encontrada. Por favor, contate o suporte.";
+      }
+      
       toast({
         variant: "destructive",
         title: "Falha no Login",
-        description: error.message || "Verifique suas credenciais e tente novamente.",
+        description: description,
       });
     } finally {
       setIsLoading(false);

@@ -37,7 +37,7 @@ function Calendar({
         nav_button_previous: "absolute left-1",
         nav_button_next: "absolute right-1",
         table: "w-full border-collapse space-y-1",
-        head_row: "flex w-full",
+        head_row: "flex w-full justify-evenly",
         head_cell:
           "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem] text-center",
         row: "flex w-full mt-2",
@@ -61,7 +61,7 @@ function Calendar({
       formatters={{
         formatWeekdayName: (day) => {
            const dayInitial = ptBR.localize!.day(day.getDay(), { width: 'narrow' });
-           return dayInitial;
+           return dayInitial.toUpperCase();
         }
       }}
       components={{

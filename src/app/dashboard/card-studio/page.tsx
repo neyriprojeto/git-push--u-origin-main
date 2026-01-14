@@ -521,7 +521,9 @@ export default function CardStudioPage() {
                     </div>
                 )
             }
-            const objectFitStyle: 'cover' | 'contain' = id === 'Foto do Membro' ? 'cover' : 'contain';
+            const objectFitStyle: React.CSSProperties = {
+                objectFit: id === 'Foto do Membro' ? 'cover' : 'contain'
+            };
             return (
                  <div
                     style={style}
@@ -533,7 +535,7 @@ export default function CardStudioPage() {
                         src={el.src}
                         alt={id}
                         fill
-                        style={{ objectFit: objectFitStyle }}
+                        style={objectFitStyle}
                         className={cn({ 'rounded-md': id !== 'Assinatura'})}
                         draggable={false}
                     />

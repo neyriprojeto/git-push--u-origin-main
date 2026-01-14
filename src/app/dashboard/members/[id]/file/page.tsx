@@ -18,7 +18,7 @@ const DetailItem = ({ label, value, colSpan = 2, className }: { label: string; v
     return (
         <div className={cn(`grid grid-cols-1 sm:grid-cols-${colSpan} gap-x-2 py-1 border-b border-gray-300 break-inside-avoid items-center`, className)}>
             <span className="text-xs font-semibold text-gray-600 col-span-1">{label}:</span>
-            <span className="text-sm col-span-1 break-words", valueColSpan}>{value || 'Não informado'}</span>
+            <span className={cn("text-sm col-span-1 break-words", valueColSpan)}>{value || 'Não informado'}</span>
         </div>
     );
 };

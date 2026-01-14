@@ -205,7 +205,7 @@ export default function NewMemberPage() {
                                     </Button>
                                 </FormControl>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
+                                <PopoverContent className="w-auto p-0 max-w-[calc(100vw-1rem)] overflow-auto sm:max-w-md" align="start">
                                 <Calendar
                                     locale={ptBR}
                                     mode="single"
@@ -215,6 +215,7 @@ export default function NewMemberPage() {
                                     date > new Date() || date < new Date("1900-01-01")
                                     }
                                     initialFocus
+                                    captionLayout="dropdown"
                                 />
                                 </PopoverContent>
                             </Popover>
@@ -302,7 +303,7 @@ export default function NewMemberPage() {
                                     </Button>
                                 </FormControl>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
+                                <PopoverContent className="w-auto p-0 max-w-[calc(100vw-1rem)] overflow-auto sm:max-w-md" align="start">
                                 <Calendar
                                     locale={ptBR}
                                     mode="single"
@@ -310,6 +311,7 @@ export default function NewMemberPage() {
                                     onSelect={field.onChange}
                                     disabled={(date) => date > new Date()}
                                     initialFocus
+                                    captionLayout="dropdown"
                                 />
                                 </PopoverContent>
                             </Popover>
@@ -342,7 +344,7 @@ export default function NewMemberPage() {
                                     </Button>
                                 </FormControl>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
+                                <PopoverContent className="w-auto p-0 max-w-[calc(100vw-1rem)] overflow-auto sm:max-w-md" align="start">
                                 <Calendar
                                     locale={ptBR}
                                     mode="single"
@@ -350,6 +352,7 @@ export default function NewMemberPage() {
                                     onSelect={field.onChange}
                                     disabled={(date) => date > new Date()}
                                     initialFocus
+                                    captionLayout="dropdown"
                                 />
                                 </PopoverContent>
                             </Popover>

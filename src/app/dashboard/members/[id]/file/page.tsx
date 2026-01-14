@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { notFound } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { format } from 'date-fns';
@@ -65,8 +65,9 @@ const DetailItem = ({ label, value }: { label: string; value?: string | null | D
 };
 
 
-export default function MemberFilePage({ params }: { params: { id: string } }) {
-    const memberId = params.id;
+export default function MemberFilePage() {
+    const params = useParams();
+    const memberId = params.id as string;
     const [isFlipped, setIsFlipped] = useState(false);
     const firestore = useFirestore();
     const { user: authUser, isUserLoading } = useUser();

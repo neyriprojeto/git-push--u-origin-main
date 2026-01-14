@@ -2,7 +2,7 @@
 
 'use client';
 
-import { notFound, useRouter } from "next/navigation";
+import { notFound, useRouter, useParams } from "next/navigation";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -28,7 +28,7 @@ import { useState, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { useDoc, useFirestore, useMemoFirebase, useCollection, useUser } from "@/firebase";
-import { doc, collection } from "firebase/firestore";
+import { doc, collection, getDoc } from "firebase/firestore";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { posts as initialPosts, Post } from '@/data/posts';
 
@@ -85,12 +85,9 @@ const formatDate = (dateValue?: string | { seconds: number; nanoseconds: number 
 }
 
 
-export default function MemberProfilePage({
-  params,
-}: {
-  params: { id: string };
-}) {
-  const memberId = params.id;
+export default function MemberProfilePage() {
+  const params = useParams();
+  const memberId = params.id as string;
   const firestore = useFirestore();
   const { user: authUser, isUserLoading } = useUser();
   const router = useRouter();

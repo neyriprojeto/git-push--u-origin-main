@@ -1,13 +1,15 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { notFound } from 'next/navigation';
 import { members } from '@/data/members';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
 
 
 const DetailItem = ({ label, value }: { label: string; value?: string | null }) => {
@@ -23,13 +25,18 @@ const DetailItem = ({ label, value }: { label: string; value?: string | null }) 
 export default function MemberFilePage({ params }: { params: { id: string } }) {
     const member = members.find((m) => m.id === params.id);
     const [isFlipped, setIsFlipped] = useState(false);
+    const firestore = useFirestore();
+    
+    const churchInfoRef = useMemoFirebase(() => (firestore ? doc(firestore, 'churchInfo', 'main') : null), [firestore]);
+    const { data: churchInfo } = useDoc<{ fichaLogoUrl?: string }>(churchInfoRef);
     
     if (!member) {
         notFound();
     }
     
     const avatar = PlaceHolderImages.find((p) => p.id === member.avatar);
-    const churchLogo = PlaceHolderImages.find((p) => p.id === 'church-banner');
+    const defaultFichaLogo = PlaceHolderImages.find((p) => p.id === 'church-logo');
+    const fichaLogoUrl = churchInfo?.fichaLogoUrl || defaultFichaLogo?.imageUrl;
 
     return (
         <div className="w-full min-h-screen bg-secondary p-4 flex justify-center items-center font-serif">
@@ -57,8 +64,8 @@ export default function MemberFilePage({ params }: { params: { id: string } }) {
                                     <p className="text-[1.8vw] md:text-lg font-sans">Nº: {member.recordNumber}</p>
                                 </div>
                                 <div className="w-[12vw] h-[12vw] md:w-24 md:h-24 border border-gray-300 flex items-center justify-center shrink-0 bg-gray-100">
-                                    {churchLogo ? (
-                                        <Image src={churchLogo.imageUrl} alt="Logo" width={96} height={96} className="object-contain p-1" />
+                                    {fichaLogoUrl ? (
+                                        <Image src={fichaLogoUrl} alt="Logo da Ficha" width={96} height={96} className="object-contain p-1" />
                                     ) : (
                                         <span className="text-[1.2vw] md:text-xs text-gray-500">Logo</span>
                                     )}
@@ -123,7 +130,7 @@ export default function MemberFilePage({ params }: { params: { id: string } }) {
 
 
                                 {/* Footer com assinaturas */}
-                                <div className="flex justify-around mt-auto pt-[2vw] md:pt-12">
+                                <div className="flex justify-around mt-auto pt-4 md:pt-8">
                                     <div className="text-center w-1/2">
                                         <div className="border-t border-black mt-8 w-full max-w-xs mx-auto"></div>
                                         <p className="mt-2 text-[1.5vw] md:text-sm font-sans">Assinatura do Membro</p>

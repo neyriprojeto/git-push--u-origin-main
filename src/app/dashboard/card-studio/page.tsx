@@ -21,7 +21,7 @@ import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-cr
 import 'react-image-crop/dist/ReactCrop.css';
 import { uploadArquivo } from '@/lib/cloudinary';
 import { useToast } from '@/hooks/use-toast';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 
 
@@ -60,7 +60,7 @@ function centerAspectCrop(
   )
 }
 
-const churchLogoPlaceholder = PlaceHolderImages.find((p) => p.id === 'church-banner');
+const churchLogoPlaceholder = PlaceHolderImages.find((p) => p.id === 'church-logo');
 
 const defaultElements: CardElements = {
     // --- Frente ---
@@ -122,6 +122,7 @@ export default function CardStudioPage() {
         'Fundo (Frente)': useRef<HTMLInputElement>(null),
         'Fundo (Verso)': useRef<HTMLInputElement>(null),
         'Logo Igreja': useRef<HTMLInputElement>(null),
+        'Logo da Ficha': useRef<HTMLInputElement>(null),
         'Logo Convenção 1': useRef<HTMLInputElement>(null),
         'Logo Convenção 2': useRef<HTMLInputElement>(null),
         'Assinatura': useRef<HTMLInputElement>(null),
@@ -185,6 +186,7 @@ export default function CardStudioPage() {
                 updatedAt: new Date().toISOString(),
             };
             if (templateRef) {
+                // We don't save the fichaLogoUrl in the card template, just update it in churchInfo
                 await setDoc(templateRef, templateDataToSave);
                 toast({
                     title: 'Sucesso!',
@@ -256,7 +258,7 @@ export default function CardStudioPage() {
     const saveCroppedImage = async () => {
         const image = imgRef.current;
         const canvas = previewCanvasRef.current;
-        if (!image || !canvas || !completedCrop) {
+        if (!image || !canvas || !completedCrop || !firestore) {
           toast({
             variant: 'destructive',
             title: 'Erro de Corte',
@@ -317,6 +319,9 @@ export default function CardStudioPage() {
                     setCardStyles(prev => ({...prev, frontBackgroundImage: src}));
                 } else if (croppingId === 'Fundo (Verso)') {
                     setCardStyles(prev => ({...prev, backBackgroundImage: src}));
+                } else if (croppingId === 'Logo da Ficha') {
+                    const churchInfoRef = doc(firestore, 'churchInfo', 'main');
+                    await setDoc(churchInfoRef, { fichaLogoUrl: src }, { merge: true });
                 } else {
                     setElements(prev => ({
                         ...prev,
@@ -830,5 +835,3 @@ export default function CardStudioPage() {
     </>
   );
 }
-
-    

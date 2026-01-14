@@ -44,6 +44,57 @@
           "type": "string",
           "format": "date-time",
           "description": "The timestamp when the user was created."
+        },
+        "recordNumber": {
+            "type": "string",
+            "description": "The user's registration number."
+        },
+        "rg": {
+            "type": "string",
+            "description": "The user's RG."
+        },
+        "cpf": {
+            "type": "string",
+            "description": "The user's CPF."
+        },
+        "dataNascimento": {
+            "type": "string",
+            "format": "date",
+            "description": "The user's birth date."
+        },
+        "dataBatismo": {
+            "type": "string",
+            "format": "date",
+            "description": "The user's baptism date."
+        },
+        "dataMembro": {
+            "type": "string",
+            "format": "date",
+            "description": "The date the user became a member."
+        },
+        "cep": {
+            "type": "string",
+            "description": "The user's postal code."
+        },
+        "logradouro": {
+            "type": "string",
+            "description": "The user's street."
+        },
+        "numero": {
+            "type": "string",
+            "description": "The user's house number."
+        },
+        "bairro": {
+            "type": "string",
+            "description": "The user's neighborhood."
+        },
+        "cidade": {
+            "type": "string",
+            "description": "The user's city."
+        },
+        "estado": {
+            "type": "string",
+            "description": "The user's state."
         }
       },
       "required": [
@@ -52,7 +103,12 @@
         "igrejaId",
         "ativo",
         "criadoEm",
-        "tipo"
+        "tipo",
+        "recordNumber",
+        "rg",
+        "cpf",
+        "dataNascimento",
+        "cargo"
       ]
     },
     "igreja": {

@@ -13,7 +13,7 @@ import {
   SidebarGroupLabel,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { Home, MessageSquare, Users, UserCog, Settings, CreditCard, LayoutGrid, Radio, Share2, Mail, Youtube, Instagram, Globe } from "lucide-react";
+import { Home, MessageSquare, Users, UserCog, Settings, CreditCard, LayoutGrid, Radio, Share2, Mail, Youtube, Instagram, Globe, UserPlus } from "lucide-react";
 import { AppLogo } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 
@@ -81,6 +81,14 @@ export default function DashboardLayout({
                   <Link href="/dashboard/members">
                     <Users />
                     <span>Membros</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+               <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip={{ children: "Cadastrar Membro" }}>
+                  <Link href="/dashboard/members/new">
+                    <UserPlus />
+                    <span>Cadastrar Membro</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

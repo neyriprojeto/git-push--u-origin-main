@@ -15,6 +15,7 @@ export { FirebaseClientProvider } from './client-provider';
 export { useCollection } from './firestore/use-collection';
 export { useDoc } from './firestore/use-doc';
 export { useUser } from './auth/use-user';
+export { addMember } from './firestore/mutations';
 
 export type FirebaseInstances = {
   app: FirebaseApp;
@@ -30,5 +31,3 @@ export function initializeFirebase(): FirebaseInstances {
   const firestore = getFirestore(app);
   return { app, auth, firestore };
 }
-
-    

@@ -26,7 +26,6 @@ function Calendar({
         month: "space-y-4",
         caption: "flex justify-center pt-1 relative items-center",
         caption_label: "text-sm font-medium",
-        caption_dropdowns: "flex justify-center gap-1",
         nav: "space-x-1 flex items-center",
         nav_button: cn(
           buttonVariants({ variant: "outline" }),
@@ -55,12 +54,6 @@ function Calendar({
           "aria-selected:bg-accent aria-selected:text-accent-foreground",
         day_hidden: "invisible",
         ...classNames,
-      }}
-      formatters={{
-        formatWeekdayName: (day) => {
-           const dayInitial = ptBR.localize!.day(day.getDay(), { width: 'narrow' });
-           return dayInitial.toUpperCase();
-        }
       }}
       components={{
         IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" />,

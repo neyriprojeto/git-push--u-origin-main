@@ -31,6 +31,7 @@ type ElementStyle = {
     text?: string;
     fontWeight?: 'normal' | 'bold';
     src?: string; // Para imagens
+    textAlign?: 'left' | 'center' | 'right';
 };
 
 type CardElements = {
@@ -108,27 +109,27 @@ export default function CardStudioPage() {
 
     const [elements, setElements] = useState<CardElements>({
         // --- Frente ---
-        'Título 1': { position: { top: 5, left: 50 }, size: { fontSize: 20 }, text: 'ASSEMBLEIA DE DEUS', fontWeight: 'bold' },
-        'Título 2': { position: { top: 12, left: 50 }, size: { fontSize: 16 }, text: 'MINISTÉRIO KAIRÓS', fontWeight: 'bold' },
-        'Congregação': { position: { top: 18, left: 50 }, size: { fontSize: 14 }, text: 'SEDE', fontWeight: 'normal' },
-        'Endereço': { position: { top: 23, left: 50 }, size: { fontSize: 8 }, text: 'Rua Presidente Prudente, N°28\nEldorado, Diadema-SP' },
+        'Título 1': { position: { top: 5, left: 50 }, size: { fontSize: 20 }, text: 'ASSEMBLEIA DE DEUS', fontWeight: 'bold', textAlign: 'center' },
+        'Título 2': { position: { top: 12, left: 50 }, size: { fontSize: 16 }, text: 'MINISTÉRIO KAIRÓS', fontWeight: 'bold', textAlign: 'center' },
+        'Congregação': { position: { top: 18, left: 50 }, size: { fontSize: 14 }, text: 'SEDE', fontWeight: 'normal', textAlign: 'center' },
+        'Endereço': { position: { top: 23, left: 50 }, size: { fontSize: 8 }, text: 'Rua Presidente Prudente, N°28\nEldorado, Diadema-SP', textAlign: 'center' },
         'Foto do Membro': { position: { top: 40, left: 15 }, size: { width: 80, height: 100 }, src: avatarPlaceholder?.imageUrl },
-        'Nome': { position: { top: 60, left: 50 }, size: { fontSize: 11 }, text: `Nome: ${member.name}`, fontWeight: 'bold' },
-        'RG': { position: { top: 68, left: 50 }, size: { fontSize: 10 }, text: `RG: ${member.rg}` },
-        'CPF': { position: { top: 74, left: 50 }, size: { fontSize: 10 }, text: `CPF: ${member.cpf}` },
-        'Cargo': { position: { top: 80, left: 50 }, size: { fontSize: 10 }, text: `Cargo: ${member.role}` },
-        'Data de Nascimento': { position: { top: 85, left: 30 }, size: { fontSize: 10 }, text: `Nasc: ${new Date(member.birthDate).toLocaleDateString('pt-BR')}` },
-        'Data de Batismo': { position: { top: 85, left: 65 }, size: { fontSize: 10 }, text: `Batismo: ${new Date().toLocaleDateString('pt-BR')}` },
+        'Nome': { position: { top: 60, left: 50 }, size: { fontSize: 11 }, text: `Nome: ${member.name}`, fontWeight: 'bold', textAlign: 'center' },
+        'RG': { position: { top: 68, left: 50 }, size: { fontSize: 10 }, text: `RG: ${member.rg}`, textAlign: 'center' },
+        'CPF': { position: { top: 74, left: 50 }, size: { fontSize: 10 }, text: `CPF: ${member.cpf}`, textAlign: 'center' },
+        'Cargo': { position: { top: 80, left: 50 }, size: { fontSize: 10 }, text: `Cargo: ${member.role}`, textAlign: 'center' },
+        'Data de Nascimento': { position: { top: 85, left: 10 }, size: { fontSize: 10 }, text: `Nasc: ${new Date(member.birthDate).toLocaleDateString('pt-BR')}`, textAlign: 'left' },
+        'Data de Batismo': { position: { top: 85, left: 90 }, size: { fontSize: 10 }, text: `Batismo: ${new Date().toLocaleDateString('pt-BR')}`, textAlign: 'right' },
         'Logo Igreja': { position: { top: 40, left: 80 }, size: { width: 60, height: 60 }, src: '' },
         
         // --- Verso ---
-        'Logo Convenção 1': { position: { top: 15, left: 25 }, size: { width: 60, height: 60 }, src: '' },
-        'Logo Convenção 2': { position: { top: 15, left: 75 }, size: { width: 60, height: 60 }, src: '' },
+        'Logo Convenção 1': { position: { top: 15, left: 25 }, size: { width: 70, height: 70 }, src: '' },
+        'Logo Convenção 2': { position: { top: 15, left: 75 }, size: { width: 70, height: 70 }, src: '' },
         'QR Code': { position: { top: 45, left: 25 }, size: { width: 80, height: 80 }, src: qrCodePlaceholder?.imageUrl },
-        'Assinatura': { position: { top: 70, left: 65 }, size: { width: 120, height: 40 }, src: '' },
-        'Assinatura Pastor': { position: { top: 82, left: 50 }, size: { fontSize: 10 }, text: 'Assinatura Pastor Presidente' },
-        'Validade': { position: { top: 88, left: 50 }, size: { fontSize: 10 }, text: 'Validade: 01/01/2026', fontWeight: 'bold' },
-        'Membro Desde': { position: { top: 93, left: 50 }, size: { fontSize: 10 }, text: `Membro desde: ${new Date(member.memberSince).toLocaleDateString('pt-BR')}`, fontWeight: 'bold' },
+        'Assinatura': { position: { top: 70, left: 65 }, size: { width: 140, height: 50 }, src: '' },
+        'Assinatura Pastor': { position: { top: 82, left: 50 }, size: { fontSize: 10 }, text: 'Assinatura Pastor Presidente', textAlign: 'center' },
+        'Validade': { position: { top: 88, left: 50 }, size: { fontSize: 10 }, text: 'Validade: 01/01/2026', fontWeight: 'bold', textAlign: 'center' },
+        'Membro Desde': { position: { top: 93, left: 50 }, size: { fontSize: 10 }, text: `Membro desde: ${new Date(member.memberSince).toLocaleDateString('pt-BR')}`, fontWeight: 'bold', textAlign: 'center' },
     });
     
     const [selectedElement, setSelectedElement] = useState<string | null>(null);
@@ -448,20 +449,31 @@ export default function CardStudioPage() {
             position: 'absolute',
             top: `${el.position.top}%`,
             left: `${el.position.left}%`,
-            transform: 'translateX(-50%)',
             userSelect: 'none', // Prevent text selection while dragging
         };
+
+        if (el.textAlign === 'center') {
+             style.transform = 'translateX(-50%)';
+        } else if (el.textAlign === 'right') {
+            style.transform = 'translateX(-100%)';
+        } else {
+            style.transform = 'translateX(0)';
+        }
         
         if (isText) {
             style.fontSize = el.size.fontSize ? `${el.size.fontSize}px` : undefined;
             style.color = color;
             style.fontWeight = el.fontWeight;
-            style.textAlign = 'center';
-            if (id.includes('Título')) {
+            style.textAlign = el.textAlign;
+            style.whiteSpace = 'pre-wrap';
+
+            if (id.includes('Título') || id === 'Nome') {
                 style.whiteSpace = 'nowrap';
             }
-            if (id === 'Endereço' || id.includes('Título')) {
-                style.whiteSpace = id === 'Endereço' ? 'pre-wrap' : 'nowrap';
+             if (id === 'Nome') {
+                style.maxWidth = '50%';
+                style.overflow = 'hidden';
+                style.textOverflow = 'ellipsis';
             }
         } else { // isImage
              style.width = el.size.width ? `${el.size.width}px` : 'auto';
@@ -496,7 +508,7 @@ export default function CardStudioPage() {
                     <Image
                         src={el.src}
                         alt={id}
-                        layout="fill"
+                        fill
                         objectFit={id === 'Foto do Membro' ? "cover" : "contain"}
                         className={cn({ 'rounded-md': id !== 'Assinatura'})}
                         draggable={false}

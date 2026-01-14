@@ -11,12 +11,18 @@ import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { format } from 'date-fns';
 
-const DetailItem = ({ label, value, className }: { label: string; value?: string | null, className?: string }) => (
-    <div className={cn("border-b border-gray-300 py-1 break-inside-avoid", className)}>
-        <span className="text-xs font-semibold text-gray-600">{label}:</span>
-        <span className="text-sm ml-2">{value || 'Não informado'}</span>
-    </div>
-);
+const DetailItem = ({ label, value, colSpan = 2, className }: { label: string; value?: string | null, colSpan?: number, className?: string }) => {
+    // Determine column span for the value based on the total span.
+    const valueColSpan = colSpan > 1 ? `sm:col-span-${colSpan - 1}` : `sm:col-span-1`;
+
+    return (
+        <div className={cn(`grid grid-cols-1 sm:grid-cols-${colSpan} gap-x-2 py-1 border-b border-gray-300 break-inside-avoid items-center`, className)}>
+            <span className="text-xs font-semibold text-gray-600 col-span-1">{label}:</span>
+            <span className="text-sm col-span-1 break-words", valueColSpan}>{value || 'Não informado'}</span>
+        </div>
+    );
+};
+
 
 export default function MemberFilePage({ params }: { params: { id: string } }) {
     const member = members.find((m) => m.id === params.id);
@@ -60,35 +66,35 @@ export default function MemberFilePage({ params }: { params: { id: string } }) {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 text-sm">
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 text-sm">
                                 <div className="flex flex-col gap-1">
-                                    <DetailItem label="Nome" value={member.name} />
-                                    <DetailItem label="Naturalidade" value={member.naturalness} />
-                                    <DetailItem label="Nacionalidade" value={member.nationality} />
-                                    <div className="flex gap-4">
-                                        <DetailItem label="Data Nasc" value={member.birthDate ? format(new Date(member.birthDate), 'dd/MM/yyyy') : ''} className="flex-1" />
-                                        <DetailItem label="Gênero" value={member.gender} className="flex-1"/>
+                                    <DetailItem label="Nome" value={member.name} colSpan={4} />
+                                    <DetailItem label="Naturalidade" value={member.naturalness} colSpan={4}/>
+                                    <DetailItem label="Nacionalidade" value={member.nationality} colSpan={4}/>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+                                        <DetailItem label="Data Nasc" value={member.birthDate ? format(new Date(member.birthDate), 'dd/MM/yyyy') : ''} colSpan={2} />
+                                        <DetailItem label="Gênero" value={member.gender} colSpan={2}/>
                                     </div>
-                                    <DetailItem label="Est. Civil" value={member.maritalStatus} />
-                                    <div className="flex gap-4">
-                                        <DetailItem label="RG" value={member.rg} className="flex-1"/>
-                                        <DetailItem label="CPF" value={member.cpf} className="flex-1"/>
+                                    <DetailItem label="Est. Civil" value={member.maritalStatus} colSpan={4}/>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+                                        <DetailItem label="RG" value={member.rg} colSpan={2}/>
+                                        <DetailItem label="CPF" value={member.cpf} colSpan={2}/>
                                     </div>
+                                    <DetailItem label="E-mail" value={member.email} colSpan={4}/>
                                 </div>
                                 <div className="flex flex-col gap-1">
-                                    <DetailItem label="E-mail" value={member.email} />
-                                     <div className="flex gap-4">
-                                        <DetailItem label="Tel" value={member.phone} className="flex-1"/>
-                                        <DetailItem label="Whatsapp" value={member.whatsapp} className="flex-1"/>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+                                        <DetailItem label="Tel" value={member.phone} colSpan={2}/>
+                                        <DetailItem label="Whatsapp" value={member.whatsapp} colSpan={2}/>
                                     </div>
-                                    <DetailItem label="End" value={`${member.address}, ${member.addressNumber}`} />
-                                    <div className="flex gap-4">
-                                        <DetailItem label="Bairro" value={member.addressDistrict} className="flex-1"/>
-                                        <DetailItem label="CEP" value={member.addressCep} className="flex-1"/>
+                                    <DetailItem label="End" value={`${member.address}, ${member.addressNumber}`} colSpan={4}/>
+                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+                                        <DetailItem label="Bairro" value={member.addressDistrict} colSpan={2}/>
+                                        <DetailItem label="CEP" value={member.addressCep} colSpan={2}/>
                                     </div>
-                                    <div className="flex gap-4">
-                                        <DetailItem label="Cidade" value={member.addressCity} className="flex-1"/>
-                                        <DetailItem label="Estado" value={member.addressState} className="flex-1"/>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+                                        <DetailItem label="Cidade" value={member.addressCity} colSpan={2}/>
+                                        <DetailItem label="Estado" value={member.addressState} colSpan={2}/>
                                     </div>
                                 </div>
                             </div>
@@ -100,13 +106,13 @@ export default function MemberFilePage({ params }: { params: { id: string } }) {
                             <div>
                                 <h2 className="text-xl font-bold text-center mb-6">Dados Eclesiásticos</h2>
                                 <div className="space-y-3">
-                                     <div className="flex flex-col sm:flex-row gap-4">
-                                        <DetailItem label="Data de Batismo" value={member.baptismDate ? format(new Date(member.baptismDate), 'dd/MM/yyyy') : ''} className="flex-1"/>
-                                        <DetailItem label="Data de Membresia" value={member.memberSince ? format(new Date(member.memberSince), 'dd/MM/yyyy') : ''} className="flex-1"/>
+                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+                                        <DetailItem label="Data de Batismo" value={member.baptismDate ? format(new Date(member.baptismDate), 'dd/MM/yyyy') : ''} colSpan={2}/>
+                                        <DetailItem label="Data de Membresia" value={member.memberSince ? format(new Date(member.memberSince), 'dd/MM/yyyy') : ''} colSpan={2}/>
                                     </div>
-                                    <DetailItem label="Congregação" value={member.congregation} />
-                                    <DetailItem label="Igreja de Origem" value={member.originChurch} />
-                                    <DetailItem label="Pastor Responsável" value={member.responsiblePastor} />
+                                    <DetailItem label="Congregação" value={member.congregation} colSpan={4}/>
+                                    <DetailItem label="Igreja de Origem" value={member.originChurch} colSpan={4}/>
+                                    <DetailItem label="Pastor Responsável" value={member.responsiblePastor} colSpan={4}/>
                                 </div>
 
                                 <div className="mt-6">

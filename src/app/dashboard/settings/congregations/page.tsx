@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -7,7 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore, useCollection, addCongregacao, deleteCongregacao } from '@/firebase';
+import { useFirestore, useCollection } from '@/firebase';
+import { addCongregacao, deleteCongregacao } from '@/firebase/firestore/mutations';
 import { Trash2 } from 'lucide-react';
 import {
   AlertDialog,
@@ -109,11 +109,11 @@ export default function CongregationsPage() {
           <CardContent>
             {loading ? (
               <p>Carregando congregações...</p>
-            ) : congregacoes.length === 0 ? (
+            ) : congregacoes && congregacoes.length === 0 ? (
                 <p>Nenhuma congregação cadastrada.</p>
             ) : (
               <ul className="space-y-2">
-                {congregacoes.map((c) => (
+                {congregacoes && congregacoes.map((c) => (
                   <li key={c.id} className="flex items-center justify-between p-2 border rounded-md">
                     <span>{c.nome}</span>
                     <AlertDialog>

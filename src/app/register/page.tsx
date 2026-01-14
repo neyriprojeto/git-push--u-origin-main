@@ -15,7 +15,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { addMember, useCollection, useFirestore } from '@/firebase';
+import { addMember } from '@/firebase/firestore/mutations';
+import { useCollection, useFirestore } from '@/firebase';
 import { useState } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon, CheckCircle } from 'lucide-react';
@@ -290,7 +291,7 @@ export default function RegisterPage() {
                                     </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                        {congregacoes.map((c) => (
+                                        {congregacoes && congregacoes.map((c) => (
                                             <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>
                                         ))}
                                     </SelectContent>

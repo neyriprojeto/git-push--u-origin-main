@@ -10,16 +10,48 @@ import { cn } from '@/lib/utils';
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Loader2 } from 'lucide-react';
-import { Member } from '@/data/members';
+
+// Define a interface para o objeto de membro para garantir a tipagem
+interface Member {
+    id: string;
+    name: string;
+    avatar?: string;
+    recordNumber?: string;
+    birthDate?: string | Date;
+    naturalness?: string;
+    nationality?: string;
+    maritalStatus?: string;
+    gender?: string;
+    rg?: string;
+    cpf?: string;
+    email?: string;
+    phone?: string;
+    whatsapp?: string;
+    address?: string;
+    addressNumber?: string;
+    addressDistrict?: string;
+    addressCity?: string;
+    addressCep?: string;
+    baptismDate?: string | Date;
+    memberSince?: string | Date;
+    congregation?: string;
+    originChurch?: string;
+    responsiblePastor?: string;
+}
 
 
 const DetailItem = ({ label, value }: { label: string; value?: string | null | Date }) => {
     let displayValue: string | null = 'Não informado';
 
-    if (value instanceof Date) {
-        displayValue = format(value, 'dd/MM/yyyy');
-    } else if (value) {
-        displayValue = value;
+    if (value) {
+        if (value instanceof Date) {
+            displayValue = format(value, 'dd/MM/yyyy');
+        } else if (typeof value === 'string' && value.match(/^\d{4}-\d{2}-\d{2}/)) {
+            // Trata strings que são datas (ex: '1988-04-15')
+            displayValue = format(new Date(value), 'dd/MM/yyyy');
+        } else {
+            displayValue = value;
+        }
     }
 
     return (
@@ -169,5 +201,3 @@ export default function MemberFilePage({ params }: { params: { id: string } }) {
         </div>
     );
 }
-
-    

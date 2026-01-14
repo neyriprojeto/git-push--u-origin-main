@@ -18,10 +18,6 @@ const DetailItem = ({ label, value, className }: { label: string; value?: string
     </div>
 );
 
-const DetailItemGroup = ({ children }: { children: React.ReactNode }) => (
-    <div className="flex flex-col sm:flex-row sm:gap-x-4">{children}</div>
-);
-
 export default function MemberFilePage({ params }: { params: { id: string } }) {
     const member = members.find((m) => m.id === params.id);
     const [isFlipped, setIsFlipped] = useState(false);
@@ -40,10 +36,10 @@ export default function MemberFilePage({ params }: { params: { id: string } }) {
             </p>
 
             <div 
-                className="w-full max-w-2xl flip-card-container cursor-pointer"
+                className="w-full max-w-4xl flip-card-container cursor-pointer"
                 onClick={() => setIsFlipped(!isFlipped)}
             >
-                <div className={cn("flip-card w-full aspect-[1/1.41]", { 'flipped': isFlipped })}>
+                <div className={cn("flip-card w-full aspect-[1.41/1]", { 'flipped': isFlipped })}>
                     {/* Front Side */}
                     <div className="flip-card-front">
                         <Card className="h-full w-full p-4 md:p-6 flex flex-col">
@@ -64,35 +60,37 @@ export default function MemberFilePage({ params }: { params: { id: string } }) {
                                 </div>
                             </div>
 
-                            <div className="space-y-2 text-sm">
-                                <DetailItem label="Nome" value={member.name} />
-                                <DetailItemGroup>
-                                    <DetailItem label="Naturalidade" value={member.naturalness} className="flex-1" />
-                                    <DetailItem label="Nacionalidade" value={member.nationality} className="flex-1" />
-                                </DetailItemGroup>
-                                <DetailItemGroup>
-                                    <DetailItem label="Data Nasc" value={member.birthDate ? format(new Date(member.birthDate), 'dd/MM/yyyy') : ''} className="flex-1" />
-                                    <DetailItem label="Gênero" value={member.gender} className="flex-1"/>
-                                    <DetailItem label="Est. Civil" value={member.maritalStatus} className="flex-1"/>
-                                </DetailItemGroup>
-                                <DetailItemGroup>
-                                    <DetailItem label="RG" value={member.rg} className="flex-1"/>
-                                    <DetailItem label="CPF" value={member.cpf} className="flex-1"/>
-                                </DetailItemGroup>
-                                <DetailItem label="E-mail" value={member.email} />
-                                 <DetailItemGroup>
-                                    <DetailItem label="Tel" value={member.phone} className="flex-1"/>
-                                    <DetailItem label="Whatsapp" value={member.whatsapp} className="flex-1"/>
-                                </DetailItemGroup>
-                                <DetailItem label="End" value={`${member.address}, ${member.addressNumber}`} />
-                                 <DetailItemGroup>
-                                    <DetailItem label="Bairro" value={member.addressDistrict} className="flex-1"/>
-                                    <DetailItem label="CEP" value={member.addressCep} className="flex-1"/>
-                                </DetailItemGroup>
-                                 <DetailItemGroup>
-                                    <DetailItem label="Cidade" value={member.addressCity} className="flex-1"/>
-                                    <DetailItem label="Estado" value={member.addressState} className="flex-1"/>
-                                </DetailItemGroup>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 text-sm">
+                                <div className="flex flex-col gap-1">
+                                    <DetailItem label="Nome" value={member.name} />
+                                    <DetailItem label="Naturalidade" value={member.naturalness} />
+                                    <DetailItem label="Nacionalidade" value={member.nationality} />
+                                    <div className="flex gap-4">
+                                        <DetailItem label="Data Nasc" value={member.birthDate ? format(new Date(member.birthDate), 'dd/MM/yyyy') : ''} className="flex-1" />
+                                        <DetailItem label="Gênero" value={member.gender} className="flex-1"/>
+                                    </div>
+                                    <DetailItem label="Est. Civil" value={member.maritalStatus} />
+                                    <div className="flex gap-4">
+                                        <DetailItem label="RG" value={member.rg} className="flex-1"/>
+                                        <DetailItem label="CPF" value={member.cpf} className="flex-1"/>
+                                    </div>
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                    <DetailItem label="E-mail" value={member.email} />
+                                     <div className="flex gap-4">
+                                        <DetailItem label="Tel" value={member.phone} className="flex-1"/>
+                                        <DetailItem label="Whatsapp" value={member.whatsapp} className="flex-1"/>
+                                    </div>
+                                    <DetailItem label="End" value={`${member.address}, ${member.addressNumber}`} />
+                                    <div className="flex gap-4">
+                                        <DetailItem label="Bairro" value={member.addressDistrict} className="flex-1"/>
+                                        <DetailItem label="CEP" value={member.addressCep} className="flex-1"/>
+                                    </div>
+                                    <div className="flex gap-4">
+                                        <DetailItem label="Cidade" value={member.addressCity} className="flex-1"/>
+                                        <DetailItem label="Estado" value={member.addressState} className="flex-1"/>
+                                    </div>
+                                </div>
                             </div>
                         </Card>
                     </div>
@@ -102,10 +100,10 @@ export default function MemberFilePage({ params }: { params: { id: string } }) {
                             <div>
                                 <h2 className="text-xl font-bold text-center mb-6">Dados Eclesiásticos</h2>
                                 <div className="space-y-3">
-                                     <DetailItemGroup>
+                                     <div className="flex flex-col sm:flex-row gap-4">
                                         <DetailItem label="Data de Batismo" value={member.baptismDate ? format(new Date(member.baptismDate), 'dd/MM/yyyy') : ''} className="flex-1"/>
                                         <DetailItem label="Data de Membresia" value={member.memberSince ? format(new Date(member.memberSince), 'dd/MM/yyyy') : ''} className="flex-1"/>
-                                    </DetailItemGroup>
+                                    </div>
                                     <DetailItem label="Congregação" value={member.congregation} />
                                     <DetailItem label="Igreja de Origem" value={member.originChurch} />
                                     <DetailItem label="Pastor Responsável" value={member.responsiblePastor} />
@@ -113,7 +111,7 @@ export default function MemberFilePage({ params }: { params: { id: string } }) {
 
                                 <div className="mt-6">
                                      <h3 className="text-lg font-bold text-center mb-2">Observações</h3>
-                                     <div className="h-32 border border-gray-300 rounded-md p-2 text-sm bg-gray-50 overflow-y-auto">
+                                     <div className="h-24 border border-gray-300 rounded-md p-2 text-sm bg-gray-50 overflow-y-auto">
                                          {member.observations || <span className='text-gray-400'>Nenhuma observação.</span>}
                                      </div>
                                 </div>

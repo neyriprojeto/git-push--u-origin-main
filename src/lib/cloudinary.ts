@@ -1,13 +1,19 @@
-// Substitua 'SEU_CLOUD_NAME' pelo seu Cloud Name real do Cloudinary.
-const CLOUD_NAME = "dar0zviw2"; 
-const UPLOAD_PRESET = "public_upload";
+// Configure seu Cloud Name e Upload Preset do Cloudinary.
+const CLOUD_NAME = "dar0zviw2"; // Substitua por seu Cloud Name
+const UPLOAD_PRESET = "public_upload"; // Substitua por seu Upload Preset
 
 /**
- * Envia um arquivo para o Cloudinary e retorna a URL segura.
+ * Valida a configuração do Cloudinary e envia um arquivo, retornando a URL segura.
  * @param file O arquivo a ser enviado.
  * @returns A URL segura do arquivo no Cloudinary.
  */
 export async function uploadArquivo(file: File): Promise<string> {
+    if (!CLOUD_NAME || !UPLOAD_PRESET) {
+        const errorMessage = "A configuração do Cloudinary (CLOUD_NAME ou UPLOAD_PRESET) está ausente. Verifique o arquivo src/lib/cloudinary.ts.";
+        console.error(errorMessage);
+        throw new Error(errorMessage);
+    }
+
     const formData = new FormData();
     formData.append("file", file);
     formData.append("upload_preset", UPLOAD_PRESET);

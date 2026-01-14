@@ -334,9 +334,13 @@ export default function CardStudioPage() {
                 setImageToCrop('');
                 setCroppingId('');
                 setCurrentFile(null);
-            } catch (error) {
+            } catch (error: any) {
                 console.error(error);
-                toast({ variant: 'destructive', title: 'Erro de Upload', description: 'Não foi possível enviar a imagem. Verifique seu `Cloud Name` e `Upload Preset` no Cloudinary.' });
+                toast({ 
+                    variant: 'destructive', 
+                    title: 'Erro de Upload', 
+                    description: `Não foi possível enviar a imagem. Verifique se o 'Cloud Name' e 'Upload Preset' estão configurados corretamente em src/lib/cloudinary.ts. Erro: ${error.message}`
+                });
             } finally {
                 setIsUploading(false);
             }
@@ -818,6 +822,7 @@ export default function CardStudioPage() {
               <DialogFooter>
                   <Button variant="outline" onClick={() => setIsCropping(false)}>Cancelar</Button>
                   <Button onClick={saveCroppedImage} disabled={isUploading}>
+                    {isUploading ? <Loader2 className="animate-spin mr-2"/> : null}
                     {isUploading ? 'Salvando...' : 'Salvar Imagem'}
                   </Button>
               </DialogFooter>

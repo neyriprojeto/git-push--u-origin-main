@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { use, useState } from 'react';
@@ -14,8 +13,8 @@ import { cn } from '@/lib/utils';
 const DetailItem = ({ label, value, className }: { label: string; value?: string | null, className?: string }) => {
     return (
         <div className={cn("flex items-end border-b border-dotted border-gray-400 pb-1", className)}>
-            <span className="text-[1.5vw] md:text-[0.9vw] lg:text-[0.8rem] font-bold whitespace-nowrap mr-2">{label}:</span>
-            <span className="text-[1.5vw] md:text-[0.9vw] lg:text-[0.8rem] break-words">{value || 'Não informado'}</span>
+            <span className="text-xs font-bold whitespace-nowrap mr-2">{label}:</span>
+            <span className="text-xs break-words">{value || 'Não informado'}</span>
             <span className="flex-grow"></span>
         </div>
     );
@@ -43,31 +42,31 @@ export default function MemberFilePage({ params }: { params: { id: string } }) {
                     <div className={cn("relative w-full h-full transition-transform duration-700", { '[transform:rotateY(180deg)]': isFlipped })} style={{ transformStyle: 'preserve-3d' }}>
                         
                         {/* Container da Ficha - Frente */}
-                        <div className="absolute w-full h-full bg-white shadow-lg p-[2vw] md:p-6 lg:p-8 flex flex-col" style={{ backfaceVisibility: 'hidden' }}>
+                        <div className="absolute w-full h-full bg-white shadow-lg p-8 flex flex-col" style={{ backfaceVisibility: 'hidden' }}>
                             {/* Header */}
-                            <div className="flex justify-between items-start pb-[1.5vw] md:pb-4 border-b border-black gap-4">
-                                <div className="w-[12vw] h-[15vw] md:w-24 md:h-32 border border-gray-300 flex items-center justify-center shrink-0 bg-gray-100">
+                            <div className="flex justify-between items-start pb-4 border-b border-black gap-4">
+                                <div className="w-24 h-32 border border-gray-300 flex items-center justify-center shrink-0 bg-gray-100">
                                     {avatar ? (
                                         <Image src={avatar.imageUrl} alt={member.name} width={96} height={128} className="object-cover w-full h-full" />
                                     ) : (
-                                        <span className="text-[1.5vw] md:text-xs text-gray-400 text-center">Foto 3x4</span>
+                                        <span className="text-xs text-gray-400 text-center">Foto 3x4</span>
                                     )}
                                 </div>
                                 <div className="text-center flex-grow">
-                                    <h1 className="text-[3vw] sm:text-2xl md:text-4xl font-bold">Ficha de Membro</h1>
-                                    <p className="text-[2vw] sm:text-base md:text-lg font-sans">Nº: {member.recordNumber}</p>
+                                    <h1 className="text-4xl font-bold">Ficha de Membro</h1>
+                                    <p className="text-lg font-sans">Nº: {member.recordNumber}</p>
                                 </div>
-                                <div className="w-[12vw] h-[12vw] md:w-24 md:h-24 border border-gray-300 flex items-center justify-center shrink-0 bg-gray-100">
+                                <div className="w-24 h-24 border border-gray-300 flex items-center justify-center shrink-0 bg-gray-100">
                                     {churchLogo ? (
                                         <Image src={churchLogo.imageUrl} alt="Logo" width={96} height={96} className="object-contain p-1" />
                                     ) : (
-                                        <span className="text-[1.5vw] md:text-xs text-gray-500">Logo</span>
+                                        <span className="text-xs text-gray-500">Logo</span>
                                     )}
                                 </div>
                             </div>
 
                             {/* Content */}
-                            <div className="flex-grow pt-[2vw] md:pt-6 grid grid-cols-12 gap-x-4 md:gap-x-8 gap-y-1 md:gap-y-4 font-sans">
+                            <div className="flex-grow pt-6 grid grid-cols-12 gap-x-8 gap-y-4 font-sans">
                                 <div className="col-span-12"><DetailItem label="Nome" value={member.name} /></div>
 
                                 <div className="col-span-7"><DetailItem label="Naturalidade" value={member.naturalness} /></div>
@@ -97,14 +96,14 @@ export default function MemberFilePage({ params }: { params: { id: string } }) {
                         </div>
 
                         {/* Container da Ficha - Verso */}
-                        <div className="absolute w-full h-full bg-white shadow-lg p-[2vw] md:p-6 lg:p-8 flex flex-col" style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
+                        <div className="absolute w-full h-full bg-white shadow-lg p-8 flex flex-col" style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
                             {/* Header */}
-                            <div className="text-center pb-[1.5vw] md:pb-4 border-b border-black">
-                                <h1 className="text-[3vw] sm:text-2xl md:text-4xl font-bold">Dados Eclesiásticos</h1>
+                            <div className="text-center pb-4 border-b border-black">
+                                <h1 className="text-4xl font-bold">Dados Eclesiásticos</h1>
                             </div>
 
                             {/* Content */}
-                            <div className="flex-grow pt-[2vw] md:pt-6 grid grid-cols-12 gap-x-4 md:gap-x-8 gap-y-1 md:gap-y-4 font-sans">
+                            <div className="flex-grow pt-6 grid grid-cols-12 gap-x-8 gap-y-4 font-sans">
                                 <div className="col-span-6"><DetailItem label="Data de Batismo" value={member.baptismDate ? format(new Date(member.baptismDate), 'dd/MM/yyyy') : ''} /></div>
                                 <div className="col-span-6"><DetailItem label="Data de Membresia" value={member.memberSince ? format(new Date(member.memberSince), 'dd/MM/yyyy') : ''} /></div>
                                 
@@ -113,9 +112,9 @@ export default function MemberFilePage({ params }: { params: { id: string } }) {
                                 <div className="col-span-12"><DetailItem label="Igreja de Origem" value={member.originChurch} /></div>
                                 <div className="col-span-12"><DetailItem label="Pastor Responsável" value={member.responsiblePastor} /></div>
                                 
-                                <div className="col-span-12 pt-4 md:pt-8">
-                                    <h2 className="text-[2.2vw] sm:text-lg md:text-xl font-bold text-center mb-4 font-serif">Observações</h2>
-                                    <div className="space-y-4 md:space-y-6 mt-4">
+                                <div className="col-span-12 pt-8">
+                                    <h2 className="text-xl font-bold text-center mb-4 font-serif">Observações</h2>
+                                    <div className="space-y-6 mt-4">
                                         <div className="border-b border-dotted border-gray-400"></div>
                                         <div className="border-b border-dotted border-gray-400"></div>
                                         <div className="border-b border-dotted border-gray-400"></div>
@@ -125,14 +124,14 @@ export default function MemberFilePage({ params }: { params: { id: string } }) {
 
 
                             {/* Footer com assinaturas */}
-                            <div className="flex justify-around pt-8 sm:pt-12 mt-auto">
+                            <div className="flex justify-around pt-12 mt-auto">
                                 <div className="text-center w-1/2">
                                     <div className="border-t border-black mt-8 w-full max-w-xs mx-auto"></div>
-                                    <p className="mt-2 text-[1.5vw] md:text-xs sm:text-sm font-sans">Assinatura do Membro</p>
+                                    <p className="mt-2 text-sm font-sans">Assinatura do Membro</p>
                                 </div>
                                 <div className="text-center w-1/2">
                                     <div className="border-t border-black mt-8 w-full max-w-xs mx-auto"></div>
-                                    <p className="mt-2 text-[1.5vw] md:text-xs sm:text-sm font-sans">Assinatura do Pastor</p>
+                                    <p className="mt-2 text-sm font-sans">Assinatura do Pastor</p>
                                 </div>
                             </div>
                         </div>
@@ -143,3 +142,5 @@ export default function MemberFilePage({ params }: { params: { id: string } }) {
         </div>
     );
 }
+
+    

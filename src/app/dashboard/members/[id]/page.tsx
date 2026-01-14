@@ -2,7 +2,7 @@
 
 'use client';
 
-import { notFound } from "next/navigation";
+import { notFound, useRouter } from "next/navigation";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -11,6 +11,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
@@ -21,13 +22,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { AppLogo } from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
-import { User, CreditCard, FileText, MessageSquare, BookOpen, RefreshCw, Loader2 } from "lucide-react";
+import { User, CreditCard, FileText, MessageSquare, BookOpen, RefreshCw, Loader2, LayoutGrid } from "lucide-react";
 import { bibleVerses } from "@/data/bible-verses";
 import { useState, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { useDoc, useFirestore, useMemoFirebase } from "@/firebase";
-import { doc } from "firebase/firestore";
+import { useDoc, useFirestore, useMemoFirebase, useCollection, useUser } from "@/firebase";
+import { doc, collection } from "firebase/firestore";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { posts as initialPosts, Post } from '@/data/posts';
+
 
 type Verse = {
   book: string;
@@ -59,6 +63,11 @@ interface Member {
     congregation?: string;
 }
 
+type Congregacao = {
+    id: string;
+    nome: string;
+}
+
 
 const formatDate = (dateValue?: string | { seconds: number; nanoseconds: number }) => {
     if (!dateValue) return 'Não informado';
@@ -83,12 +92,43 @@ export default function MemberProfilePage({
 }) {
   const memberId = params.id;
   const firestore = useFirestore();
+  const { user: authUser, isUserLoading } = useUser();
+  const router = useRouter();
+
+  // Redirect if a non-owner member tries to access another member's page
+  useEffect(() => {
+    if (!isUserLoading && authUser && authUser.uid !== memberId) {
+      // Fetch the current user's role
+      const checkUserRole = async () => {
+        if (firestore) {
+          const userDocRef = doc(firestore, 'users', authUser.uid);
+          const userDocSnap = await getDoc(userDocRef);
+          if (userDocSnap.exists()) {
+            const userData = userDocSnap.data();
+            if (userData.cargo === 'Membro') {
+              router.push(`/dashboard/members/${authUser.uid}`);
+            }
+          }
+        }
+      };
+      checkUserRole();
+    }
+  }, [isUserLoading, authUser, memberId, firestore, router]);
+
 
   const memberRef = useMemoFirebase(() => (firestore ? doc(firestore, 'users', memberId) : null), [firestore, memberId]);
   const { data: member, isLoading: memberLoading } = useDoc<Member>(memberRef);
+  
+  const congregacoesCollection = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'congregacoes') : null),
+    [firestore]
+  );
+  const { data: congregacoes, isLoading: loadingCongregacoes } = useCollection<Congregacao>(congregacoesCollection);
 
   const [verse, setVerse] = useState<Verse | null>(null);
   const [isCardFlipped, setIsCardFlipped] = useState(false);
+  const [posts, setPosts] = useState<Post[]>(initialPosts);
+
 
   const selectRandomVerse = useCallback(() => {
     const randomVerse = bibleVerses[Math.floor(Math.random() * bibleVerses.length)];
@@ -99,7 +139,11 @@ export default function MemberProfilePage({
     selectRandomVerse();
   }, [selectRandomVerse]);
 
-  if (memberLoading) {
+  const getAvatar = (avatarId: string) => {
+    return PlaceHolderImages.find((p) => p.id === avatarId);
+  }
+
+  if (memberLoading || isUserLoading) {
       return (
           <div className="flex-1 h-screen flex items-center justify-center bg-secondary">
               <Loader2 className="h-16 w-16 animate-spin" />
@@ -130,6 +174,117 @@ export default function MemberProfilePage({
       </div>
 
       <div className="container mx-auto space-y-6 pb-8">
+        <Card>
+            <CardHeader>
+            <CardTitle>Bem-vindo(a), {member.nome.split(' ')[0]}!</CardTitle>
+            <CardDescription>
+                Este é o seu espaço central para interagir com as funcionalidades da igreja. Use o menu de navegação para explorar.
+            </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="flex gap-2 mt-1">
+                <Badge variant="secondary">{member.cargo}</Badge>
+                <Badge variant={member.status === "Ativo" ? "default" : "destructive"}>{member.status}</Badge>
+                </div>
+            </CardContent>
+        </Card>
+
+        {/* Digital ID Card */}
+        <div className="space-y-4">
+            <p className="text-center text-sm text-muted-foreground">
+            Clique na carteirinha para visualizar o verso.
+            </p>
+
+            <div 
+            className="max-w-lg mx-auto flip-card-container cursor-pointer" 
+            style={{ height: '390px' }} 
+            onClick={() => setIsCardFlipped(!isCardFlipped)}
+            >
+                <div className={cn("flip-card w-full h-full", { 'flipped': isCardFlipped })}>
+                    {/* Card Front */}
+                    <div className="flip-card-front">
+                    <Card className="h-full w-full overflow-hidden shadow-lg bg-[#0a2749] text-white flex flex-col">
+                        <div className="p-4">
+                            <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                {churchPicture && 
+                                <Image src={churchPicture.imageUrl} alt="Igreja" width={60} height={60} className="rounded-md" />
+                                }
+                                <div>
+                                <h3 className="font-bold text-sm sm:text-base">ASSEMBLEIA DE DEUS</h3>
+                                <h4 className="font-semibold text-xs sm:text-sm">MINISTÉRIO KAIRÓS</h4>
+                                <p className="text-xs opacity-80">Tempo de Deus</p>
+                                </div>
+                            </div>
+                            <div className="text-center">
+                                <AppLogo className="h-8 w-8 mx-auto" />
+                                <span className="text-[10px] font-bold">A.D. K</span>
+                            </div>
+                            </div>
+                            <p className="text-center text-xs opacity-80 mt-2">Rua Presidente Prudente, 28, Eldorado, Diadema - SP, 09972-300</p>
+                        </div>
+                        <div className="bg-white text-gray-800 p-4 space-y-3 flex-1">
+                            <div className="flex items-center gap-4">
+                                <Avatar className="h-16 w-16 border">
+                                    {avatar && <AvatarImage src={avatar.imageUrl} alt={avatar.description} data-ai-hint={avatar.imageHint} />}
+                                    <AvatarFallback className="text-2xl">
+                                        {member.nome.charAt(0)}
+                                    </AvatarFallback>
+                                </Avatar>
+                                <div className="border-b pb-1 flex-1">
+                                    <Label className="text-xs text-muted-foreground">NOME</Label>
+                                    <p className="font-bold text-sm">{member.nome}</p>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="border-b pb-1">
+                                    <Label className="text-xs text-muted-foreground">RG</Label>
+                                    <p className="font-bold text-sm">{member.rg || 'N/A'}</p>
+                                </div>
+                                <div className="border-b pb-1">
+                                    <Label className="text-xs text-muted-foreground">CARGO</Label>
+                                    <p className="font-bold text-sm">{member.cargo}</p>
+                                </div>
+                                <div className="border-b pb-1">
+                                    <Label className="text-xs text-muted-foreground">NASCIMENTO</Label>
+                                    <p className="font-bold text-sm">{formatDate(member.dataNascimento)}</p>
+                                </div>
+                                    <div className="border-b pb-1">
+                                    <Label className="text-xs text-muted-foreground">MEMBRO DESDE</Label>
+                                    <p className="font-bold text-sm">{formatDate(member.dataMembro)}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </Card>
+                    </div>
+
+                    {/* Card Back */}
+                    <div className="flip-card-back">
+                        <Card className="h-full w-full overflow-hidden shadow-lg bg-[#0a2749] text-white flex flex-col justify-between">
+                        <div className="p-4">
+                            <p className="text-xs text-center text-white/80">Válido em todo o território nacional.</p>
+                        </div>
+                        <div className="p-4 bg-white text-gray-800 space-y-4">
+                            <div className="space-y-1">
+                                <Label className="text-xs text-muted-foreground">ASSINATURA DO PASTOR</Label>
+                                <div className="h-10 border-b border-gray-400"></div>
+                            </div>
+                                <div className="space-y-1">
+                                <Label className="text-xs text-muted-foreground">ASSINATURA DO MEMBRO</Label>
+                                <div className="h-10 border-b border-gray-400"></div>
+                            </div>
+                            <div className="text-center pt-4">
+                                <p className="text-sm font-semibold">"Se o filho vos libertar, verdadeiramente sereis livres."</p>
+                                <p className="text-xs text-muted-foreground">João 8:36</p>
+                            </div>
+                        </div>
+                        </Card>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
         {verse && (
           <Card>
             <CardHeader>
@@ -155,229 +310,68 @@ export default function MemberProfilePage({
           </Card>
         )}
 
-        <Tabs defaultValue="carteirinha" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="inicio">
-              <User className="mr-2 h-4 w-4" />
-              Início
-            </TabsTrigger>
-            <TabsTrigger value="carteirinha">
-              <CreditCard className="mr-2 h-4 w-4" />
-              Carteirinha
-            </TabsTrigger>
-            <TabsTrigger value="meus-dados">
-              <FileText className="mr-2 h-4 w-4" />
-              Meus Dados
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="inicio">
-            <Card>
-              <CardHeader>
-                <CardTitle>Bem-vindo(a), {member.nome.split(' ')[0]}!</CardTitle>
-                <CardDescription>
-                    Este é o seu espaço central para interagir com as funcionalidades da igreja. Use o menu de navegação para explorar.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                  <div className="flex gap-2 mt-1">
-                    <Badge variant="secondary">{member.cargo}</Badge>
-                    <Badge variant={member.status === "Ativo" ? "default" : "destructive"}>{member.status}</Badge>
-                  </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="carteirinha">
-            <div className="space-y-4">
-              <p className="text-center text-sm text-muted-foreground">
-                Clique na carteirinha para visualizar o verso.
-              </p>
-
-              {/* Digital ID Card */}
-              <div 
-                className="max-w-lg mx-auto flip-card-container cursor-pointer" 
-                style={{ height: '390px' }} 
-                onClick={() => setIsCardFlipped(!isCardFlipped)}
-              >
-                  <div className={cn("flip-card w-full h-full", { 'flipped': isCardFlipped })}>
-                      {/* Card Front */}
-                      <div className="flip-card-front">
-                        <Card className="h-full w-full overflow-hidden shadow-lg bg-[#0a2749] text-white flex flex-col">
-                            <div className="p-4">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                  {churchPicture && 
-                                    <Image src={churchPicture.imageUrl} alt="Igreja" width={60} height={60} className="rounded-md" />
-                                  }
-                                  <div>
-                                    <h3 className="font-bold text-sm sm:text-base">ASSEMBLEIA DE DEUS</h3>
-                                    <h4 className="font-semibold text-xs sm:text-sm">MINISTÉRIO KAIRÓS</h4>
-                                    <p className="text-xs opacity-80">Tempo de Deus</p>
-                                  </div>
-                                </div>
-                                <div className="text-center">
-                                  <AppLogo className="h-8 w-8 mx-auto" />
-                                  <span className="text-[10px] font-bold">A.D. K</span>
-                                </div>
-                              </div>
-                              <p className="text-center text-xs opacity-80 mt-2">Rua Presidente Prudente, 28, Eldorado, Diadema - SP, 09972-300</p>
-                            </div>
-                            <div className="bg-white text-gray-800 p-4 space-y-3 flex-1">
-                                <div className="flex items-center gap-4">
-                                  <Avatar className="h-16 w-16 border">
-                                      {avatar && <AvatarImage src={avatar.imageUrl} alt={avatar.description} data-ai-hint={avatar.imageHint} />}
-                                      <AvatarFallback className="text-2xl">
-                                          {member.nome.charAt(0)}
-                                      </AvatarFallback>
-                                  </Avatar>
-                                  <div className="border-b pb-1 flex-1">
-                                      <Label className="text-xs text-muted-foreground">NOME</Label>
-                                      <p className="font-bold text-sm">{member.nome}</p>
-                                  </div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="border-b pb-1">
-                                      <Label className="text-xs text-muted-foreground">RG</Label>
-                                      <p className="font-bold text-sm">{member.rg || 'N/A'}</p>
-                                    </div>
-                                    <div className="border-b pb-1">
-                                      <Label className="text-xs text-muted-foreground">CARGO</Label>
-                                      <p className="font-bold text-sm">{member.cargo}</p>
-                                    </div>
-                                    <div className="border-b pb-1">
-                                      <Label className="text-xs text-muted-foreground">NASCIMENTO</Label>
-                                      <p className="font-bold text-sm">{formatDate(member.dataNascimento)}</p>
-                                    </div>
-                                     <div className="border-b pb-1">
-                                      <Label className="text-xs text-muted-foreground">MEMBRO DESDE</Label>
-                                      <p className="font-bold text-sm">{formatDate(member.dataMembro)}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </Card>
-                      </div>
-
-                      {/* Card Back */}
-                      <div className="flip-card-back">
-                          <Card className="h-full w-full overflow-hidden shadow-lg bg-[#0a2749] text-white flex flex-col justify-between">
-                            <div className="p-4">
-                               <p className="text-xs text-center text-white/80">Válido em todo o território nacional.</p>
-                            </div>
-                            <div className="p-4 bg-white text-gray-800 space-y-4">
-                                <div className="space-y-1">
-                                    <Label className="text-xs text-muted-foreground">ASSINATURA DO PASTOR</Label>
-                                    <div className="h-10 border-b border-gray-400"></div>
-                                </div>
-                                 <div className="space-y-1">
-                                    <Label className="text-xs text-muted-foreground">ASSINATURA DO MEMBRO</Label>
-                                    <div className="h-10 border-b border-gray-400"></div>
-                                </div>
-                                <div className="text-center pt-4">
-                                    <p className="text-sm font-semibold">"Se o filho vos libertar, verdadeiramente sereis livres."</p>
-                                    <p className="text-xs text-muted-foreground">João 8:36</p>
-                                </div>
-                            </div>
-                          </Card>
-                      </div>
-                  </div>
-              </div>
-
-
-              <Card>
+        <div className="space-y-4">
+            <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2"><LayoutGrid /> Mural de Avisos</h2>
+            {posts.map((post) => {
+            const avatar = getAvatar(post.authorAvatar);
+            return (
+                <Card key={post.id}>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <MessageSquare className="h-5 w-5"/>
-                        Fale com a Administração
-                    </CardTitle>
-                    <CardDescription>Envie sua mensagem, dúvida, ou anexe um documento.</CardDescription>
+                    <div className="flex items-start gap-4">
+                    <Avatar className="h-10 w-10 border">
+                        {avatar && <AvatarImage src={avatar.imageUrl} alt={avatar.description} />}
+                        <AvatarFallback>{post.author.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div className="grid gap-0.5">
+                        <CardTitle>{post.title}</CardTitle>
+                        <CardDescription>
+                        Por {post.author} em {new Date(post.date).toLocaleDateString('pt-BR')}
+                        </CardDescription>
+                    </div>
+                    </div>
                 </CardHeader>
                 <CardContent>
-                    <form className="space-y-4">
-                        <div>
-                            <Label htmlFor="assunto">Assunto</Label>
-                            <Input id="assunto" placeholder="Sobre o que você quer falar?" />
-                        </div>
-                        <div>
-                             <Label htmlFor="mensagem">Mensagem</Label>
-                             <Textarea id="mensagem" placeholder="Digite sua mensagem aqui..." />
-                        </div>
-                        <Button>Enviar Mensagem</Button>
-                    </form>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{post.content}</p>
                 </CardContent>
-              </Card>
+                </Card>
+            )
+            })}
+        </div>
 
-            </div>
-          </TabsContent>
-          <TabsContent value="meus-dados">
-            <Card>
-              <CardHeader>
-                <CardTitle>Meus Dados</CardTitle>
-                <CardDescription>Verifique e atualize suas informações pessoais.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div className="space-y-1">
-                      <p className="font-medium text-muted-foreground">Nome Completo</p>
-                      <p>{member.nome}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="font-medium text-muted-foreground">Email</p>
-                      <p>{member.email || 'Não informado'}</p>
-                    </div>
-                     <div className="space-y-1">
-                      <p className="font-medium text-muted-foreground">Data de Nascimento</p>
-                      <p>{formatDate(member.dataNascimento)}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="font-medium text-muted-foreground">Telefone</p>
-                      <p>{member.phone || 'Não informado'}</p>
-                    </div>
-                     <div className="space-y-1">
-                      <p className="font-medium text-muted-foreground">WhatsApp</p>
-                      <p>{member.whatsapp || 'Não informado'}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="font-medium text-muted-foreground">Endereço</p>
-                      <p>{member.address || 'Não informado'}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="font-medium text-muted-foreground">Gênero</p>
-                      <p>{member.gender || 'Não informado'}</p>
-                    </div>
-                     <div className="space-y-1">
-                      <p className="font-medium text-muted-foreground">Estado Civil</p>
-                      <p>{member.maritalStatus || 'Não informado'}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="font-medium text-muted-foreground">RG</p>
-                      <p>{member.rg || 'Não informado'}</p>
-                    </div>
-                     <div className="space-y-1">
-                      <p className="font-medium text-muted-foreground">CPF</p>
-                      <p>{member.cpf || 'Não informado'}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="font-medium text-muted-foreground">Naturalidade</p>
-                      <p>{member.naturalness || 'Não informado'}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="font-medium text-muted-foreground">Nacionalidade</p>
-                      <p>{member.nationality || 'Não informado'}</p>
-                    </div>
-                     <div className="space-y-1">
-                      <p className="font-medium text-muted-foreground">Nº da Ficha</p>
-                      <p>{member.recordNumber || 'Não informado'}</p>
-                    </div>
-                     <div className="space-y-1">
-                      <p className="font-medium text-muted-foreground">Membro Desde</p>
-                      <p>{formatDate(member.dataMembro)}</p>
-                    </div>
-                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+        <Card>
+        <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+                <MessageSquare className="h-5 w-5"/>
+                Fale com a Administração
+            </CardTitle>
+            <CardDescription>Envie sua mensagem, dúvida, ou anexe um documento.</CardDescription>
+        </CardHeader>
+        <CardContent>
+            <form className="space-y-4">
+                 <div>
+                    <Label htmlFor="destinatario">Enviar para</Label>
+                    <Select>
+                        <SelectTrigger id="destinatario">
+                            <SelectValue placeholder="Selecione o destinatário" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="admin">Administração Geral</SelectItem>
+                            {congregacoes?.map(c => <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div>
+                    <Label htmlFor="assunto">Assunto</Label>
+                    <Input id="assunto" placeholder="Sobre o que você quer falar?" />
+                </div>
+                <div>
+                        <Label htmlFor="mensagem">Mensagem</Label>
+                        <Textarea id="mensagem" placeholder="Digite sua mensagem aqui..." />
+                </div>
+                <Button>Enviar Mensagem</Button>
+            </form>
+        </CardContent>
+        </Card>
       </div>
     </div>
   );

@@ -43,6 +43,7 @@ export default function DashboardLayout({
   const isLoading = isUserLoading || isUserDataLoading;
 
   const canManageUsers = userRole === 'Administrador' || userRole === 'Pastor Dirigente/Local';
+  const isMember = userRole === 'Membro';
 
   return (
     <SidebarProvider>
@@ -62,36 +63,41 @@ export default function DashboardLayout({
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip={{ children: "Início" }}>
-                <Link href="/dashboard">
+                <Link href={isMember && user ? `/dashboard/members/${user.uid}` : "/dashboard"}>
                   <Home />
                   <span>Início</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-            <SidebarMenuItem>
-               <SidebarMenuButton asChild tooltip={{ children: "Mural" }}>
-                <Link href="/dashboard/mural">
-                  <LayoutGrid />
-                  <span>Mural</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-             <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip={{ children: "Mensagens" }}>
-                  <Link href="#">
-                    <Mail />
-                    <span>Mensagens</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip={{ children: "Carteirinhas" }}>
-                  <Link href="/dashboard/card-studio">
-                    <CreditCard />
-                    <span>Carteirinhas</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+            
+            {!isMember && (
+              <>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip={{ children: "Mural" }}>
+                    <Link href="/dashboard/mural">
+                      <LayoutGrid />
+                      <span>Mural</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip={{ children: "Mensagens" }}>
+                    <Link href="#">
+                      <Mail />
+                      <span>Mensagens</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip={{ children: "Carteirinhas" }}>
+                    <Link href="/dashboard/card-studio">
+                      <CreditCard />
+                      <span>Carteirinhas</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </>
+            )}
           </SidebarMenu>
 
           {!isLoading && canManageUsers && (

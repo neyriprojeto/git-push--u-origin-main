@@ -72,7 +72,6 @@ const defaultElements: CardElements = {
     'RG': { position: { top: 68, left: 75 }, size: { fontSize: 10 }, text: `RG: ${members[0].rg}`, textAlign: 'left' },
     'CPF': { position: { top: 74, left: 40 }, size: { fontSize: 10 }, text: `CPF: ${members[0].cpf}`, textAlign: 'left' },
     'Cargo': { position: { top: 80, left: 40 }, size: { fontSize: 10 }, text: `Cargo: ${members[0].role}`, textAlign: 'left' },
-    'Data de Nascimento': { position: { top: 85, left: 10 }, size: { fontSize: 10 }, text: `Nasc: ${new Date(members[0].birthDate).toLocaleDateString('pt-BR')}`, textAlign: 'left' },
     'Logo Igreja': { position: { top: 38, left: 80 }, size: { width: 70, height: 70 }, src: '' },
     
     // --- Verso ---

@@ -51,6 +51,9 @@ export default function DashboardLayout({
   const canSeeAdminMenus = isLoading || isAdmin || isPastor;
   const canSeeFullAdminFeatures = isLoading || isAdmin;
 
+  // For members, "Início" links to their profile. For others, to the main dashboard.
+  const homeLink = isMember && user ? `/dashboard/members/${user.uid}` : '/dashboard';
+
 
   const settingsLink = isAdmin
     ? "/dashboard/settings/congregations"
@@ -76,7 +79,7 @@ export default function DashboardLayout({
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip={{ children: "Início" }}>
-                <Link href={user ? `/dashboard` : "/dashboard"}>
+                <Link href={homeLink}>
                   <Home />
                   <span>Início</span>
                 </Link>
@@ -85,27 +88,27 @@ export default function DashboardLayout({
             
             {/* General menus visible to Admins and Pastors */}
             {canSeeAdminMenus && (
-              <>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip={{ children: "Mural" }}>
-                    <Link href="/dashboard/mural">
-                      <LayoutGrid />
-                      <span>Mural</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip={{ children: "Mural" }}>
+                  <Link href="/dashboard/mural">
+                    <LayoutGrid />
+                    <span>Mural</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             )}
 
              {/* Messages menu visible to all authenticated users */}
-             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip={{ children: "Mensagens" }}>
-                <Link href="#">
-                  <Mail />
-                  <span>Mensagens</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+             {(canSeeAdminMenus || isMember) && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip={{ children: "Mensagens" }}>
+                    <Link href="#">
+                      <Mail />
+                      <span>Mensagens</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+             )}
             
             {/* Card Studio only for full admins */}
             {canSeeFullAdminFeatures && (

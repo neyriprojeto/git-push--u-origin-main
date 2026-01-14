@@ -16,17 +16,20 @@ import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { addMember } from '@/firebase/firestore/mutations';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useAuth, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { useState } from 'react';
 import { CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { AppLogo } from '@/components/icons';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { collection } from 'firebase/firestore';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 
 const formSchema = z.object({
   // Dados Pessoais
   nome: z.string().min(2, { message: 'O nome deve ter pelo menos 2 caracteres.' }),
+  email: z.string().email({ message: 'Por favor, insira um e-mail válido.' }),
+  password: z.string().min(6, { message: 'A senha deve ter pelo menos 6 caracteres.' }),
   rg: z.string().min(1, { message: 'O RG é obrigatório.' }),
   cpf: z.string().min(11, { message: 'O CPF deve ter 11 caracteres.' }).max(14, { message: 'O CPF deve ter no máximo 14 caracteres.' }),
   dataNascimento: z.string().optional(),
@@ -53,6 +56,7 @@ type Congregacao = {
 export default function RegisterPage() {
   const { toast } = useToast();
   const firestore = useFirestore();
+  const auth = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
@@ -67,6 +71,8 @@ export default function RegisterPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       nome: '',
+      email: '',
+      password: '',
       rg: '',
       cpf: '',
       cargo: 'Membro',
@@ -101,22 +107,32 @@ export default function RegisterPage() {
 
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!firestore) {
-        toast({ variant: 'destructive', title: 'Erro de conexão', description: 'Não foi possível conectar ao banco de dados.' });
+    if (!firestore || !auth) {
+        toast({ variant: 'destructive', title: 'Erro de conexão', description: 'Não foi possível conectar aos serviços. Tente novamente.' });
         return;
     }
     setIsSubmitting(true);
     try {
-      const memberData = {
-        ...values,
-      }
-      await addMember(firestore, memberData);
+      // 1. Create user in Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const user = userCredential.user;
+
+      // 2. Prepare data for Firestore (excluding password)
+      const { password, ...memberData } = values;
+
+      // 3. Save member data to Firestore using the UID from Auth
+      await addMember(firestore, user.uid, memberData);
+      
       setIsSubmitted(true);
-    } catch (error) {
+    } catch (error: any) {
+        let description = 'Não foi possível salvar o cadastro. Tente novamente.';
+        if (error.code === 'auth/email-already-in-use') {
+            description = 'Este e-mail já está em uso. Por favor, utilize outro e-mail.';
+        }
         toast({
             variant: 'destructive',
             title: 'Erro ao cadastrar',
-            description: 'Não foi possível salvar o cadastro. Tente novamente.',
+            description: description,
         });
     } finally {
         setIsSubmitting(false);
@@ -159,6 +175,38 @@ export default function RegisterPage() {
                 <CardContent>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+
+                    <div className="space-y-4">
+                        <h3 className="text-lg font-medium">Dados de Acesso</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                             <FormField
+                                control={form.control}
+                                name="email"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Email</FormLabel>
+                                    <FormControl>
+                                        <Input type="email" placeholder="seuemail@exemplo.com" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="password"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Senha</FormLabel>
+                                    <FormControl>
+                                        <Input type="password" placeholder="******" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                    </div>
                     
                     <div className="space-y-4">
                         <h3 className="text-lg font-medium">Dados Pessoais</h3>

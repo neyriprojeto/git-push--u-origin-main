@@ -18,12 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { addMember } from '@/firebase/firestore/mutations';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { useState } from 'react';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, CheckCircle } from 'lucide-react';
-import { Calendar } from '@/components/ui/calendar';
-import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { AppLogo } from '@/components/icons';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -34,12 +29,12 @@ const formSchema = z.object({
   nome: z.string().min(2, { message: 'O nome deve ter pelo menos 2 caracteres.' }),
   rg: z.string().min(1, { message: 'O RG é obrigatório.' }),
   cpf: z.string().min(11, { message: 'O CPF deve ter 11 caracteres.' }).max(14, { message: 'O CPF deve ter no máximo 14 caracteres.' }),
-  dataNascimento: z.date().optional(),
+  dataNascimento: z.string().optional(),
   
   // Dados de Membro
   cargo: z.string({ required_error: 'O cargo é obrigatório.' }),
   congregacao: z.string({ required_error: 'A congregação é obrigatória.' }),
-  dataBatismo: z.date().optional(),
+  dataBatismo: z.string().optional(),
 
   // Endereço
   cep: z.string().optional(),
@@ -185,43 +180,12 @@ export default function RegisterPage() {
                                 control={form.control}
                                 name="dataNascimento"
                                 render={({ field }) => (
-                                    <FormItem className="flex flex-col pt-2">
-                                    <FormLabel>Data de Nascimento</FormLabel>
-                                    <Popover>
-                                        <PopoverTrigger asChild>
+                                     <FormItem>
+                                        <FormLabel>Data de Nascimento</FormLabel>
                                         <FormControl>
-                                            <Button
-                                            variant={"outline"}
-                                            className={cn(
-                                                "w-full justify-start text-left font-normal",
-                                                !field.value && "text-muted-foreground"
-                                            )}
-                                            >
-                                            <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {field.value ? (
-                                                format(field.value, "PPP", { locale: ptBR })
-                                            ) : (
-                                                <span>Escolha uma data</span>
-                                            )}
-                                            </Button>
+                                            <Input type="date" {...field} />
                                         </FormControl>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-auto p-0" align="start">
-                                            <Calendar
-                                                mode="single"
-                                                captionLayout="dropdown-buttons"
-                                                fromYear={1920}
-                                                toYear={new Date().getFullYear()}
-                                                selected={field.value}
-                                                onSelect={field.onChange}
-                                                disabled={(date) =>
-                                                date > new Date() || date < new Date("1900-01-01")
-                                                }
-                                                initialFocus
-                                            />
-                                        </PopoverContent>
-                                    </Popover>
-                                    <FormMessage />
+                                        <FormMessage />
                                     </FormItem>
                                 )}
                                 />
@@ -310,43 +274,12 @@ export default function RegisterPage() {
                                 control={form.control}
                                 name="dataBatismo"
                                 render={({ field }) => (
-                                    <FormItem className="flex flex-col pt-2">
-                                    <FormLabel>Data de Batismo</FormLabel>
-                                    <Popover>
-                                        <PopoverTrigger asChild>
+                                    <FormItem>
+                                        <FormLabel>Data de Batismo</FormLabel>
                                         <FormControl>
-                                            <Button
-                                            variant={"outline"}
-                                            className={cn(
-                                                "w-full justify-start text-left font-normal",
-                                                !field.value && "text-muted-foreground"
-                                            )}
-                                            >
-                                            <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {field.value ? (
-                                                format(field.value, "PPP", { locale: ptBR })
-                                            ) : (
-                                                <span>Escolha uma data</span>
-                                            )}
-                                            </Button>
+                                            <Input type="date" {...field} />
                                         </FormControl>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-auto p-0" align="start">
-                                            <Calendar
-                                                mode="single"
-                                                captionLayout="dropdown-buttons"
-                                                fromYear={1920}
-                                                toYear={new Date().getFullYear()}
-                                                selected={field.value}
-                                                onSelect={field.onChange}
-                                                disabled={(date) =>
-                                                date > new Date() || date < new Date("1900-01-01")
-                                                }
-                                                initialFocus
-                                            />
-                                        </PopoverContent>
-                                    </Popover>
-                                    <FormMessage />
+                                        <FormMessage />
                                     </FormItem>
                                 )}
                                 />
@@ -452,8 +385,3 @@ export default function RegisterPage() {
     </div>
   );
 }
-
-
-    
-
-    

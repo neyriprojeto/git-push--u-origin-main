@@ -109,7 +109,6 @@
         "ativo",
         "criadoEm",
         "tipo",
-        "recordNumber",
         "rg",
         "cpf",
         "dataNascimento",
@@ -193,3 +192,5 @@
     }
   }
 }
+
+    

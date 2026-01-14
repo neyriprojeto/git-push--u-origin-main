@@ -25,14 +25,14 @@ import { CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const formSchema = z.object({
   // Dados da Carteirinha (Obrigatórios)
   nome: z.string().min(2, { message: 'O nome deve ter pelo menos 2 caracteres.' }),
-  recordNumber: z.string().min(1, { message: 'O número de registro é obrigatório.' }),
   rg: z.string().min(1, { message: 'O RG é obrigatório.' }),
   cpf: z.string().min(11, { message: 'O CPF deve ter 11 caracteres.' }).max(14, { message: 'O CPF deve ter no máximo 14 caracteres.' }),
-  cargo: z.string().min(2, { message: 'O cargo é obrigatório.' }),
+  cargo: z.string({ required_error: 'O cargo é obrigatório.' }),
   dataNascimento: z.date({ required_error: 'A data de nascimento é obrigatória.' }),
   
   // Dados de Membro
@@ -58,10 +58,9 @@ export default function NewMemberPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       nome: '',
-      recordNumber: '',
       rg: '',
       cpf: '',
-      cargo: '',
+      cargo: 'Membro',
     },
   });
 
@@ -92,7 +91,12 @@ export default function NewMemberPage() {
     }
     setIsSubmitting(true);
     try {
-      await addMember(firestore, values);
+      // O número de registro será gerado automaticamente aqui no futuro
+      const memberData = {
+        ...values,
+        recordNumber: new Date().getTime().toString(), // Placeholder for automatic generation
+      }
+      await addMember(firestore, memberData);
       toast({
         title: 'Sucesso!',
         description: 'Novo membro cadastrado com sucesso.',
@@ -121,7 +125,7 @@ export default function NewMemberPage() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               
               <div className="space-y-4">
-                <h3 className="text-lg font-medium">Dados Pessoais (Carteirinha)</h3>
+                <h3 className="text-lg font-medium">Dados Pessoais</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <FormField
                     control={form.control}
@@ -137,17 +141,30 @@ export default function NewMemberPage() {
                     )}
                     />
                     <FormField
-                    control={form.control}
-                    name="recordNumber"
-                    render={({ field }) => (
+                      control={form.control}
+                      name="cargo"
+                      render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Nº de Registro</FormLabel>
-                        <FormControl>
-                            <Input placeholder="001" {...field} />
-                        </FormControl>
-                        <FormMessage />
+                          <FormLabel>Cargo</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione o cargo" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Membro">Membro</SelectItem>
+                              <SelectItem value="Cooperador(a)">Cooperador(a)</SelectItem>
+                              <SelectItem value="Diácono(a)">Diácono(a)</SelectItem>
+                              <SelectItem value="Presbítero">Presbítero</SelectItem>
+                              <SelectItem value="Missionário(a)">Missionário(a)</SelectItem>
+                              <SelectItem value="Evangelista">Evangelista</SelectItem>
+                              <SelectItem value="Pastor(a)">Pastor(a)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
                         </FormItem>
-                    )}
+                      )}
                     />
                     <FormField
                     control={form.control}
@@ -170,19 +187,6 @@ export default function NewMemberPage() {
                         <FormLabel>CPF</FormLabel>
                         <FormControl>
                             <Input placeholder="000.000.000-00" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                    <FormField
-                    control={form.control}
-                    name="cargo"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Cargo</FormLabel>
-                        <FormControl>
-                            <Input placeholder="Membro, Diácono, etc." {...field} />
                         </FormControl>
                         <FormMessage />
                         </FormItem>
@@ -413,3 +417,5 @@ export default function NewMemberPage() {
     </div>
   );
 }
+
+    

@@ -13,8 +13,8 @@ import { cn } from '@/lib/utils';
 const DetailItem = ({ label, value, className }: { label: string; value?: string | null, className?: string }) => {
     return (
         <div className={cn("flex items-end border-b border-dotted border-gray-400 pb-1", className)}>
-            <span className="text-sm font-bold whitespace-nowrap mr-2">{label}:</span>
-            <span className="text-sm break-words">{value || 'Não informado'}</span>
+            <span className="text-[1.5vw] md:text-[0.9vw] lg:text-[0.8rem] font-bold whitespace-nowrap mr-2">{label}:</span>
+            <span className="text-[1.5vw] md:text-[0.9vw] lg:text-[0.8rem] break-words">{value || 'Não informado'}</span>
             <span className="flex-grow"></span>
         </div>
     );
@@ -42,78 +42,78 @@ export default function MemberFilePage({ params }: { params: { id: string } }) {
                     <div className={cn("relative w-full h-full transition-transform duration-700", { '[transform:rotateY(180deg)]': isFlipped })} style={{ transformStyle: 'preserve-3d' }}>
                         
                         {/* Container da Ficha - Frente */}
-                        <div className="absolute w-full h-full bg-white shadow-lg p-4 sm:p-6 md:p-8 flex flex-col" style={{ backfaceVisibility: 'hidden' }}>
+                        <div className="absolute w-full h-full bg-white shadow-lg p-[2vw] md:p-6 lg:p-8 flex flex-col" style={{ backfaceVisibility: 'hidden' }}>
                             {/* Header */}
-                            <div className="flex justify-between items-start pb-4 border-b border-black gap-4">
-                                <div className="w-20 h-24 sm:w-24 sm:h-32 border border-gray-300 flex items-center justify-center shrink-0 bg-gray-100">
+                            <div className="flex justify-between items-start pb-[1.5vw] md:pb-4 border-b border-black gap-4">
+                                <div className="w-[12vw] h-[15vw] md:w-24 md:h-32 border border-gray-300 flex items-center justify-center shrink-0 bg-gray-100">
                                     {avatar ? (
                                         <Image src={avatar.imageUrl} alt={member.name} width={96} height={128} className="object-cover w-full h-full" />
                                     ) : (
-                                        <span className="text-[10px] sm:text-xs text-gray-400 text-center">Foto 3x4</span>
+                                        <span className="text-[1.5vw] md:text-xs text-gray-400 text-center">Foto 3x4</span>
                                     )}
                                 </div>
                                 <div className="text-center flex-grow">
-                                    <h1 className="text-xl sm:text-2xl md:text-4xl font-bold">Ficha de Membro</h1>
-                                    <p className="text-sm sm:text-base md:text-lg font-sans">Nº: {member.recordNumber}</p>
+                                    <h1 className="text-[3vw] sm:text-2xl md:text-4xl font-bold">Ficha de Membro</h1>
+                                    <p className="text-[2vw] sm:text-base md:text-lg font-sans">Nº: {member.recordNumber}</p>
                                 </div>
-                                <div className="w-20 h-20 sm:w-24 sm:h-24 border border-gray-300 flex items-center justify-center shrink-0 bg-gray-100">
+                                <div className="w-[12vw] h-[12vw] md:w-24 md:h-24 border border-gray-300 flex items-center justify-center shrink-0 bg-gray-100">
                                     {churchLogo ? (
                                         <Image src={churchLogo.imageUrl} alt="Logo" width={96} height={96} className="object-contain p-1" />
                                     ) : (
-                                        <span className="text-xs text-gray-500">Logo</span>
+                                        <span className="text-[1.5vw] md:text-xs text-gray-500">Logo</span>
                                     )}
                                 </div>
                             </div>
 
                             {/* Content */}
-                            <div className="flex-grow pt-4 sm:pt-6 md:pt-8 grid grid-cols-1 md:grid-cols-12 gap-x-8 gap-y-2 sm:gap-y-4 font-sans">
-                                <div className="md:col-span-12"><DetailItem label="Nome" value={member.name} /></div>
+                            <div className="flex-grow pt-[2vw] md:pt-6 grid grid-cols-12 gap-x-4 md:gap-x-8 gap-y-1 md:gap-y-4 font-sans">
+                                <div className="col-span-12"><DetailItem label="Nome" value={member.name} /></div>
 
-                                <div className="md:col-span-7"><DetailItem label="Naturalidade" value={member.naturalness} /></div>
-                                <div className="md:col-span-5"><DetailItem label="Nacionalidade" value={member.nationality} /></div>
+                                <div className="col-span-7"><DetailItem label="Naturalidade" value={member.naturalness} /></div>
+                                <div className="col-span-5"><DetailItem label="Nacionalidade" value={member.nationality} /></div>
 
-                                <div className="md:col-span-4"><DetailItem label="Data Nasc" value={member.birthDate ? format(new Date(member.birthDate), 'dd/MM/yyyy') : ''} /></div>
-                                <div className="md:col-span-4"><DetailItem label="Gênero" value={member.gender} /></div>
-                                <div className="md:col-span-4"><DetailItem label="Est. Civil" value={member.maritalStatus} /></div>
+                                <div className="col-span-4"><DetailItem label="Data Nasc" value={member.birthDate ? format(new Date(member.birthDate), 'dd/MM/yyyy') : ''} /></div>
+                                <div className="col-span-4"><DetailItem label="Gênero" value={member.gender} /></div>
+                                <div className="col-span-4"><DetailItem label="Est. Civil" value={member.maritalStatus} /></div>
                                 
-                                <div className="md:col-span-6"><DetailItem label="RG" value={member.rg} /></div>
-                                <div className="md:col-span-6"><DetailItem label="CPF" value={member.cpf} /></div>
+                                <div className="col-span-6"><DetailItem label="RG" value={member.rg} /></div>
+                                <div className="col-span-6"><DetailItem label="CPF" value={member.cpf} /></div>
 
-                                <div className="md:col-span-12"><DetailItem label="E-mail" value={member.email} /></div>
+                                <div className="col-span-12"><DetailItem label="E-mail" value={member.email} /></div>
                                 
-                                <div className="md:col-span-6"><DetailItem label="Tel" value={member.phone} /></div>
-                                <div className="md:col-span-6"><DetailItem label="Whatsapp" value={member.whatsapp} /></div>
+                                <div className="col-span-6"><DetailItem label="Tel" value={member.phone} /></div>
+                                <div className="col-span-6"><DetailItem label="Whatsapp" value={member.whatsapp} /></div>
 
-                                <div className="md:col-span-9"><DetailItem label="End" value={member.address} /></div>
-                                <div className="md:col-span-3"><DetailItem label="Nº" value={member.addressNumber} /></div>
+                                <div className="col-span-9"><DetailItem label="End" value={member.address} /></div>
+                                <div className="col-span-3"><DetailItem label="Nº" value={member.addressNumber} /></div>
 
-                                <div className="md:col-span-8"><DetailItem label="Bairro" value={member.addressDistrict} /></div>
-                                <div className="md:col-span-4"><DetailItem label="CEP" value={member.addressCep} /></div>
+                                <div className="col-span-8"><DetailItem label="Bairro" value={member.addressDistrict} /></div>
+                                <div className="col-span-4"><DetailItem label="CEP" value={member.addressCep} /></div>
 
-                                <div className="md:col-span-8"><DetailItem label="Cidade" value={member.addressCity} /></div>
-                                <div className="md:col-span-4"><DetailItem label="Estado" value={member.addressState} /></div>
+                                <div className="col-span-8"><DetailItem label="Cidade" value={member.addressCity} /></div>
+                                <div className="col-span-4"><DetailItem label="Estado" value={member.addressState} /></div>
                             </div>
                         </div>
 
                         {/* Container da Ficha - Verso */}
-                        <div className="absolute w-full h-full bg-white shadow-lg p-4 sm:p-6 md:p-8 flex flex-col" style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
+                        <div className="absolute w-full h-full bg-white shadow-lg p-[2vw] md:p-6 lg:p-8 flex flex-col" style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
                             {/* Header */}
-                            <div className="text-center pb-4 border-b border-black">
-                                <h1 className="text-xl sm:text-2xl md:text-4xl font-bold">Dados Eclesiásticos</h1>
+                            <div className="text-center pb-[1.5vw] md:pb-4 border-b border-black">
+                                <h1 className="text-[3vw] sm:text-2xl md:text-4xl font-bold">Dados Eclesiásticos</h1>
                             </div>
 
                             {/* Content */}
-                            <div className="flex-grow pt-4 sm:pt-6 md:pt-8 grid grid-cols-1 md:grid-cols-12 gap-x-8 gap-y-2 sm:gap-y-4 font-sans">
-                                <div className="md:col-span-6"><DetailItem label="Data de Batismo" value={member.baptismDate ? format(new Date(member.baptismDate), 'dd/MM/yyyy') : ''} /></div>
-                                <div className="md:col-span-6"><DetailItem label="Data de Membresia" value={member.memberSince ? format(new Date(member.memberSince), 'dd/MM/yyyy') : ''} /></div>
+                            <div className="flex-grow pt-[2vw] md:pt-6 grid grid-cols-12 gap-x-4 md:gap-x-8 gap-y-1 md:gap-y-4 font-sans">
+                                <div className="col-span-6"><DetailItem label="Data de Batismo" value={member.baptismDate ? format(new Date(member.baptismDate), 'dd/MM/yyyy') : ''} /></div>
+                                <div className="col-span-6"><DetailItem label="Data de Membresia" value={member.memberSince ? format(new Date(member.memberSince), 'dd/MM/yyyy') : ''} /></div>
                                 
-                                <div className="md:col-span-12"><DetailItem label="Congregação" value={member.congregation}/></div>
+                                <div className="col-span-12"><DetailItem label="Congregação" value={member.congregation}/></div>
                                 
-                                <div className="md:col-span-12"><DetailItem label="Igreja de Origem" value={member.originChurch} /></div>
-                                <div className="md:col-span-12"><DetailItem label="Pastor Responsável" value={member.responsiblePastor} /></div>
+                                <div className="col-span-12"><DetailItem label="Igreja de Origem" value={member.originChurch} /></div>
+                                <div className="col-span-12"><DetailItem label="Pastor Responsável" value={member.responsiblePastor} /></div>
                                 
-                                <div className="md:col-span-12 pt-4 md:pt-8">
-                                    <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-center mb-4 font-serif">Observações</h2>
+                                <div className="col-span-12 pt-4 md:pt-8">
+                                    <h2 className="text-[2.2vw] sm:text-lg md:text-xl font-bold text-center mb-4 font-serif">Observações</h2>
                                     <div className="space-y-4 md:space-y-6 mt-4">
                                         <div className="border-b border-dotted border-gray-400"></div>
                                         <div className="border-b border-dotted border-gray-400"></div>
@@ -127,11 +127,11 @@ export default function MemberFilePage({ params }: { params: { id: string } }) {
                             <div className="flex justify-around pt-8 sm:pt-12 mt-auto">
                                 <div className="text-center w-1/2">
                                     <div className="border-t border-black mt-8 w-full max-w-xs mx-auto"></div>
-                                    <p className="mt-2 text-xs sm:text-sm font-sans">Assinatura do Membro</p>
+                                    <p className="mt-2 text-[1.5vw] md:text-xs sm:text-sm font-sans">Assinatura do Membro</p>
                                 </div>
                                 <div className="text-center w-1/2">
                                     <div className="border-t border-black mt-8 w-full max-w-xs mx-auto"></div>
-                                    <p className="mt-2 text-xs sm:text-sm font-sans">Assinatura do Pastor</p>
+                                    <p className="mt-2 text-[1.5vw] md:text-xs sm:text-sm font-sans">Assinatura do Pastor</p>
                                 </div>
                             </div>
                         </div>
@@ -143,3 +143,5 @@ export default function MemberFilePage({ params }: { params: { id: string } }) {
     );
 }
 
+
+    

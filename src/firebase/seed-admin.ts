@@ -11,7 +11,7 @@ const ADMIN_EMAIL = 'admin@adkairos.com';
 // This UID should correspond to the user created in Firebase Authentication with the email 'admin@adkairos.com'.
 // You can get this UID from the Firebase Console -> Authentication section.
 // Replace 'ADMIN_USER_UID_HERE' with the actual UID.
-const ADMIN_UID = 'h2rEaH8pY1b5kO2wZ7sT8xY3jUe2'; // <--- REPLACE WITH YOUR ADMIN's ACTUAL UID FROM FIREBASE AUTH
+const ADMIN_UID = 'ADMIN_USER_UID_HERE'; // <--- Este valor será ignorado se o e-mail for encontrado, mas é um fallback.
 
 const adminData = {
     nome: 'Administrador Principal',
@@ -45,21 +45,22 @@ const adminData = {
  * Checks if the admin user exists in Firestore and creates it if it doesn't.
  * This is useful for initial setup to ensure the primary admin account has its data record.
  * @param firestore - The Firestore instance.
+ * @param adminUid - The actual UID of the logged-in admin user from Firebase Auth.
  */
-export async function seedAdminUser(firestore: Firestore) {
-  if (!ADMIN_UID || ADMIN_UID === 'ADMIN_USER_UID_HERE') {
-    console.warn("Admin UID is not set. Seeding will be skipped. Please update 'src/firebase/seed-admin.ts'.");
+export async function seedAdminUser(firestore: Firestore, adminUid: string) {
+  if (!adminUid) {
+    console.warn("Admin UID not provided to seed function. Seeding will be skipped.");
     return;
   }
 
-  const adminRef = doc(firestore, 'users', ADMIN_UID);
+  const adminRef = doc(firestore, 'users', adminUid);
 
   try {
     const adminSnap = await getDoc(adminRef);
 
     if (!adminSnap.exists()) {
-      console.log(`Admin user with UID ${ADMIN_UID} not found. Seeding data...`);
-      await setDoc(adminRef, adminData);
+      console.log(`Admin user with UID ${adminUid} not found. Seeding data...`);
+      await setDoc(adminRef, { ...adminData, id: adminUid });
       console.log("Admin user seeded successfully.");
     }
   } catch (error) {

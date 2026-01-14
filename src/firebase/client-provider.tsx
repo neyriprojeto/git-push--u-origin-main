@@ -5,6 +5,7 @@ import React, { useState, useEffect, type ReactNode } from 'react';
 import { FirebaseProvider } from '@/firebase/provider';
 import { initializeFirebase, type FirebaseServices } from '@/firebase';
 import { seedAdminUser } from '@/firebase/seed-admin';
+import { onAuthStateChanged } from 'firebase/auth';
 
 interface FirebaseClientProviderProps {
   children: ReactNode;
@@ -19,9 +20,17 @@ export function FirebaseClientProvider({ children }: FirebaseClientProviderProps
       try {
         const services = await initializeFirebase();
         setFirebaseServices(services);
-        // Seed the admin user after services are initialized
-        if (services.firestore) {
-            await seedAdminUser(services.firestore);
+        
+        // Seed the admin user after services are initialized.
+        // We use onAuthStateChanged to get the currently logged in user to check if it's the admin.
+        if (services.auth && services.firestore) {
+          const unsubscribe = onAuthStateChanged(services.auth, async (user) => {
+            if (user && user.email === 'admin@adkairos.com') {
+              await seedAdminUser(services.firestore!, user.uid);
+            }
+            // We only need to run this check once on initial load
+            unsubscribe();
+          });
         }
       } catch (error) {
         console.error("Failed to initialize Firebase:", error);

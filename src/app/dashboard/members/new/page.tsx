@@ -157,9 +157,11 @@ export default function NewMemberPage() {
                               <SelectItem value="Cooperador(a)">Cooperador(a)</SelectItem>
                               <SelectItem value="Diácono(a)">Diácono(a)</SelectItem>
                               <SelectItem value="Presbítero">Presbítero</SelectItem>
-                              <SelectItem value="Missionário(a)">Missionário(a)</SelectItem>
                               <SelectItem value="Evangelista">Evangelista</SelectItem>
+                              <SelectItem value="Missionário(a)">Missionário(a)</SelectItem>
                               <SelectItem value="Pastor(a)">Pastor(a)</SelectItem>
+                              <SelectItem value="Pastor Dirigente">Pastor Dirigente</SelectItem>
+                              <SelectItem value="Pastor Local">Pastor Local</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />

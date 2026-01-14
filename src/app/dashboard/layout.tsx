@@ -42,15 +42,13 @@ export default function DashboardLayout({
 
   const isLoading = isUserLoading || isUserDataLoading;
   const userRole = userData?.cargo;
-  const isMember = userRole === 'Membro';
 
-  // Corrected Logic: Assume admin access while loading to prevent menu flickering.
-  // Menus are only hidden if the user is explicitly a 'Membro'.
-  const canSeeAdminMenus = !isMember;
-  const canSeeFullAdminFeatures = userRole === 'Administrador' || isLoading;
+  // Determine visibility based on role, assuming admin access during load.
+  const canSeeAdminMenus = isLoading || (userRole && userRole !== 'Membro');
+  const canSeeFullAdminFeatures = isLoading || userRole === 'Administrador';
 
   // For members, "Início" links to their profile. For others, to the main dashboard.
-  const homeLink = isMember && user ? `/dashboard/members/${user.uid}` : '/dashboard';
+  const homeLink = (userRole === 'Membro' || userRole === 'Pastor Dirigente/Local') && user ? `/dashboard/members/${user.uid}` : '/dashboard';
 
   const settingsLink = userRole === 'Administrador'
     ? "/dashboard/settings/congregations"
@@ -96,16 +94,14 @@ export default function DashboardLayout({
             )}
 
              {/* Messages menu visible to all authenticated users */}
-             {(canSeeAdminMenus || isMember) && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip={{ children: "Mensagens" }}>
-                    <Link href="#">
-                      <Mail />
-                      <span>Mensagens</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-             )}
+             <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip={{ children: "Mensagens" }}>
+                <Link href="#">
+                  <Mail />
+                  <span>Mensagens</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
             
             {/* Card Studio only for full admins */}
             {canSeeFullAdminFeatures && (

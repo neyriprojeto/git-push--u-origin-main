@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { addMember } from '@/firebase/firestore/mutations';
-import { useCollection, useFirestore } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -27,6 +27,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { collection } from 'firebase/firestore';
 
 const formSchema = z.object({
   // Dados Pessoais
@@ -59,7 +60,12 @@ export default function NewMemberPage() {
   const firestore = useFirestore();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { data: congregacoes, loading: loadingCongregacoes } = useCollection<Congregacao>('congregacoes');
+
+  const congregacoesCollection = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'congregacoes') : null),
+    [firestore]
+  );
+  const { data: congregacoes, isLoading: loadingCongregacoes } = useCollection<Congregacao>(congregacoesCollection);
 
 
   const form = useForm<z.infer<typeof formSchema>>({

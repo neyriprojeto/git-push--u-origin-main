@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { addMember } from '@/firebase/firestore/mutations';
-import { useCollection, useFirestore } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { useState } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon, CheckCircle } from 'lucide-react';
@@ -27,6 +27,7 @@ import { ptBR } from 'date-fns/locale';
 import Link from 'next/link';
 import { AppLogo } from '@/components/icons';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { collection } from 'firebase/firestore';
 
 const formSchema = z.object({
   // Dados Pessoais
@@ -59,7 +60,12 @@ export default function RegisterPage() {
   const firestore = useFirestore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const { data: congregacoes, loading: loadingCongregacoes } = useCollection<Congregacao>('congregacoes');
+
+  const congregacoesCollection = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'congregacoes') : null),
+    [firestore]
+  );
+  const { data: congregacoes, isLoading: loadingCongregacoes } = useCollection<Congregacao>(congregacoesCollection);
 
 
   const form = useForm<z.infer<typeof formSchema>>({

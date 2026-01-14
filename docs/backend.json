@@ -38,14 +38,7 @@
         },
         "congregacao": {
           "type": "string",
-          "description": "The congregation the user belongs to.",
-           "enum": [
-            "ADKAIROS SEDE",
-            "ADKAIROS VILA CARAQUATA",
-            "ADKAIROS MATA VIRGEM",
-            "ADKAIROS VERANÓPOLIS BAIRRO SANTO ANTÔNIO",
-            "ADKAIROS VERANÓPOLIS BAIRRO CENTRO"
-          ]
+          "description": "The congregation the user belongs to."
         },
         "ativo": {
           "type": "boolean",
@@ -176,6 +169,26 @@
           "description": "Timestamp of the last update."
         }
       }
+    },
+    "congregacao": {
+      "title": "Congregação",
+      "description": "Represents a church congregation.",
+      "type": "object",
+      "properties": {
+        "nome": {
+          "type": "string",
+          "description": "The name of the congregation."
+        },
+        "criadaEm": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the congregation was created."
+        }
+      },
+      "required": [
+        "nome",
+        "criadaEm"
+      ]
     }
   },
   "auth": {
@@ -201,6 +214,12 @@
         "$ref": "#/entities/cardTemplate"
       },
       "description": "Stores the member ID card design template."
+    },
+    "/congregacoes/{congregacaoId}": {
+      "schema": {
+        "$ref": "#/entities/congregacao"
+      },
+      "description": "Stores the list of congregations."
     }
   }
 }

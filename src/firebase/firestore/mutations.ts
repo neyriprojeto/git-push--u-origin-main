@@ -1,6 +1,6 @@
 
 'use client';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
 import { useFirestore } from '..';
 
 // We are defining a function that can be used to add a member to the database.
@@ -33,4 +33,34 @@ export const addMember = async (firestore: any, memberData: any) => {
   }
 };
 
-    
+
+export const addCongregacao = async (firestore: any, nome: string) => {
+    if (!firestore) {
+        throw new Error('Firestore is not initialized');
+    }
+    if (!nome || nome.trim() === '') {
+        throw new Error('Congregation name cannot be empty');
+    }
+
+    try {
+        await addDoc(collection(firestore, 'congregacoes'), {
+            nome: nome,
+            criadaEm: serverTimestamp(),
+        });
+    } catch (error) {
+        console.error('Error adding congregation: ', error);
+        throw new Error('Failed to add congregation to the database');
+    }
+}
+
+export const deleteCongregacao = async (firestore: any, id: string) => {
+    if (!firestore) {
+        throw new Error('Firestore is not initialized');
+    }
+    try {
+        await deleteDoc(doc(firestore, 'congregacoes', id));
+    } catch (error) {
+        console.error('Error deleting congregation: ', error);
+        throw new Error('Failed to delete congregation from the database');
+    }
+}

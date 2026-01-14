@@ -13,7 +13,7 @@ import {
   SidebarGroupLabel,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { Home, MessageSquare, Users, UserCog, Settings, CreditCard, LayoutGrid, Radio, Share2, Mail, Youtube, Instagram, Globe, UserPlus } from "lucide-react";
+import { Home, MessageSquare, Users, UserCog, Settings, CreditCard, LayoutGrid, Radio, Share2, Mail, Youtube, Instagram, Globe, UserPlus, Building } from "lucide-react";
 import { AppLogo } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 
@@ -146,7 +146,7 @@ export default function DashboardLayout({
            <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip={{ children: "Configurações" }}>
-                <Link href="#">
+                <Link href="/dashboard/settings/congregations">
                   <Settings />
                   <span>Configurações</span>
                 </Link>

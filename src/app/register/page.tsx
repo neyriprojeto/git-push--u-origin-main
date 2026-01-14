@@ -16,7 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { addMember, useFirestore } from '@/firebase';
+import { addMember, useCollection, useFirestore } from '@/firebase';
 import { useState } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon, CheckCircle } from 'lucide-react';
@@ -49,11 +49,18 @@ const formSchema = z.object({
   estado: z.string().optional(),
 });
 
+type Congregacao = {
+    id: string;
+    nome: string;
+}
+
 export default function RegisterPage() {
   const { toast } = useToast();
   const firestore = useFirestore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const { data: congregacoes, loading: loadingCongregacoes } = useCollection<Congregacao>('congregacoes');
+
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -194,18 +201,16 @@ export default function RegisterPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Congregação</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={field.onChange} defaultValue={field.value} disabled={loadingCongregacoes}>
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Selecione a congregação" />
+                                <SelectValue placeholder={loadingCongregacoes ? "Carregando..." : "Selecione a congregação"} />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="ADKAIROS SEDE">ADKAIROS SEDE</SelectItem>
-                              <SelectItem value="ADKAIROS VILA CARAQUATA">ADKAIROS VILA CARAQUATA</SelectItem>
-                              <SelectItem value="ADKAIROS MATA VIRGEM">ADKAIROS MATA VIRGEM</SelectItem>
-                              <SelectItem value="ADKAIROS VERANÓPOLIS BAIRRO SANTO ANTÔNIO">ADKAIROS VERANÓPOLIS BAIRRO SANTO ANTÔNIO</SelectItem>
-                              <SelectItem value="ADKAIROS VERANÓPOLIS BAIRRO CENTRO">ADKAIROS VERANÓPOLIS BAIRRO CENTRO</SelectItem>
+                                {congregacoes.map((c) => (
+                                    <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>
+                                ))}
                             </SelectContent>
                           </Select>
                           <FormMessage />

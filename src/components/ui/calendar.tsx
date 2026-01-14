@@ -18,22 +18,9 @@ function Calendar({
   showOutsideDays = true,
   ...props
 }: CalendarProps) {
-  const formatWeekdayName = (day: Date) => {
-    const dayName = ptBR.localize?.day(day.getDay(), { width: 'short' });
-    if (dayName) {
-      if (day.getDay() === 0) { // Domingo
-        return 'D';
-      }
-      return dayName.charAt(0).toUpperCase();
-    }
-    return '';
-  };
-
-
   return (
     <DayPicker
       locale={ptBR}
-      formatters={{ formatWeekdayName }}
       showOutsideDays={showOutsideDays}
       className={cn("p-3", className)}
       classNames={{
@@ -59,17 +46,17 @@ function Calendar({
           buttonVariants({ variant: "ghost" }),
           "h-9 w-9 p-0 font-normal aria-selected:opacity-100"
         ),
+        day_range_end: "day-range-end",
         day_selected:
           "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
         day_today: "bg-accent text-accent-foreground",
-        day_outside: "day-outside text-muted-foreground opacity-50",
+        day_outside:
+          "day-outside text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
         day_disabled: "text-muted-foreground opacity-50",
         day_range_middle:
           "aria-selected:bg-accent aria-selected:text-accent-foreground",
         day_hidden: "invisible",
         ...classNames,
-        head: "w-full",
-        head_cell_sunday: "text-red-500",
       }}
       formatters={{
         formatWeekdayName: (day) => {

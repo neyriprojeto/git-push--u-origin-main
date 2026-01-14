@@ -3,7 +3,6 @@
 
 import { notFound } from 'next/navigation';
 import { members } from '@/data/members';
-import { AppLogo } from '@/components/icons';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { format } from 'date-fns';
@@ -33,10 +32,9 @@ export default function MemberFilePage({ params }: { params: { id: string } }) {
 
     return (
         <div className="w-full min-h-screen bg-secondary p-4 md:p-8 flex justify-center">
-             {/* Container for scaling on smaller screens */}
             <div className="w-full max-w-5xl">
-                {/* A4-like container with fixed aspect ratio */}
-                <div className="bg-white shadow-lg mx-auto w-full aspect-[1.414/1] p-8 md:p-12 font-serif flex flex-col">
+                {/* Container da Ficha - Frente */}
+                <div className="bg-white shadow-lg mx-auto w-full aspect-[1.414/1] p-8 md:p-12 font-serif flex flex-col mb-8">
                     {/* Header */}
                     <div className="flex justify-between items-start pb-4 border-b border-black">
                         <div className="w-24 h-32 border border-gray-300 flex items-center justify-center shrink-0 bg-gray-100">
@@ -88,19 +86,45 @@ export default function MemberFilePage({ params }: { params: { id: string } }) {
                         <div className="col-span-12 sm:col-span-4"><DetailItem label="Estado" value={member.addressState} /></div>
                     </div>
 
-                     {/* Back Side Content - Ecclesiastical Data */}
-                    <div className="flex-grow pt-8 grid grid-cols-12 gap-x-8 gap-y-4 font-sans">
-                        <div className="col-span-12">
-                            <h2 className="text-xl font-bold text-center mb-4 font-serif">Dados Eclesiásticos</h2>
+                    {/* Footer com Assinatura do Membro na frente */}
+                    <div className="flex justify-center pt-12 mt-auto">
+                        <div className="text-center w-1/2">
+                            <div className="border-t border-black mt-8 w-full max-w-xs mx-auto"></div>
+                            <p className="mt-2 text-sm font-sans">Assinatura do Membro</p>
                         </div>
-                        <div className="col-span-12 sm:col-span-6"><DetailItem label="Data de Batismo" value={member.baptismDate ? format(new Date(member.baptismDate), 'dd/MM/yyyy') : ''} /></div>
-                        <div className="col-span-12 sm:col-span-6"><DetailItem label="Data de Membresia" value={member.memberSince ? format(new Date(member.memberSince), 'dd/MM/yyyy') : ''} /></div>
-                        <div className="col-span-12 sm:col-span-6"><DetailItem label="Igreja de Origem" value={member.originChurch} /></div>
-                        <div className="col-span-12 sm:col-span-6"><DetailItem label="Pastor Responsável" value={member.responsiblePastor} /></div>
-                        <div className="col-span-12"><DetailItem label="Congregação" value={member.congregation}/></div>
                     </div>
 
-                    {/* Footer with signatures */}
+                </div>
+
+                 {/* Container da Ficha - Verso */}
+                 <div className="bg-white shadow-lg mx-auto w-full aspect-[1.414/1] p-8 md:p-12 font-serif flex flex-col">
+                     {/* Header */}
+                    <div className="text-center pb-4 border-b border-black">
+                        <h1 className="text-4xl font-bold">Dados Eclesiásticos</h1>
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-grow pt-8 grid grid-cols-12 gap-x-8 gap-y-4 font-sans">
+                        <div className="col-span-12 sm:col-span-6"><DetailItem label="Data de Batismo" value={member.baptismDate ? format(new Date(member.baptismDate), 'dd/MM/yyyy') : ''} /></div>
+                        <div className="col-span-12 sm:col-span-6"><DetailItem label="Data de Membresia" value={member.memberSince ? format(new Date(member.memberSince), 'dd/MM/yyyy') : ''} /></div>
+                        
+                        <div className="col-span-12"><DetailItem label="Congregação" value={member.congregation}/></div>
+                        
+                        <div className="col-span-12"><DetailItem label="Igreja de Origem" value={member.originChurch} /></div>
+                        <div className="col-span-12"><DetailItem label="Pastor Responsável" value={member.responsiblePastor} /></div>
+                        
+                         <div className="col-span-12 pt-8">
+                            <h2 className="text-2xl font-bold text-center mb-4 font-serif">Observações</h2>
+                             <div className="space-y-6 mt-4">
+                                <div className="border-b border-dotted border-gray-400"></div>
+                                <div className="border-b border-dotted border-gray-400"></div>
+                                <div className="border-b border-dotted border-gray-400"></div>
+                             </div>
+                        </div>
+                    </div>
+
+
+                    {/* Footer com assinaturas */}
                     <div className="flex justify-around pt-12 mt-auto">
                         <div className="text-center w-1/2">
                             <div className="border-t border-black mt-8 w-full max-w-xs mx-auto"></div>
@@ -111,7 +135,6 @@ export default function MemberFilePage({ params }: { params: { id: string } }) {
                             <p className="mt-2 text-sm font-sans">Assinatura do Pastor</p>
                         </div>
                     </div>
-
                 </div>
             </div>
         </div>

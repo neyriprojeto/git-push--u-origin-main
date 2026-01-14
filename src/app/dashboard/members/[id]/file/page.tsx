@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { use, useState } from 'react';
+import React, { useState } from 'react';
 import { notFound } from 'next/navigation';
 import { members } from '@/data/members';
 import Image from 'next/image';
@@ -53,8 +53,8 @@ export default function MemberFilePage({ params }: { params: { id: string } }) {
                                     )}
                                 </div>
                                 <div className="text-center flex-grow">
-                                    <h1 className="text-4xl font-bold">Ficha de Membro</h1>
-                                    <p className="text-lg font-sans">Nº: {member.recordNumber}</p>
+                                    <h1 className="text-2xl md:text-4xl font-bold">Ficha de Membro</h1>
+                                    <p className="text-md md:text-lg font-sans">Nº: {member.recordNumber}</p>
                                 </div>
                                 <div className="w-24 h-24 border border-gray-300 flex items-center justify-center shrink-0 bg-gray-100">
                                     {churchLogo ? (
@@ -99,7 +99,7 @@ export default function MemberFilePage({ params }: { params: { id: string } }) {
                         <div className="absolute w-full h-full bg-white shadow-lg p-8 flex flex-col" style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
                             {/* Header */}
                             <div className="text-center pb-4 border-b border-black">
-                                <h1 className="text-4xl font-bold">Dados Eclesiásticos</h1>
+                                <h1 className="text-2xl md:text-4xl font-bold">Dados Eclesiásticos</h1>
                             </div>
 
                             {/* Content */}
@@ -113,7 +113,7 @@ export default function MemberFilePage({ params }: { params: { id: string } }) {
                                 <div className="col-span-12"><DetailItem label="Pastor Responsável" value={member.responsiblePastor} /></div>
                                 
                                 <div className="col-span-12 pt-8">
-                                    <h2 className="text-xl font-bold text-center mb-4 font-serif">Observações</h2>
+                                    <h2 className="text-lg md:text-xl font-bold text-center mb-4 font-serif">Observações</h2>
                                     <div className="space-y-6 mt-4">
                                         <div className="border-b border-dotted border-gray-400"></div>
                                         <div className="border-b border-dotted border-gray-400"></div>
@@ -142,5 +142,3 @@ export default function MemberFilePage({ params }: { params: { id: string } }) {
         </div>
     );
 }
-
-    

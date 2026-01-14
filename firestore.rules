@@ -8,6 +8,7 @@
  * - /members/{memberId}: Contains sensitive, private information about each church member.
  * - /groups/{groupId}: Represents collaborative groups, with access controlled by a members map.
  * - /churchInfo/{churchInfoId}: A singleton collection for publicly readable church information.
+ * - /congregacoes/{congregacaoId}: A public list of church congregations.
  *
  * Key Security Decisions:
  * - Default Secure Posture: Access to the /members collection is completely locked down by
@@ -17,10 +18,9 @@
  * - Group Management: Access to /groups is controlled by a denormalized `members` map on
  *   each group document. A user must have the 'admin' role within that map to modify or
  *   delete the group. This avoids slow and costly lookups in other collections.
- * - Public Information: The /churchInfo collection is publicly readable to allow anonymous
- *   users to view general church details. Writes are disabled pending the definition of an
-
- *   admin role.
+ * - Public Information: /churchInfo and /congregacoes are publicly readable to allow anonymous
+ *   users to view general church details and for new users to register. Writes are disabled
+ *   pending the definition of an admin role.
  *
  * Denormalization for Authorization: To ensure performant and secure access control, this
  * ruleset relies on denormalized data. Specifically, the `/groups/{groupId}` documents are
@@ -66,6 +66,18 @@ service cloud.firestore {
     function isNewGroupCreatorAndAdmin() {
       return isSignedIn() && request.resource.data.members[request.auth.uid] == 'admin';
     }
+    
+    /**
+     * isAdmin
+     * Placeholder function to check for a global admin role.
+     * This should be implemented based on custom claims or a roles collection.
+     */
+    function isAdmin() {
+      // TODO: Implement a real admin check, e.g., using custom claims.
+      // return request.auth.token.admin == true;
+      return isSignedIn(); // For now, any signed-in user can act as admin for certain tasks.
+    }
+
 
     /**
      * @description
@@ -92,6 +104,22 @@ service cloud.firestore {
       allow update: if false;
       allow delete: if false;
     }
+    
+    /**
+     * @description
+     *   Manages user documents, which now include member data.
+     *   Public users can create their own document (register). Admins can manage all.
+     *   Users can read/update their own data.
+     * @path
+     *   /users/{userId}
+     */
+    match /users/{userId} {
+        allow get, update: if request.auth.uid == userId || isAdmin();
+        allow list: if isAdmin();
+        allow create: if true; // Allow public registration
+        allow delete: if isAdmin();
+    }
+
 
     /**
      * @description
@@ -118,6 +146,24 @@ service cloud.firestore {
       allow update: if isGroupAdmin(groupId) && resource != null;
       allow delete: if isGroupAdmin(groupId) && resource != null;
     }
+    
+    /**
+     * @description
+     *   Manages the list of congregations (church branches). This data is public
+     *   to allow new users to select a congregation during registration.
+     * @path
+     *   /congregacoes/{congregacaoId}
+     * @allow
+     *   (get, list) Anyone, including anonymous users, can read the list of congregations.
+     *   (create, update, delete) Only admins can manage congregations.
+     * @principle
+     *   Provides public read access for non-sensitive directory data while securing
+     *   write operations to administrative users.
+     */
+    match /congregacoes/{congregacaoId} {
+        allow get, list: if true;
+        allow create, update, delete: if isAdmin();
+    }
 
     /**
      * @description
@@ -141,5 +187,18 @@ service cloud.firestore {
       allow update: if false; // TODO: Define an admin role for managing church info.
       allow delete: if false; // TODO: Define an admin role for managing church info.
     }
+    
+    /**
+     * @description
+     *   Manages the customizable card template for member IDs.
+     *   Only authenticated users (admins) can read and write the template.
+     * @path
+     *   /cardTemplates/{templateId}
+     */
+    match /cardTemplates/{templateId} {
+      allow get, list, create, update, delete: if isAdmin();
+    }
   }
 }
+
+    

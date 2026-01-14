@@ -1,21 +1,21 @@
 
 'use client';
 
-import { useState } from 'react';
 import { notFound } from 'next/navigation';
-import { members, Member } from '@/data/members';
-import { cn } from '@/lib/utils';
-import { Card } from '@/components/ui/card';
+import { members } from '@/data/members';
 import { AppLogo } from '@/components/icons';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { format } from 'date-fns';
+import React from 'react';
 
-const DetailItem = ({ label, value }: { label: string; value?: string | null }) => {
+
+const DetailItem = ({ label, value, className }: { label: string; value?: string | null, className?: string }) => {
     return (
-        <div className="py-1 border-b border-gray-300">
-            <span className="text-xs font-semibold text-gray-600">{label}:</span>
-            <span className="text-sm ml-2">{value || 'Não informado'}</span>
+        <div className={`flex items-end border-b border-dotted border-gray-400 pb-1 ${className}`}>
+            <span className="text-sm font-bold whitespace-nowrap mr-2">{label}:</span>
+            <span className="text-sm">{value || 'Não informado'}</span>
+            <span className="flex-grow"></span>
         </div>
     );
 };
@@ -23,120 +23,98 @@ const DetailItem = ({ label, value }: { label: string; value?: string | null }) 
 
 export default function MemberFilePage({ params }: { params: { id: string } }) {
     const member = members.find((m) => m.id === params.id);
-    const [isFlipped, setIsFlipped] = useState(false);
     
     if (!member) {
         notFound();
     }
     
     const avatar = PlaceHolderImages.find((p) => p.id === member.avatar);
+    const churchLogo = PlaceHolderImages.find((p) => p.id === 'church-banner');
 
     return (
-        <div className="w-full min-h-screen bg-secondary p-4 md:p-8 flex flex-col items-center">
-            <h1 className="text-2xl font-bold mb-4">Ficha Cadastral de Membro</h1>
-            <p className="text-center text-sm text-muted-foreground mb-4">
-                Clique na ficha para visualizar o verso.
-            </p>
-
-            {/* Container to handle scaling */}
-            <div className='w-full max-w-5xl flex justify-center'>
-                <div 
-                    className="w-[1123px] max-w-full flip-card-container cursor-pointer"
-                    onClick={() => setIsFlipped(!isFlipped)}
-                >
-                    <div className={cn("flip-card w-full aspect-[1.41/1]", { 'flipped': isFlipped })}>
-                        {/* Front Side */}
-                        <div className="flip-card-front">
-                            <Card className="h-full w-full p-8 flex flex-col">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className="w-24 h-32 border-2 border-gray-300 flex items-center justify-center shrink-0">
-                                        {avatar ? (
-                                            <Image src={avatar.imageUrl} alt={member.name} width={96} height={128} className="object-cover w-full h-full" />
-                                        ) : (
-                                            <span className="text-xs text-gray-400">Foto 3x4</span>
-                                        )}
-                                    </div>
-                                    <div className="text-center px-4">
-                                        <h2 className="text-xl font-bold">Ficha de Membro</h2>
-                                        <p className="text-lg">Nº: {member.recordNumber}</p>
-                                    </div>
-                                    <div className="w-24 h-24 flex items-center justify-center shrink-0">
-                                        <AppLogo className="w-16 h-16 text-gray-300"/>
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-x-8 text-sm">
-                                    {/* Left Column */}
-                                    <div className="flex flex-col gap-1">
-                                        <DetailItem label="Nome" value={member.name} />
-                                        <DetailItem label="Naturalidade" value={member.naturalness} />
-                                        <DetailItem label="Data Nasc" value={member.birthDate ? format(new Date(member.birthDate), 'dd/MM/yyyy') : ''} />
-                                        <DetailItem label="RG" value={member.rg} />
-                                        <DetailItem label="Est. Civil" value={member.maritalStatus} />
-                                        <DetailItem label="E-mail" value={member.email} />
-                                        <DetailItem label="Tel" value={member.phone} />
-                                        <DetailItem label="End" value={`${member.address}, ${member.addressNumber}`} />
-                                        <DetailItem label="Bairro" value={member.addressDistrict} />
-                                        <DetailItem label="Cidade" value={member.addressCity} />
-                                    </div>
-                                    {/* Right Column */}
-                                    <div className="flex flex-col gap-1">
-                                        <div></div> {/* Empty div to align with Name */}
-                                        <DetailItem label="Nacionalidade" value={member.nationality} />
-                                        <DetailItem label="Gênero" value={member.gender} />
-                                        <DetailItem label="CPF" value={member.cpf} />
-                                        <div></div> {/* Empty div to align with Est. Civil */}
-                                        <div></div> {/* Empty div to align with Email */}
-                                        <DetailItem label="Whatsapp" value={member.whatsapp} />
-                                        <div></div> {/* Empty div to align with End */}
-                                        <DetailItem label="CEP" value={member.addressCep} />
-                                        <DetailItem label="Estado" value={member.addressState} />
-                                    </div>
-                                </div>
-                            </Card>
+        <div className="w-full min-h-screen bg-secondary p-4 md:p-8 flex justify-center">
+             {/* Container for scaling on smaller screens */}
+            <div className="w-full max-w-5xl">
+                {/* A4-like container with fixed aspect ratio */}
+                <div className="bg-white shadow-lg mx-auto w-full aspect-[1.414/1] p-8 md:p-12 font-serif flex flex-col">
+                    {/* Header */}
+                    <div className="flex justify-between items-start pb-4 border-b border-black">
+                        <div className="w-24 h-32 border border-gray-300 flex items-center justify-center shrink-0 bg-gray-100">
+                            {avatar ? (
+                                <Image src={avatar.imageUrl} alt={member.name} width={96} height={128} className="object-cover w-full h-full" />
+                            ) : (
+                                <span className="text-xs text-gray-400">Foto 3x4</span>
+                            )}
                         </div>
-                        {/* Back Side */}
-                        <div className="flip-card-back">
-                            <Card className="h-full w-full p-8 flex flex-col justify-between">
-                                <div>
-                                    <h2 className="text-xl font-bold text-center mb-6">Dados Eclesiásticos</h2>
-                                    <div className="grid grid-cols-2 gap-x-8">
-                                        <div className='space-y-3'>
-                                            <DetailItem label="Data de Batismo" value={member.baptismDate ? format(new Date(member.baptismDate), 'dd/MM/yyyy') : ''} />
-                                            <DetailItem label="Igreja de Origem" value={member.originChurch} />
-                                        </div>
-                                         <div className='space-y-3'>
-                                            <DetailItem label="Data de Membresia" value={member.memberSince ? format(new Date(member.memberSince), 'dd/MM/yyyy') : ''} />
-                                            <DetailItem label="Pastor Responsável" value={member.responsiblePastor} />
-                                        </div>
-                                    </div>
-                                    <div className='mt-3'>
-                                        <DetailItem label="Congregação" value={member.congregation}/>
-                                    </div>
-
-                                    <div className="mt-6">
-                                        <h3 className="text-lg font-bold text-center mb-2">Observações</h3>
-                                        <div className="h-32 border border-gray-300 rounded-md p-2 text-sm bg-gray-50 overflow-y-auto">
-                                            {member.observations || <span className='text-gray-400'>Nenhuma observação.</span>}
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div className="flex justify-around pt-8">
-                                    <div className="text-center w-1/2">
-                                        <div className="border-t border-black mt-8 w-full max-w-xs mx-auto"></div>
-                                        <p className="mt-2 text-sm">Assinatura do Membro</p>
-                                    </div>
-                                    <div className="text-center w-1/2">
-                                        <div className="border-t border-black mt-8 w-full max-w-xs mx-auto"></div>
-                                        <p className="mt-2 text-sm">Assinatura do Pastor</p>
-                                    </div>
-                                </div>
-                            </Card>
+                        <div className="text-center">
+                            <h1 className="text-4xl font-bold">Ficha de Membro</h1>
+                            <p className="text-lg font-sans">Nº: {member.recordNumber}</p>
+                        </div>
+                        <div className="w-24 h-24 border border-gray-300 flex items-center justify-center shrink-0 bg-gray-100">
+                             {churchLogo ? (
+                                <Image src={churchLogo.imageUrl} alt="Logo" width={96} height={96} className="object-contain p-1" />
+                             ) : (
+                                <span className="text-sm text-gray-500">Logo</span>
+                             )}
                         </div>
                     </div>
+
+                    {/* Content */}
+                    <div className="flex-grow pt-8 grid grid-cols-12 gap-x-8 gap-y-4 font-sans">
+                        <div className="col-span-12"><DetailItem label="Nome" value={member.name} /></div>
+
+                        <div className="col-span-12 sm:col-span-7"><DetailItem label="Naturalidade" value={member.naturalness} /></div>
+                        <div className="col-span-12 sm:col-span-5"><DetailItem label="Nacionalidade" value={member.nationality} /></div>
+
+                        <div className="col-span-12 sm:col-span-4"><DetailItem label="Data Nasc" value={member.birthDate ? format(new Date(member.birthDate), 'dd/MM/yyyy') : ''} /></div>
+                        <div className="col-span-12 sm:col-span-4"><DetailItem label="Gênero" value={member.gender} /></div>
+                        <div className="col-span-12 sm:col-span-4"><DetailItem label="Est. Civil" value={member.maritalStatus} /></div>
+                        
+                        <div className="col-span-12 sm:col-span-6"><DetailItem label="RG" value={member.rg} /></div>
+                        <div className="col-span-12 sm:col-span-6"><DetailItem label="CPF" value={member.cpf} /></div>
+
+                        <div className="col-span-12"><DetailItem label="E-mail" value={member.email} /></div>
+                        
+                        <div className="col-span-12 sm:col-span-6"><DetailItem label="Tel" value={member.phone} /></div>
+                        <div className="col-span-12 sm:col-span-6"><DetailItem label="Whatsapp" value={member.whatsapp} /></div>
+
+                        <div className="col-span-12 sm:col-span-9"><DetailItem label="End" value={member.address} /></div>
+                        <div className="col-span-12 sm:col-span-3"><DetailItem label="Nº" value={member.addressNumber} /></div>
+
+                        <div className="col-span-12 sm:col-span-8"><DetailItem label="Bairro" value={member.addressDistrict} /></div>
+                        <div className="col-span-12 sm:col-span-4"><DetailItem label="CEP" value={member.addressCep} /></div>
+
+                        <div className="col-span-12 sm:col-span-8"><DetailItem label="Cidade" value={member.addressCity} /></div>
+                        <div className="col-span-12 sm:col-span-4"><DetailItem label="Estado" value={member.addressState} /></div>
+                    </div>
+
+                     {/* Back Side Content - Ecclesiastical Data */}
+                    <div className="flex-grow pt-8 grid grid-cols-12 gap-x-8 gap-y-4 font-sans">
+                        <div className="col-span-12">
+                            <h2 className="text-xl font-bold text-center mb-4 font-serif">Dados Eclesiásticos</h2>
+                        </div>
+                        <div className="col-span-12 sm:col-span-6"><DetailItem label="Data de Batismo" value={member.baptismDate ? format(new Date(member.baptismDate), 'dd/MM/yyyy') : ''} /></div>
+                        <div className="col-span-12 sm:col-span-6"><DetailItem label="Data de Membresia" value={member.memberSince ? format(new Date(member.memberSince), 'dd/MM/yyyy') : ''} /></div>
+                        <div className="col-span-12 sm:col-span-6"><DetailItem label="Igreja de Origem" value={member.originChurch} /></div>
+                        <div className="col-span-12 sm:col-span-6"><DetailItem label="Pastor Responsável" value={member.responsiblePastor} /></div>
+                        <div className="col-span-12"><DetailItem label="Congregação" value={member.congregation}/></div>
+                    </div>
+
+                    {/* Footer with signatures */}
+                    <div className="flex justify-around pt-12 mt-auto">
+                        <div className="text-center w-1/2">
+                            <div className="border-t border-black mt-8 w-full max-w-xs mx-auto"></div>
+                            <p className="mt-2 text-sm font-sans">Assinatura do Membro</p>
+                        </div>
+                        <div className="text-center w-1/2">
+                            <div className="border-t border-black mt-8 w-full max-w-xs mx-auto"></div>
+                            <p className="mt-2 text-sm font-sans">Assinatura do Pastor</p>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
     );
 }
+

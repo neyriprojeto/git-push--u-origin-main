@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore, useCollection } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { addCongregacao, deleteCongregacao } from '@/firebase/firestore/mutations';
 import { Trash2 } from 'lucide-react';
 import {
@@ -20,6 +20,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { collection } from 'firebase/firestore';
 
 type Congregacao = {
   id: string;
@@ -29,9 +30,15 @@ type Congregacao = {
 export default function CongregationsPage() {
   const { toast } = useToast();
   const firestore = useFirestore();
-  const { data: congregacoes, loading } = useCollection<Congregacao>('congregacoes');
   const [newCongregacao, setNewCongregacao] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const congregacoesCollection = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'congregacoes') : null),
+    [firestore]
+  );
+  const { data: congregacoes, isLoading: loading } = useCollection<Congregacao>(congregacoesCollection);
+
 
   const handleAddCongregacao = async () => {
     if (!firestore || newCongregacao.trim() === '') {

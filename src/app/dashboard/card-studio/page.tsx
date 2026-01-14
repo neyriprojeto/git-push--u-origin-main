@@ -822,5 +822,3 @@ export default function CardStudioPage() {
     </>
   );
 }
-
-    

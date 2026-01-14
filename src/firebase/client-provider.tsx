@@ -1,18 +1,35 @@
 'use client';
 
-import React, { useMemo, type ReactNode } from 'react';
+import React, { useState, useEffect, type ReactNode } from 'react';
 import { FirebaseProvider } from '@/firebase/provider';
-import { initializeFirebase } from '@/firebase';
+import { initializeFirebase, type FirebaseServices } from '@/firebase';
 
 interface FirebaseClientProviderProps {
   children: ReactNode;
 }
 
 export function FirebaseClientProvider({ children }: FirebaseClientProviderProps) {
-  const firebaseServices = useMemo(() => {
-    // Initialize Firebase on the client side, once per component mount.
-    return initializeFirebase();
-  }, []); // Empty dependency array ensures this runs only once on mount
+  const [firebaseServices, setFirebaseServices] = useState<FirebaseServices | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const init = async () => {
+      try {
+        const services = await initializeFirebase();
+        setFirebaseServices(services);
+      } catch (error) {
+        console.error("Failed to initialize Firebase:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    init();
+  }, []); 
+
+  if (loading || !firebaseServices) {
+    // You can render a loading spinner or some placeholder here
+    return <div>Carregando...</div>; 
+  }
 
   return (
     <FirebaseProvider

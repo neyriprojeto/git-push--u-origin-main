@@ -31,7 +31,7 @@ import { posts as initialPosts, Post } from '@/data/posts';
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { updateMember } from "@/firebase/firestore/mutations";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -39,6 +39,7 @@ import { Slider } from '@/components/ui/slider';
 import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import { uploadArquivo } from '@/lib/cloudinary';
+import { Textarea } from "@/components/ui/textarea";
 
 
 type Verse = {
@@ -168,9 +169,13 @@ export default function MemberProfilePage() {
           const userDocSnap = await getDoc(userDocRef);
           if (userDocSnap.exists()) {
             const userData = userDocSnap.data();
+            // This check should ONLY apply to the 'Membro' role
             if (userData.cargo === 'Membro') {
               router.push(`/dashboard/members/${authUser.uid}`);
             }
+          } else {
+            // If the user document doesn't exist for some reason, deny access
+             router.push('/dashboard');
           }
         }
       };
@@ -263,7 +268,14 @@ export default function MemberProfilePage() {
   }, [selectRandomVerse]);
 
   const getAvatar = (avatarId?: string) => {
-    if (!avatarId) return null;
+    if (!avatarId || !member?.avatar) {
+      const placeholder = PlaceHolderImages.find((p) => p.id === 'member-avatar-1');
+      return placeholder;
+    }
+    // If member.avatar is a full URL, use it directly. Otherwise, look it up.
+    if(member.avatar.startsWith('http')) {
+        return { imageUrl: member.avatar };
+    }
     return PlaceHolderImages.find((p) => p.id === avatarId);
   }
 
@@ -321,6 +333,8 @@ export default function MemberProfilePage() {
             await onSubmit(form.getValues());
             toast({ title: 'Sucesso', description: 'Foto de perfil atualizada!' });
             setIsCropping(false);
+            setImageToCrop('');
+            setCurrentFile(null);
         } catch (error: any) {
             console.error(error);
             toast({ variant: 'destructive', title: 'Erro de Upload', description: `Não foi possível enviar a imagem. Erro: ${error.message}` });
@@ -341,10 +355,10 @@ export default function MemberProfilePage() {
 
   if (!member || memberError) {
     if (memberError) console.error(memberError);
-    notFound();
+    return notFound();
   }
 
-  const avatar = member.avatar ? { imageUrl: member.avatar } : getAvatar('member-avatar-1');
+  const avatar = getAvatar(member.avatar);
   const churchPicture = PlaceHolderImages.find((p) => p.id === "church-banner");
 
   return (
@@ -416,7 +430,7 @@ export default function MemberProfilePage() {
             </CardContent>
         </Card>
 
-        <Tabs defaultValue="perfil">
+        <Tabs defaultValue="perfil" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="perfil">Meu Perfil</TabsTrigger>
                 <TabsTrigger value="dados">Meus Dados</TabsTrigger>
@@ -458,12 +472,14 @@ export default function MemberProfilePage() {
                                 </div>
                                 <div className="bg-white text-gray-800 p-4 space-y-3 flex-1">
                                     <div className="flex items-center gap-4">
-                                        <Avatar className="h-16 w-16 border">
-                                            {avatar && <AvatarImage src={avatar.imageUrl} alt={member.nome} />}
-                                            <AvatarFallback className="text-2xl">
-                                                {member.nome.charAt(0)}
-                                            </AvatarFallback>
-                                        </Avatar>
+                                        <div className="relative">
+                                            <Avatar className="h-20 w-20 border">
+                                                {avatar && <AvatarImage src={avatar.imageUrl} alt={member.nome} />}
+                                                <AvatarFallback className="text-3xl">
+                                                    {member.nome.charAt(0)}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                        </div>
                                         <div className="border-b pb-1 flex-1">
                                             <Label className="text-xs text-muted-foreground">NOME</Label>
                                             <p className="font-bold text-sm">{member.nome}</p>
@@ -605,7 +621,7 @@ export default function MemberProfilePage() {
                                     </div>
                                 </div>
                                 {isOwner && (
-                                    <Button type="submit" disabled={isSubmitting}>
+                                    <Button type="submit" disabled={isSubmitting || isUploading}>
                                         {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                                         {isSubmitting ? 'Salvando...' : 'Salvar Alterações'}
                                     </Button>
@@ -709,5 +725,3 @@ export default function MemberProfilePage() {
     </div>
   );
 }
-
-    

@@ -22,8 +22,8 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Users, Share2, Radio, Menu, Instagram, Youtube, Globe, Loader2, MapPin } from "lucide-react";
 import React, { useState, useEffect } from "react";
-import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
-import { collection } from "firebase/firestore";
+import { useFirestore } from "@/firebase";
+import { collection, getDocs, QuerySnapshot, DocumentData } from "firebase/firestore";
 
 
 type Congregacao = {
@@ -38,11 +38,28 @@ export default function Home() {
   const pastorPhoto = PlaceHolderImages.find((p) => p.id === "pastor-photo");
 
   const firestore = useFirestore();
-  const congregacoesCollectionRef = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'congregacoes') : null),
-    [firestore]
-  );
-  const { data: congregacoes, isLoading: loadingCongregacoes } = useCollection<Congregacao>(congregacoesCollectionRef);
+  const [congregacoes, setCongregacoes] = useState<Congregacao[]>([]);
+  const [loadingCongregacoes, setLoadingCongregacoes] = useState(true);
+
+  useEffect(() => {
+    const fetchCongregacoes = async () => {
+      if (!firestore) return;
+      try {
+        setLoadingCongregacoes(true);
+        const congregacoesCollectionRef = collection(firestore, 'congregacoes');
+        const snapshot = await getDocs(congregacoesCollectionRef);
+        const congregacoesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Congregacao));
+        setCongregacoes(congregacoesData);
+      } catch (error) {
+        console.error("Erro ao buscar congregações:", error);
+      } finally {
+        setLoadingCongregacoes(false);
+      }
+    };
+
+    fetchCongregacoes();
+  }, [firestore]);
+
 
   return (
     <div className="flex flex-col min-h-screen bg-secondary">

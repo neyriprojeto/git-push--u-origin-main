@@ -146,7 +146,7 @@ export default function MemberFilePage() {
     const fichaLogoUrl = churchInfo?.fichaLogoUrl || defaultFichaLogo?.imageUrl;
 
     const FichaFrente = () => (
-        <div className="bg-white shadow-lg p-[2vw] md:p-8 flex flex-col aspect-[1/1.414]">
+        <div className="bg-white shadow-lg p-[2vw] md:p-8 flex flex-col h-full">
             {/* Header */}
             <div className="flex justify-between items-start pb-[1vw] md:pb-4 border-b border-black gap-4">
                 <div className="w-[12vw] h-[16vw] md:w-24 md:h-32 border border-gray-300 flex items-center justify-center shrink-0 bg-gray-100">
@@ -198,7 +198,7 @@ export default function MemberFilePage() {
     );
 
     const FichaVerso = () => (
-         <div className="bg-white shadow-lg p-[2vw] md:p-8 flex flex-col aspect-[1/1.414]">
+         <div className="bg-white shadow-lg p-[2vw] md:p-8 flex flex-col h-full">
            <div className="flex flex-col h-full">
                 {/* Header */}
                 <div className="text-center pb-[1vw] md:pb-4 border-b border-black">
@@ -253,11 +253,10 @@ export default function MemberFilePage() {
             {/* Flip container for screen view */}
             <div className="w-full max-w-5xl print:hidden">
                 <div 
-                    className="flip-card-container cursor-pointer" 
-                    style={{ perspective: '2000px' }}
+                    className="flip-card-container cursor-pointer aspect-[1/1.414]"
                     onClick={() => setIsFront(!isFront)}
                 >
-                    <div className={cn("flip-card w-full transition-transform duration-700", { 'flipped': !isFront })} style={{ transformStyle: 'preserve-3d' }}>
+                    <div className={cn("flip-card w-full h-full transition-transform duration-700", { 'flipped': !isFront })} style={{ transformStyle: 'preserve-3d' }}>
                         <div className="flip-card-front">
                             <FichaFrente />
                         </div>

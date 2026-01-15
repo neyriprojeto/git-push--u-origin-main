@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from "next/image";
@@ -22,8 +23,8 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Users, Share2, Radio, Menu, Instagram, Youtube, Globe, Loader2, MapPin } from "lucide-react";
 import React, { useState, useEffect } from "react";
-import { useFirestore } from "@/firebase";
-import { collection, getDocs, QuerySnapshot, DocumentData } from "firebase/firestore";
+import { useFirestore, useDoc, useMemoFirebase } from "@/firebase";
+import { collection, getDocs, QuerySnapshot, DocumentData, query, where } from "firebase/firestore";
 
 
 type Congregacao = {
@@ -32,14 +33,37 @@ type Congregacao = {
   endereco?: string;
 };
 
+type ChurchInfo = {
+  pastorName?: string;
+  pastoralMessage?: string;
+  aboutUs?: string;
+  bannerImageUrl?: string;
+  pastorImageUrl?: string;
+}
+
+type Member = {
+    id: string;
+    nome: string;
+    avatar?: string;
+    cargo: string;
+}
+
 
 export default function Home() {
-  const churchBanner = PlaceHolderImages.find((p) => p.id === "church-banner");
-  const pastorPhoto = PlaceHolderImages.find((p) => p.id === "pastor-photo");
+  const churchBannerPlaceholder = PlaceHolderImages.find((p) => p.id === "church-banner");
+  const pastorPhotoPlaceholder = PlaceHolderImages.find((p) => p.id === "pastor-photo");
 
   const firestore = useFirestore();
   const [congregacoes, setCongregacoes] = useState<Congregacao[]>([]);
   const [loadingCongregacoes, setLoadingCongregacoes] = useState(true);
+
+  const [leaders, setLeaders] = useState<Member[]>([]);
+  const [loadingLeaders, setLoadingLeaders] = useState(true);
+
+  // Fetch ChurchInfo
+  const churchInfoRef = useMemoFirebase(() => (firestore ? doc(firestore, 'churchInfo', 'main') : null), [firestore]);
+  const { data: churchInfo, isLoading: loadingChurchInfo } = useDoc<ChurchInfo>(churchInfoRef);
+
 
   useEffect(() => {
     const fetchCongregacoes = async () => {
@@ -57,8 +81,41 @@ export default function Home() {
       }
     };
 
+    const fetchLeaders = async () => {
+        if (!firestore) return;
+        setLoadingLeaders(true);
+        try {
+            const leaderRoles = ['Pastor(a)', 'Pastor/dirigente', 'Diácono(a)', 'Presbítero', 'Evangelista', 'Missionário(a)'];
+            const leadersQuery = query(collection(firestore, 'users'), where('cargo', 'in', leaderRoles));
+            const snapshot = await getDocs(leadersQuery);
+            const leadersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Member));
+            setLeaders(leadersData);
+        } catch (error) {
+            console.error("Erro ao buscar líderes:", error);
+        } finally {
+            setLoadingLeaders(false);
+        }
+    };
+
     fetchCongregacoes();
+    fetchLeaders();
   }, [firestore]);
+
+  const getLeaderAvatar = (leader: Member) => {
+    if (leader.avatar?.startsWith('http')) {
+        return leader.avatar;
+    }
+    const placeholder = PlaceHolderImages.find((p) => p.id === leader.avatar);
+    return placeholder?.imageUrl || '';
+  }
+
+
+  // Dynamic values or fallbacks
+  const bannerUrl = churchInfo?.bannerImageUrl || churchBannerPlaceholder?.imageUrl || '';
+  const pastorPhotoUrl = churchInfo?.pastorImageUrl || pastorPhotoPlaceholder?.imageUrl || '';
+  const pastorName = churchInfo?.pastorName || 'Pastor Presidente';
+  const aboutUs = churchInfo?.aboutUs || 'A Igreja Evangélica AD Kairós é um lugar de adoração, comunhão e serviço. Nossa missão é levar a palavra de Deus a todos, transformando vidas e comunidades.';
+  const pastoralMessage = churchInfo?.pastoralMessage || 'Aqui você encontrará uma mensagem de fé e esperança do nosso pastor. Brevemente, este espaço será preenchido com palavras que edificarão a sua vida.';
 
 
   return (
@@ -130,13 +187,14 @@ export default function Home() {
       <main className="flex-1">
         {/* Hero Section */}
         <div className="relative h-64 w-full text-white">
-          {churchBanner && (
+          {loadingChurchInfo ? (
+            <div className='w-full h-full bg-gray-300 animate-pulse' />
+          ) : (
             <Image
-              src={churchBanner.imageUrl}
-              alt={churchBanner.description}
+              src={bannerUrl}
+              alt={"Banner da Igreja"}
               fill
               className="object-cover"
-              data-ai-hint={churchBanner.imageHint}
             />
           )}
           <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-center p-4">
@@ -148,40 +206,33 @@ export default function Home() {
         {/* Content Section */}
         <div className="container -mt-20 z-10 relative px-4 md:px-6">
           <div className="flex justify-center mb-6">
-            {pastorPhoto ? (
               <Avatar className="size-40 border-8 border-background bg-background shadow-lg">
                 <AvatarImage
-                  src={pastorPhoto.imageUrl}
-                  alt={pastorPhoto.description}
-                  data-ai-hint={pastorPhoto.imageHint}
+                  src={pastorPhotoUrl}
+                  alt={pastorName}
                 />
-                <AvatarFallback>P</AvatarFallback>
-              </Avatar>
-            ) : (
-              <Avatar className="size-40 border-4 border-background bg-muted shadow-lg">
-                <AvatarFallback className="bg-slate-300">
-                  <Users className="h-24 w-24 text-muted-foreground" />
+                <AvatarFallback>
+                    {loadingChurchInfo ? <Loader2 className='animate-spin'/> : <Users className="h-24 w-24 text-muted-foreground" />}
                 </AvatarFallback>
               </Avatar>
-            )}
           </div>
 
           <div className="max-w-4xl mx-auto grid gap-8">
             {/* Sobre */}
             <Card className="text-center">
               <CardHeader>
-                <CardTitle>Pastor Presidente</CardTitle>
-                <CardDescription>Nome do Pastor</CardDescription>
+                <CardTitle>{pastorName}</CardTitle>
+                <CardDescription>Pastor Presidente</CardDescription>
               </CardHeader>
               <CardContent>
                 <h2 className="text-2xl font-bold mt-4 mb-2">
                   Sobre a nossa Igreja
                 </h2>
-                <p className="text-muted-foreground">
-                  A Igreja Evangélica AD Kairós é um lugar de adoração, comunhão e serviço. 
-                  Nossa missão é levar a palavra de Deus a todos, transformando vidas e comunidades.
-                </p>
-                <p className="text-muted-foreground mt-2">Endereço não informado</p>
+                 {loadingChurchInfo ? (
+                    <p className="text-muted-foreground">Carregando...</p>
+                 ): (
+                    <p className="text-muted-foreground">{aboutUs}</p>
+                 )}
               </CardContent>
             </Card>
 
@@ -204,10 +255,11 @@ export default function Home() {
                 <CardTitle className="text-center">Palavra Pastoral</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground text-center">
-                  Aqui você encontrará uma mensagem de fé e esperança do nosso pastor. 
-                  Brevemente, este espaço será preenchido com palavras que edificarão a sua vida.
-                </p>
+                {loadingChurchInfo ? (
+                    <p className="text-muted-foreground text-center">Carregando...</p>
+                 ): (
+                    <p className="text-muted-foreground text-center">{pastoralMessage}</p>
+                 )}
               </CardContent>
             </Card>
             
@@ -249,10 +301,31 @@ export default function Home() {
                   <CardTitle className="text-center">Comissão Executiva</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground text-center">
-                    Conheça os líderes que servem e guiam nossa igreja com dedicação e compromisso, 
-                    trabalhando para o crescimento do Reino de Deus.
-                  </p>
+                  {loadingLeaders ? (
+                        <div className="flex justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>
+                    ) : leaders.length > 0 ? (
+                        <ul className="space-y-4">
+                        {leaders.map((leader) => {
+                            const avatarUrl = getLeaderAvatar(leader);
+                            return (
+                                <li key={leader.id} className="flex items-center gap-4">
+                                <Avatar>
+                                    <AvatarImage src={avatarUrl} />
+                                    <AvatarFallback>{leader.nome.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <p className="font-semibold">{leader.nome}</p>
+                                    <p className="text-sm text-muted-foreground">{leader.cargo}</p>
+                                </div>
+                                </li>
+                            );
+                        })}
+                        </ul>
+                    ) : (
+                        <p className="text-muted-foreground text-center">
+                            Conheça os líderes que servem e guiam nossa igreja com dedicação e compromisso.
+                        </p>
+                    )}
                 </CardContent>
               </Card>
             </div>

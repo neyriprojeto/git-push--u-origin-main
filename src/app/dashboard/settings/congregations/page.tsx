@@ -77,6 +77,7 @@ export default function CongregationsPage() {
   const imgRef = useRef<HTMLImageElement>(null);
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [currentFile, setCurrentFile] = useState<File | null>(null);
 
   useEffect(() => {
     if (churchInfoData) {

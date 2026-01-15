@@ -77,7 +77,6 @@ const defaultElements: CardElements = {
     'Label Nº Reg.': { position: { top: 68, left: 40 }, size: { fontSize: 10 }, text: 'Nº Reg.:', textAlign: 'left' },
     'Label RG': { position: { top: 68, left: 70 }, size: { fontSize: 10 }, text: 'RG:', textAlign: 'left' },
     'Label CPF': { position: { top: 74, left: 40 }, size: { fontSize: 10 }, text: 'CPF:', textAlign: 'left' },
-    'Label Data de Nascimento': { position: { top: 74, left: 70 }, size: { fontSize: 10 }, text: 'Nasc:', textAlign: 'left' },
     'Label Cargo': { position: { top: 80, left: 40 }, size: { fontSize: 10 }, text: 'Cargo:', textAlign: 'left' },
 
     // Values (to be filled dynamically)
@@ -85,7 +84,6 @@ const defaultElements: CardElements = {
     'Valor Nº Reg.': { position: { top: 68, left: 52 }, size: { fontSize: 10 }, text: memberSample.recordNumber, textAlign: 'left' },
     'Valor RG': { position: { top: 68, left: 76 }, size: { fontSize: 10 }, text: memberSample.rg, textAlign: 'left' },
     'Valor CPF': { position: { top: 74, left: 50 }, size: { fontSize: 10 }, text: memberSample.cpf, textAlign: 'left' },
-    'Valor Data de Nascimento': { position: { top: 74, left: 80 }, size: { fontSize: 10 }, text: new Date(memberSample.birthDate).toLocaleDateString('pt-BR'), textAlign: 'left' },
     'Valor Cargo': { position: { top: 80, left: 52 }, size: { fontSize: 10 }, text: memberSample.role, textAlign: 'left' },
 
     'Logo Igreja': { position: { top: 38, left: 80 }, size: { width: 70, height: 70 }, src: churchLogoPlaceholder?.imageUrl || '' },
@@ -129,13 +127,13 @@ export default function CardStudioPage() {
     const [rotate, setRotate] = useState(0);
     const [aspect, setAspect] = useState<number | undefined>(undefined);
     const [imageToCrop, setImageToCrop] = useState('');
-    const [croppingId, setCroppingId = useState('');
-    const [isCropping, setIsCropping = useState(false);
-    const [isSaving, setIsSaving = useState(false);
-    const [isUploading, setIsUploading = useState(false);
+    const [croppingId, setCroppingId] = useState('');
+    const [isCropping, setIsCropping] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
     const imgRef = useRef<HTMLImageElement>(null);
     const previewCanvasRef = useRef<HTMLCanvasElement>(null);
-    const [currentFile, setCurrentFile = useState<File | null>(null);
+    const [currentFile, setCurrentFile] = useState<File | null>(null);
 
     const fileInputRefs = {
         'Fundo (Frente)': useRef<HTMLInputElement>(null),
@@ -148,21 +146,21 @@ export default function CardStudioPage() {
         'Foto do Membro': useRef<HTMLInputElement>(null),
     };
 
-    const [cardStyles, setCardStyles = useState({
+    const [cardStyles, setCardStyles] = useState({
         frontBackground: '#F3F4F6',
         backBackground: '#F3F4F6',
         frontBackgroundImage: '',
         backBackgroundImage: '',
     });
 
-     const [textColors, setTextColors = useState({
+     const [textColors, setTextColors] = useState({
         title: '#000000',
         personalData: '#333333',
         backText: '#333333',
     });
 
 
-    const [elements, setElements = useState<CardElements>(() => {
+    const [elements, setElements] = useState<CardElements>(() => {
         const initialElements = {...defaultElements};
         if(initialElements['Foto do Membro']) {
             initialElements['Foto do Membro'].src = avatarPlaceholder?.imageUrl;
@@ -173,7 +171,7 @@ export default function CardStudioPage() {
         return initialElements;
     });
     
-    const [selectedElement, setSelectedElement = useState<string | null>(null);
+    const [selectedElement, setSelectedElement] = useState<string | null>(null);
     const cardRef = useRef<HTMLDivElement>(null);
     const dragInfo = useRef({ isDragging: false, elementId: '', initialMousePos: { x: 0, y: 0 }, initialElementPos: { top: 0, left: 0 } });
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -886,5 +884,3 @@ export default function CardStudioPage() {
     </>
   );
 }
-
-    

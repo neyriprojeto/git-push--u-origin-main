@@ -75,7 +75,7 @@ export const memberApprovalFlow = onFlow(
       });
 
       // Define the sender's name and address. Prioritize .env variables.
-      const fromName = process.env.EMAIL_FROM_NAME || 'A.D.KAIRÓS';
+      const fromName = process.env.EMAIL_FROM_NAME || 'A.D. Kairós Connect';
       // Use the dedicated FROM address if provided, otherwise fallback to the user login email.
       const fromEmail = process.env.EMAIL_FROM_ADDRESS || process.env.EMAIL_USER;
 
@@ -83,7 +83,7 @@ export const memberApprovalFlow = onFlow(
       const mailOptions = {
         from: `"${fromName}" <${fromEmail}>`,
         to: memberEmail,
-        subject: 'Seu cadastro no A.D.KAIRÓS foi aprovado!',
+        subject: 'Seu cadastro no A.D. Kairós Connect foi aprovado!',
         html: `
           <h1>Bem-vindo(a), ${memberName}!</h1>
           <p>Temos o prazer de informar que seu cadastro em nossa comunidade foi aprovado.</p>

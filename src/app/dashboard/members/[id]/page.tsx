@@ -19,7 +19,7 @@ import { Label } from "@/components/ui/label";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { AppLogo } from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
-import { User, CreditCard, FileText, MessageSquare, BookOpen, RefreshCw, Loader2, LayoutGrid, Save, Upload } from "lucide-react";
+import { User, CreditCard, FileText, MessageSquare, BookOpen, RefreshCw, Loader2, LayoutGrid, Save, Upload, ShieldAlert } from "lucide-react";
 import { bibleVerses } from "@/data/bible-verses";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
@@ -210,8 +210,7 @@ export default function MemberProfilePage() {
   const isOwner = authUser?.uid === memberId;
   
   const currentUserRef = useMemoFirebase(() => (firestore && authUser ? doc(firestore, 'users', authUser.uid) : null), [firestore, authUser]);
-  const { data: currentUserData, isLoading: isCurrentUserLoading } = useDoc(currentUserRef);
-
+  const { data: currentUserData, isLoading: isCurrentUserLoading, error: currentUserError } = useDoc<Member>(currentUserRef);
 
   const memberRef = useMemoFirebase(() => (firestore ? doc(firestore, 'users', memberId) : null), [firestore, memberId]);
   const { data: member, isLoading: memberLoading, error: memberError } = useDoc<Member>(memberRef);
@@ -229,8 +228,14 @@ export default function MemberProfilePage() {
   const [isCardFlipped, setIsCardFlipped] = useState(false);
   const [posts, setPosts] = useState<Post[]>(initialPosts);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [canEdit, setCanEdit] = useState(false);
-  const [canManage, setCanManage] = useState(false);
+  
+  const [permission, setPermission] = useState<{ canView: boolean, canEdit: boolean, canManage: boolean, hasChecked: boolean }>({
+    canView: false,
+    canEdit: false,
+    canManage: false,
+    hasChecked: false,
+  });
+
 
   // State for image cropping
     const [crop, setCrop] = useState<Crop>();
@@ -254,9 +259,31 @@ export default function MemberProfilePage() {
     },
   });
 
+  // Effect to check permissions
   useEffect(() => {
-    if (member && currentUserData) {
-      // Preenche o formulário com os dados do membro
+    if (isUserLoading || isCurrentUserLoading || memberLoading) return;
+
+    if (!authUser || !currentUserData || !member) {
+        setPermission({ canView: false, canEdit: false, canManage: false, hasChecked: true });
+        return;
+    }
+    
+    const isUserOwner = authUser.uid === member.id;
+    const isAdmin = currentUserData.cargo === 'Administrador';
+    const isPastorOfCongregation = currentUserData.cargo === 'Pastor Dirigente/Local' && currentUserData.congregacao === member.congregacao;
+
+    const canView = isUserOwner || isAdmin || isPastorOfCongregation;
+    const canEdit = isUserOwner || isAdmin || isPastorOfCongregation;
+    const canManage = isAdmin || isPastorOfCongregation;
+
+    setPermission({ canView, canEdit, canManage, hasChecked: true });
+
+  }, [authUser, currentUserData, member, isUserLoading, isCurrentUserLoading, memberLoading]);
+
+
+  // Effect to reset form when member data is loaded
+  useEffect(() => {
+    if (member) {
       form.reset({
         nome: member.nome || '',
         email: member.email || '',
@@ -284,17 +311,8 @@ export default function MemberProfilePage() {
         dataMembro: formatDate(member.dataMembro) || '',
         recordNumber: member.recordNumber || '',
       });
-
-      // Define permissões de edição
-      const isUserOwner = authUser?.uid === memberId;
-      const isAdmin = currentUserData.cargo === 'Administrador';
-      const isPastorOfCongregation = currentUserData.cargo === 'Pastor Dirigente/Local' && currentUserData.congregacao === member.congregacao;
-
-      setCanEdit(isUserOwner || isAdmin || isPastorOfCongregation);
-      setCanManage(isAdmin || isPastorOfCongregation);
-
     }
-  }, [member, currentUserData, form, authUser, memberId]);
+  }, [member, form]);
 
 
   const onSubmit: SubmitHandler<MemberFormData> = async (data) => {
@@ -326,7 +344,6 @@ export default function MemberProfilePage() {
       const placeholder = PlaceHolderImages.find((p) => p.id === 'member-avatar-1');
       return placeholder;
     }
-    // If member.avatar is a full URL, use it directly. Otherwise, look it up.
     if(member.avatar.startsWith('http')) {
         return { imageUrl: member.avatar };
     }
@@ -336,7 +353,7 @@ export default function MemberProfilePage() {
   const onSelectFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-        setCrop(undefined) // Makes crop preview update between images.
+        setCrop(undefined) 
         setCurrentFile(file);
         const reader = new FileReader()
         reader.addEventListener('load', () => {
@@ -399,7 +416,9 @@ export default function MemberProfilePage() {
   }
 
 
-  if (memberLoading || isUserLoading || isCurrentUserLoading || isTemplateLoading) {
+  const isLoading = isUserLoading || isCurrentUserLoading || memberLoading || isTemplateLoading || !permission.hasChecked;
+
+  if (isLoading) {
       return (
           <div className="flex-1 h-screen flex items-center justify-center bg-secondary">
               <Loader2 className="h-16 w-16 animate-spin" />
@@ -408,10 +427,27 @@ export default function MemberProfilePage() {
   }
 
   if (!member || memberError) {
-    if (memberError) console.error(memberError);
+    if (memberError) console.error("Erro ao buscar membro:", memberError);
     return notFound();
   }
-
+  
+  if (!permission.canView) {
+      return (
+           <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+                <Card className="border-destructive">
+                    <CardHeader className="items-center text-center">
+                        <ShieldAlert className="h-12 w-12 text-destructive mb-4" />
+                        <CardTitle className="text-destructive">Acesso Negado</CardTitle>
+                    </CardHeader>
+                    <CardContent className='pt-4 text-center'>
+                        <p>Você não tem permissão para acessar esta página.</p>
+                        <Button onClick={() => router.back()} className="mt-6">Voltar</Button>
+                    </CardContent>
+                </Card>
+            </div>
+      );
+  }
+  
   if (!templateData) {
         return (
             <div className="flex-1 h-screen flex items-center justify-center bg-secondary">
@@ -446,7 +482,6 @@ export default function MemberProfilePage() {
             return `Cargo: ${member.cargo || ''}`;
         case 'Membro Desde':
              return `Membro desde: ${formatDate(member.dataMembro, 'dd/MM/yyyy') || ''}`;
-        // Adicione outros campos conforme necessário
         default:
             return '';
     }
@@ -514,7 +549,6 @@ export default function MemberProfilePage() {
         style.textAlign = el.textAlign;
         style.whiteSpace = id.includes('Endereço') ? 'pre-wrap' : 'nowrap';
         
-        // Substitui placeholders por dados reais do membro
         const dynamicText = getMemberDataForField(id) || el.text;
         
         elementContent = <p style={style}>{dynamicText}</p>;
@@ -640,7 +674,7 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
                 <Badge variant="secondary">{member.cargo}</Badge>
                 <Badge variant={member.status === "Ativo" ? "default" : member.status === 'Pendente' ? 'outline' : "destructive"}>{member.status}</Badge>
                 </div>
-                {canManage && (
+                {permission.canManage && (
                     <div className="flex gap-2 mt-4">
                          <Button asChild variant="outline" size="sm">
                             <Link href={`/dashboard/members/${member.id}/file`}>
@@ -706,8 +740,8 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
                                         </Avatar>
                                         <div className="grid gap-2">
                                             <Label>Foto de Perfil</Label>
-                                            <Input id="avatar-upload" type="file" accept="image/*" className="hidden" onChange={onSelectFile} disabled={!canEdit} />
-                                            <Button type="button" variant="outline" onClick={() => document.getElementById('avatar-upload')?.click()} disabled={!canEdit}>
+                                            <Input id="avatar-upload" type="file" accept="image/*" className="hidden" onChange={onSelectFile} disabled={!permission.canEdit} />
+                                            <Button type="button" variant="outline" onClick={() => document.getElementById('avatar-upload')?.click()} disabled={!permission.canEdit}>
                                                 <Upload className="mr-2 h-4 w-4" />
                                                 Alterar Foto
                                             </Button>
@@ -719,7 +753,7 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Nome Completo</FormLabel>
-                                                <FormControl><Input {...field} disabled={!canEdit} /></FormControl>
+                                                <FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
@@ -744,7 +778,7 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
                                 </div>
 
                                 {/* --- Dados Eclesiásticos --- */}
-                                {canManage && (
+                                {permission.canManage && (
                                     <div className="space-y-4">
                                         <h3 className="font-medium text-lg border-b pb-2">Dados Eclesiásticos</h3>
                                         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -805,13 +839,13 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
                                 <div className="space-y-4">
                                      <h3 className="font-medium text-lg border-b pb-2">Dados Pessoais</h3>
                                       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        <FormField control={form.control} name="dataNascimento" render={({ field }) => (<FormItem><FormLabel>Data de Nascimento</FormLabel><FormControl><Input type="date" {...field} disabled={!canEdit} /></FormControl><FormMessage /></FormItem>)} />
-                                        <FormField control={form.control} name="cpf" render={({ field }) => (<FormItem><FormLabel>CPF</FormLabel><FormControl><Input {...field} disabled={!canEdit} /></FormControl><FormMessage /></FormItem>)} />
-                                        <FormField control={form.control} name="rg" render={({ field }) => (<FormItem><FormLabel>RG</FormLabel><FormControl><Input {...field} disabled={!canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField control={form.control} name="dataNascimento" render={({ field }) => (<FormItem><FormLabel>Data de Nascimento</FormLabel><FormControl><Input type="date" {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField control={form.control} name="cpf" render={({ field }) => (<FormItem><FormLabel>CPF</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField control={form.control} name="rg" render={({ field }) => (<FormItem><FormLabel>RG</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
                                         <FormField control={form.control} name="gender" render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Gênero</FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value} disabled={!canEdit}>
+                                                <Select onValueChange={field.onChange} value={field.value} disabled={!permission.canEdit}>
                                                     <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                                                     <SelectContent>
                                                         <SelectItem value="Masculino">Masculino</SelectItem>
@@ -824,7 +858,7 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
                                          <FormField control={form.control} name="maritalStatus" render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Estado Civil</FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value} disabled={!canEdit}>
+                                                <Select onValueChange={field.onChange} value={field.value} disabled={!permission.canEdit}>
                                                     <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                                                     <SelectContent>
                                                         <SelectItem value="Solteiro(a)">Solteiro(a)</SelectItem>
@@ -838,8 +872,8 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
                                         )} />
                                     </div>
                                     <div className="grid md:grid-cols-2 gap-4">
-                                         <FormField control={form.control} name="naturalness" render={({ field }) => (<FormItem><FormLabel>Naturalidade</FormLabel><FormControl><Input {...field} disabled={!canEdit} /></FormControl><FormMessage /></FormItem>)} />
-                                         <FormField control={form.control} name="nationality" render={({ field }) => (<FormItem><FormLabel>Nacionalidade</FormLabel><FormControl><Input {...field} disabled={!canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                         <FormField control={form.control} name="naturalness" render={({ field }) => (<FormItem><FormLabel>Naturalidade</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                         <FormField control={form.control} name="nationality" render={({ field }) => (<FormItem><FormLabel>Nacionalidade</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
                                     </div>
                                 </div>
 
@@ -847,8 +881,8 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
                                 <div className="space-y-4">
                                      <h3 className="font-medium text-lg border-b pb-2">Contato</h3>
                                      <div className="grid md:grid-cols-2 gap-4">
-                                         <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Telefone</FormLabel><FormControl><Input {...field} disabled={!canEdit} /></FormControl><FormMessage /></FormItem>)} />
-                                         <FormField control={form.control} name="whatsapp" render={({ field }) => (<FormItem><FormLabel>WhatsApp</FormLabel><FormControl><Input {...field} disabled={!canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                         <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Telefone</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                         <FormField control={form.control} name="whatsapp" render={({ field }) => (<FormItem><FormLabel>WhatsApp</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
                                     </div>
                                 </div>
 
@@ -856,19 +890,19 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
                                 <div className="space-y-4">
                                     <h3 className="font-medium text-lg border-b pb-2">Endereço</h3>
                                     <div className="grid md:grid-cols-3 gap-4">
-                                        <FormField name="cep" control={form.control} render={({ field }) => (<FormItem><FormLabel>CEP</FormLabel><FormControl><Input {...field} disabled={!canEdit} /></FormControl><FormMessage /></FormItem>)} />
-                                        <FormField name="logradouro" control={form.control} render={({ field }) => (<FormItem className="md:col-span-2"><FormLabel>Logradouro</FormLabel><FormControl><Input {...field} disabled={!canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField name="cep" control={form.control} render={({ field }) => (<FormItem><FormLabel>CEP</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField name="logradouro" control={form.control} render={({ field }) => (<FormItem className="md:col-span-2"><FormLabel>Logradouro</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
                                     </div>
                                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        <FormField name="numero" control={form.control} render={({ field }) => (<FormItem><FormLabel>Número</FormLabel><FormControl><Input {...field} disabled={!canEdit} /></FormControl><FormMessage /></FormItem>)} />
-                                        <FormField name="complemento" control={form.control} render={({ field }) => (<FormItem><FormLabel>Complemento</FormLabel><FormControl><Input {...field} disabled={!canEdit} /></FormControl><FormMessage /></FormItem>)} />
-                                        <FormField name="bairro" control={form.control} render={({ field }) => (<FormItem><FormLabel>Bairro</FormLabel><FormControl><Input {...field} disabled={!canEdit} /></FormControl><FormMessage /></FormItem>)} />
-                                        <FormField name="cidade" control={form.control} render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><FormControl><Input {...field} disabled={!canEdit} /></FormControl><FormMessage /></FormItem>)} />
-                                        <FormField name="estado" control={form.control} render={({ field }) => (<FormItem><FormLabel>Estado</FormLabel><FormControl><Input {...field} disabled={!canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField name="numero" control={form.control} render={({ field }) => (<FormItem><FormLabel>Número</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField name="complemento" control={form.control} render={({ field }) => (<FormItem><FormLabel>Complemento</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField name="bairro" control={form.control} render={({ field }) => (<FormItem><FormLabel>Bairro</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField name="cidade" control={form.control} render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField name="estado" control={form.control} render={({ field }) => (<FormItem><FormLabel>Estado</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
                                     </div>
                                 </div>
                                 
-                                {canEdit && (
+                                {permission.canEdit && (
                                     <Button type="submit" disabled={isSubmitting || isUploading}>
                                         {isSubmitting || isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                                         {isSubmitting || isUploading ? 'Salvando...' : 'Salvar Alterações'}
@@ -973,6 +1007,5 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
     </div>
   );
 }
-
 
     

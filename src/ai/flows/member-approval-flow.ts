@@ -1,13 +1,21 @@
 
 'use server';
 /**
- * @fileOverview A Genkit flow that triggers on Firestore document updates
- * to send a welcome email when a new member's status is changed to "Ativo".
+ * @fileOverview A Genkit flow that triggers on Firestore document updates.
+ * When a new member's status changes to "Ativo", it creates a document
+ * in the 'mail' collection to be sent by the "Trigger Email" Firebase Extension.
  */
 
 import { onFlow } from '@genkit-ai/next';
 import { z } from 'zod';
-import { sendEmailTool } from '../tools/email-tool';
+import { getFirestore } from 'firebase-admin/firestore';
+import { initializeApp, getApps } from 'firebase-admin/app';
+
+// Initialize Firebase Admin SDK if it hasn't been already.
+if (!getApps().length) {
+  initializeApp();
+}
+const db = getFirestore();
 
 // Define the schema for the data we expect from the Firestore trigger event.
 // This should match the structure of the 'users' documents.
@@ -46,25 +54,29 @@ export const memberApprovalFlow = onFlow(
 
     // Check if the status was changed from 'Pendente' to 'Ativo'.
     if (beforeStatus === 'Pendente' && afterStatus === 'Ativo') {
-      console.log(`Approving member ${memberName} (${memberEmail}). Sending welcome email.`);
+      console.log(`Approving member ${memberName} (${memberEmail}). Creating email document.`);
       
-      // Call the sendEmailTool to send the welcome email.
-      await sendEmailTool({
-        to: memberEmail,
-        subject: 'Seu cadastro no A.D.KAIROS CONNECT foi aprovado!',
-        html: `
-          <h1>Bem-vindo(a), ${memberName}!</h1>
-          <p>Temos o prazer de informar que seu cadastro em nossa comunidade foi aprovado.</p>
-          <p>Você já pode acessar a área de membros e desfrutar de todas as funcionalidades.</p>
-          <p>Seja bem-vindo(a) à família A.D. Kairós!</p>
-          <br>
-          <p>Atenciosamente,</p>
-          <p><strong>Ministério A.D. Kairós</strong></p>
-        `,
+      // Create a new document in the 'mail' collection.
+      // The "Trigger Email" extension will pick this up and send the email.
+      await db.collection('mail').add({
+        to: [memberEmail],
+        message: {
+          subject: 'Seu cadastro no A.D.KAIROS CONNECT foi aprovado!',
+          html: `
+            <h1>Bem-vindo(a), ${memberName}!</h1>
+            <p>Temos o prazer de informar que seu cadastro em nossa comunidade foi aprovado.</p>
+            <p>Você já pode acessar a área de membros e desfrutar de todas as funcionalidades.</p>
+            <p>Seja bem-vindo(a) à família A.D. Kairós!</p>
+            <br>
+            <p>Atenciosamente,</p>
+            <p><strong>Ministério A.D. Kairós</strong></p>
+          `,
+        },
       });
+      console.log(`Email document created for ${memberEmail}.`);
 
     } else {
-      console.log('No status change to "Ativo", skipping email.');
+      console.log('No status change to "Ativo", skipping email document creation.');
     }
   }
 );

@@ -19,7 +19,7 @@ import { Label } from "@/components/ui/label";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { AppLogo } from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
-import { User, CreditCard, FileText, MessageSquare, BookOpen, RefreshCw, Loader2, LayoutGrid, Save, Upload, ShieldAlert } from "lucide-react";
+import { User, CreditCard, FileText, MessageSquare, BookOpen, RefreshCw, Loader2, LayoutGrid, Save, Upload, ShieldAlert, Trash2 } from "lucide-react";
 import { bibleVerses } from "@/data/bible-verses";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
@@ -33,14 +33,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { updateMember } from "@/firebase/firestore/mutations";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { updateMember, deleteMember } from "@/firebase/firestore/mutations";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Slider } from '@/components/ui/slider';
 import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import { uploadArquivo } from '@/lib/cloudinary';
 import { Textarea } from "@/components/ui/textarea";
 import Link from "next/link";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 
 type Verse = {
@@ -261,22 +262,33 @@ export default function MemberProfilePage() {
 
   // Effect to check permissions
   useEffect(() => {
-    if (isUserLoading || isCurrentUserLoading || memberLoading) return;
+    // Wait for all data to be loaded before checking permissions.
+    if (isUserLoading || isCurrentUserLoading || !authUser) return;
 
-    if (!authUser || !currentUserData || !member) {
+    // Data for the currently logged-in user (e.g., the admin) is available
+    if (currentUserData) {
+      const isAdmin = currentUserData.cargo === 'Administrador';
+      
+      // If the user being viewed exists, check permissions
+      if (member) {
+        const isUserOwner = authUser.uid === member.id;
+        const isPastorOfCongregation = currentUserData.cargo === 'Pastor Dirigente/Local' && currentUserData.congregacao === member.congregacao;
+
+        const canView = isUserOwner || isAdmin || isPastorOfCongregation;
+        const canEdit = isUserOwner || isAdmin || isPastorOfCongregation;
+        const canManage = isAdmin || isPastorOfCongregation;
+        
+        setPermission({ canView, canEdit, canManage, hasChecked: true });
+      } else if (!memberLoading) {
+        // The member profile doesn't exist (and we're not loading it anymore)
         setPermission({ canView: false, canEdit: false, canManage: false, hasChecked: true });
-        return;
+      }
+
+    } else if (!isCurrentUserLoading) {
+        // Current user's data is not available, and we are not loading it.
+        // This case indicates the current user has no profile document, so deny all.
+        setPermission({ canView: false, canEdit: false, canManage: false, hasChecked: true });
     }
-    
-    const isUserOwner = authUser.uid === member.id;
-    const isAdmin = currentUserData.cargo === 'Administrador';
-    const isPastorOfCongregation = currentUserData.cargo === 'Pastor Dirigente/Local' && currentUserData.congregacao === member.congregacao;
-
-    const canView = isUserOwner || isAdmin || isPastorOfCongregation;
-    const canEdit = isUserOwner || isAdmin || isPastorOfCongregation;
-    const canManage = isAdmin || isPastorOfCongregation;
-
-    setPermission({ canView, canEdit, canManage, hasChecked: true });
 
   }, [authUser, currentUserData, member, isUserLoading, isCurrentUserLoading, memberLoading]);
 
@@ -328,6 +340,20 @@ export default function MemberProfilePage() {
         setIsSubmitting(false);
     }
   };
+
+  const handleDelete = async () => {
+    if (!firestore || !memberId) return;
+    setIsSubmitting(true);
+    try {
+      await deleteMember(firestore, memberId);
+      toast({ title: "Sucesso!", description: "Membro excluído com sucesso." });
+      router.push('/dashboard/members');
+    } catch (error) {
+      console.error("Delete error: ", error);
+      toast({ variant: "destructive", title: "Erro", description: "Não foi possível excluir o membro." });
+      setIsSubmitting(false);
+    }
+  }
 
 
   const selectRandomVerse = useCallback(() => {
@@ -426,12 +452,8 @@ export default function MemberProfilePage() {
       )
   }
 
-  if (!member || memberError) {
-    if (memberError) console.error("Erro ao buscar membro:", memberError);
-    return notFound();
-  }
-  
-  if (!permission.canView) {
+  // After loading, if permission has been checked and is still false, deny access.
+  if (permission.hasChecked && !permission.canView) {
       return (
            <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
                 <Card className="border-destructive">
@@ -440,12 +462,17 @@ export default function MemberProfilePage() {
                         <CardTitle className="text-destructive">Acesso Negado</CardTitle>
                     </CardHeader>
                     <CardContent className='pt-4 text-center'>
-                        <p>Você não tem permissão para acessar esta página.</p>
+                        <p>Você não tem permissão para acessar esta página ou o membro não foi encontrado.</p>
                         <Button onClick={() => router.back()} className="mt-6">Voltar</Button>
                     </CardContent>
                 </Card>
             </div>
       );
+  }
+
+  // Handle case where member doc does not exist but user might have permission to view it (e.g. broken link)
+  if (!member) {
+    return notFound();
   }
   
   if (!templateData) {
@@ -782,11 +809,11 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
                                     <div className="space-y-4">
                                         <h3 className="font-medium text-lg border-b pb-2">Dados Eclesiásticos</h3>
                                         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                             <FormField control={form.control} name="recordNumber" render={({ field }) => (<FormItem><FormLabel>Nº da Ficha</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                             <FormField control={form.control} name="recordNumber" render={({ field }) => (<FormItem><FormLabel>Nº da Ficha</FormLabel><FormControl><Input {...field} disabled={!permission.canManage} /></FormControl><FormMessage /></FormItem>)} />
                                             <FormField control={form.control} name="cargo" render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>Cargo Ministerial</FormLabel>
-                                                    <Select onValueChange={field.onChange} value={field.value}>
+                                                    <Select onValueChange={field.onChange} value={field.value} disabled={!permission.canManage}>
                                                         <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
                                                         <SelectContent>
                                                             <SelectItem value="Membro">Membro</SelectItem>
@@ -806,7 +833,7 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
                                             <FormField control={form.control} name="status" render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>Status</FormLabel>
-                                                    <Select onValueChange={field.onChange} value={field.value}>
+                                                    <Select onValueChange={field.onChange} value={field.value} disabled={!permission.canManage}>
                                                         <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
                                                         <SelectContent>
                                                             <SelectItem value="Ativo">Ativo</SelectItem>
@@ -820,7 +847,7 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
                                             <FormField control={form.control} name="congregacao" render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>Congregação</FormLabel>
-                                                    <Select onValueChange={field.onChange} value={field.value} disabled={loadingCongregacoes}>
+                                                    <Select onValueChange={field.onChange} value={field.value} disabled={loadingCongregacoes || !permission.canManage}>
                                                         <FormControl><SelectTrigger><SelectValue placeholder={loadingCongregacoes ? "Carregando..." : "Selecione a congregação"} /></SelectTrigger></FormControl>
                                                         <SelectContent>
                                                             {congregacoes?.map((c) => <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>)}
@@ -829,8 +856,8 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
                                                     <FormMessage />
                                                 </FormItem>
                                             )} />
-                                             <FormField control={form.control} name="dataMembro" render={({ field }) => (<FormItem><FormLabel>Data de Membresia</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                             <FormField control={form.control} name="dataBatismo" render={({ field }) => (<FormItem><FormLabel>Data de Batismo</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                             <FormField control={form.control} name="dataMembro" render={({ field }) => (<FormItem><FormLabel>Data de Membresia</FormLabel><FormControl><Input type="date" {...field} disabled={!permission.canManage} /></FormControl><FormMessage /></FormItem>)} />
+                                             <FormField control={form.control} name="dataBatismo" render={({ field }) => (<FormItem><FormLabel>Data de Batismo</FormLabel><FormControl><Input type="date" {...field} disabled={!permission.canManage} /></FormControl><FormMessage /></FormItem>)} />
                                         </div>
                                     </div>
                                 )}
@@ -902,12 +929,37 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
                                     </div>
                                 </div>
                                 
-                                {permission.canEdit && (
-                                    <Button type="submit" disabled={isSubmitting || isUploading}>
-                                        {isSubmitting || isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                                        {isSubmitting || isUploading ? 'Salvando...' : 'Salvar Alterações'}
-                                    </Button>
-                                )}
+                                <div className="flex flex-wrap gap-2">
+                                  {permission.canEdit && (
+                                      <Button type="submit" disabled={isSubmitting || isUploading}>
+                                          {isSubmitting || isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                                          {isSubmitting || isUploading ? 'Salvando...' : 'Salvar Alterações'}
+                                      </Button>
+                                  )}
+                                  {currentUserData?.cargo === 'Administrador' && (
+                                      <AlertDialog>
+                                          <AlertDialogTrigger asChild>
+                                              <Button type="button" variant="destructive" disabled={isSubmitting}>
+                                                  <Trash2 className="mr-2 h-4 w-4" /> Excluir Membro
+                                              </Button>
+                                          </AlertDialogTrigger>
+                                          <AlertDialogContent>
+                                              <AlertDialogHeader>
+                                                  <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                                                  <AlertDialogDescription>
+                                                      Esta ação é permanente e não pode ser desfeita. O cadastro do membro será removido do banco de dados, mas a conta de autenticação (login e senha) precisará ser removida manualmente no console do Firebase, se necessário.
+                                                  </AlertDialogDescription>
+                                              </AlertDialogHeader>
+                                              <AlertDialogFooter>
+                                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                                  <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+                                                      Excluir Permanentemente
+                                                  </AlertDialogAction>
+                                              </AlertDialogFooter>
+                                          </AlertDialogContent>
+                                      </AlertDialog>
+                                  )}
+                                </div>
                             </form>
                          </Form>
                     </CardContent>

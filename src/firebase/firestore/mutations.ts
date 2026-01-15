@@ -1,3 +1,4 @@
+
 'use client';
 import { addDoc, collection, deleteDoc, doc, Firestore, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
@@ -55,6 +56,21 @@ export const updateMember = async (firestore: Firestore, uid: string, memberData
         });
 };
 
+export const deleteMember = async (firestore: Firestore, uid: string) => {
+    if (!firestore) {
+        throw new Error('Firestore is not initialized');
+    }
+
+    const memberRef = doc(firestore, 'users', uid);
+    deleteDoc(memberRef)
+        .catch(error => {
+            errorEmitter.emit('permission-error', new FirestorePermissionError({
+                path: memberRef.path,
+                operation: 'delete',
+            }));
+        });
+}
+
 
 export const addCongregacao = async (firestore: Firestore, nome: string) => {
     if (!firestore) {
@@ -108,3 +124,5 @@ export const deleteCongregacao = async (firestore: Firestore, id: string) => {
             }));
         });
 }
+
+    

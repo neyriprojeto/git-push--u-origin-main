@@ -85,11 +85,19 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
      React.useImperativeHandle(ref, () => ({
         getFrontCanvas: async () => {
             if (!frontRef.current) return null;
-            return html2canvas(frontRef.current, { scale: 3 });
+            return html2canvas(frontRef.current, { 
+                scale: 4, // Increase scale for better quality
+                useCORS: true, // Allow cross-origin images
+                backgroundColor: null, // Use transparent background
+             });
         },
         getBackCanvas: async () => {
             if (!backRef.current) return null;
-            return html2canvas(backRef.current, { scale: 3 });
+            return html2canvas(backRef.current, { 
+                scale: 4, // Increase scale for better quality
+                useCORS: true, // Allow cross-origin images
+                backgroundColor: null, // Use transparent background
+             });
         },
     } as any));
 
@@ -171,13 +179,16 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
             style.whiteSpace = 'pre-wrap';
 
             let dynamicText = el.text;
-            if (id.startsWith('Valor')) {
-                 dynamicText = getMemberDataForField(id) ?? el.text;
-            } else if (id === 'Congregação') {
-                dynamicText = member.congregacao || el.text;
-            } else if (id === 'Membro Desde') {
-                dynamicText = `Membro desde: ${formatDate(member.dataMembro) || ''}`;
-            }
+            const memberCargo = member.cargo === 'Pastor/dirigente' ? 'Pastor Dirigente' : member.cargo;
+
+            if (id === 'Valor Nome') dynamicText = `Nome: ${member.nome || ''}`;
+            else if (id === 'Valor Nº Reg.') dynamicText = `Nº Reg.: ${member.recordNumber || ''}`;
+            else if (id === 'Valor CPF') dynamicText = `CPF: ${member.cpf || ''}`;
+            else if (id === 'Valor Cargo') dynamicText = `Cargo: ${memberCargo || ''}`;
+            else if (id === 'Valor Data de Batismo') dynamicText = `Data de Batismo: ${formatDate(member.dataBatismo) || ''}`;
+            else if (id === 'Congregação') dynamicText = member.congregacao || el.text;
+            else if (id === 'Membro Desde') dynamicText = `Membro desde: ${formatDate(member.dataMembro) || ''}`;
+
 
             if (id.includes('Título') || id.includes('Valor') || id.includes('Assinatura Pastor') || id.includes('Validade') || id.includes('Membro Desde')) {
                 style.whiteSpace = 'nowrap';
@@ -280,7 +291,7 @@ export default function MemberCardPage() {
         
         const isOwner = authUser?.uid === memberId;
         const isAdmin = currentUser.cargo === 'Administrador';
-        const isPastorOfCongregation = currentUser.cargo === 'Pastor Dirigente' && currentUser.congregacao === member.congregacao;
+        const isPastorOfCongregation = currentUser.cargo === 'Pastor/dirigente' && currentUser.congregacao === member.congregacao;
 
         if (isOwner || isAdmin || isPastorOfCongregation) {
             setHasAccess(true);
@@ -387,3 +398,5 @@ export default function MemberCardPage() {
         </div>
     );
 }
+
+    

@@ -4,6 +4,11 @@ import { addDoc, collection, deleteDoc, doc, Firestore, serverTimestamp, setDoc,
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
+// Helper function to generate a random 4-digit number as a string
+const generate4DigitRecordNumber = () => {
+    return Math.floor(1000 + Math.random() * 9000).toString();
+};
+
 export const addMember = async (firestore: Firestore, uid: string | undefined, memberData: any) => {
   if (!firestore) {
     throw new Error('Firestore is not initialized');
@@ -16,7 +21,7 @@ export const addMember = async (firestore: Firestore, uid: string | undefined, m
   };
 
   if (!dataToSave.recordNumber) {
-    dataToSave.recordNumber = new Date().getTime().toString();
+    dataToSave.recordNumber = generate4DigitRecordNumber();
   }
 
   // If a UID is provided (from Auth), use it as the document ID.
@@ -124,5 +129,3 @@ export const deleteCongregacao = async (firestore: Firestore, id: string) => {
             }));
         });
 }
-
-    

@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { notFound, useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -87,18 +87,13 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
     }
     
     const getMemberDataForField = (fieldId: string) => {
-        let cargoText = member.cargo || '';
-        if (cargoText === 'Pastor Dirigente/Local') {
-            cargoText = 'Pastor\nDirigente/Local';
-        }
-
         switch (fieldId) {
             case 'Nome': return `Nome: ${member.nome || ''}`;
             case 'Nº Reg.': return `Nº Reg.: ${member.recordNumber || ''}`;
             case 'RG': return `RG: ${member.rg || ''}`;
             case 'CPF': return `CPF: ${member.cpf || ''}`;
             case 'Data de Nascimento': return `Nasc: ${formatDate(member.dataNascimento) || ''}`;
-            case 'Cargo': return `Cargo: ${cargoText}`;
+            case 'Cargo': return `Cargo: ${member.cargo || ''}`;
             case 'Membro Desde': return `Membro desde: ${formatDate(member.dataMembro) || ''}`;
             default: return null;
         }
@@ -156,11 +151,21 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
             style.color = color;
             style.fontWeight = el.fontWeight;
             style.textAlign = el.textAlign;
-            style.whiteSpace = (id.includes('Endereço') || id === 'Cargo') ? 'pre-wrap' : 'nowrap';
+            style.whiteSpace = id.includes('Endereço') ? 'pre-wrap' : 'nowrap';
             
-            const dynamicText = getMemberDataForField(id) ?? el.text;
-            
-            elementContent = <p style={style}>{dynamicText}</p>;
+            let dynamicText = getMemberDataForField(id) ?? el.text;
+
+            if (id === 'Cargo' && member.cargo === 'Pastor Dirigente/Local') {
+                 elementContent = (
+                    <div style={style} className='leading-tight'>
+                        <p>Cargo:</p>
+                        <p>Pastor</p>
+                        <p>Dirigente/Local</p>
+                    </div>
+                 );
+            } else {
+                 elementContent = <p style={style}>{dynamicText}</p>;
+            }
         }
 
         return <React.Fragment key={id}>{elementContent}</React.Fragment>;
@@ -201,9 +206,32 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
             )}
         </Card>
     );
+    
+    // This is the component that will be printed
+    const PrintableComponent = () => (
+      <div className="w-full h-full bg-white flex flex-col justify-center items-center p-4">
+        <div className="w-[85.6mm] h-[54mm]"><CardFace isFrontFace={true} /></div>
+        <div className="w-[85.6mm] h-[54mm] mt-8"><CardFace isFrontFace={false} /></div>
+      </div>
+    );
+    
+    // Assign the printable component to the ref
+    useEffect(() => {
+        if (ref && typeof ref !== 'function') {
+            const node = (ref as React.RefObject<HTMLDivElement>).current;
+            if (node) {
+                 const container = node.querySelector('.printable-container');
+                 if(container) {
+                    // Logic to render PrintableComponent into container if needed,
+                    // but for now, the structure is separate.
+                 }
+            }
+        }
+    }, [ref]);
+
 
     return (
-        <div ref={ref} className="w-full h-full bg-white flex flex-col justify-center items-center p-4">
+        <>
             {/* For screen view with flip */}
             <div className='print:hidden w-[85.6mm] h-[54mm] scale-[1.5] origin-center cursor-pointer' onClick={() => setIsFront(!isFront)}>
                 <div className={cn("flip-card w-full h-full", {'flipped': !isFront})}>
@@ -211,12 +239,12 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
                     <div className="flip-card-back"><CardFace isFrontFace={false} /></div>
                 </div>
             </div>
-            {/* For printing */}
-            <div className="hidden print:flex flex-col gap-8">
-                 <div className="w-[85.6mm] h-[54mm]"><CardFace isFrontFace={true} /></div>
-                 <div className="w-[85.6mm] h-[54mm]"><CardFace isFrontFace={false} /></div>
+            
+            {/* For printing - hidden by default */}
+            <div ref={ref} className="hidden print:block">
+               <PrintableComponent />
             </div>
-        </div>
+        </>
     );
 });
 CardView.displayName = 'CardView';
@@ -228,7 +256,7 @@ export default function MemberCardPage() {
     const memberId = params.id as string;
     const firestore = useFirestore();
     const { user: authUser, isUserLoading } = useUser();
-    const cardRef = React.useRef<HTMLDivElement>(null);
+    const printRef = useRef<HTMLDivElement>(null);
 
     const memberRef = useMemoFirebase(() => (firestore ? doc(firestore, 'users', memberId) : null), [firestore, memberId]);
     const { data: member, isLoading: memberLoading } = useDoc<Member>(memberRef);
@@ -262,7 +290,7 @@ export default function MemberCardPage() {
 
     const handlePrint = () => {
         window.print();
-    }
+    };
 
     const isLoading = memberLoading || currentUserLoading || isUserLoading || isTemplateLoading || hasAccess === null;
     
@@ -313,20 +341,18 @@ export default function MemberCardPage() {
     }
 
     return (
-        <div className="bg-gray-200 min-h-screen">
+        <div className="bg-gray-200 min-h-screen print:bg-white">
              <div className="fixed top-4 right-4 z-50 print:hidden">
                 <Button onClick={handlePrint}>
                     <Printer className="mr-2 h-4 w-4" />
                     Imprimir / Salvar PDF
                 </Button>
             </div>
-            <div className="print-container w-[21cm] h-[29.7cm] mx-auto">
-                <CardView member={member} templateData={templateData} ref={cardRef}/>
+             <div className="w-full min-h-screen flex justify-center items-center print:hidden">
+                <CardView member={member} templateData={templateData} />
             </div>
+            {/* The printable content is now inside CardView and managed by its ref */}
+            <CardView member={member} templateData={templateData} ref={printRef} />
         </div>
     );
 }
-
-    
-
-    

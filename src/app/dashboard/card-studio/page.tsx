@@ -75,15 +75,17 @@ const defaultElements: CardElements = {
     // Labels
     'Label Nome': { position: { top: 60, left: 40 }, size: { fontSize: 11 }, text: 'Nome:', fontWeight: 'bold', textAlign: 'left' },
     'Label Nº Reg.': { position: { top: 68, left: 40 }, size: { fontSize: 10 }, text: 'Nº Reg.:', textAlign: 'left' },
-    'Label CPF': { position: { top: 74, left: 40 }, size: { fontSize: 10 }, text: 'CPF:', textAlign: 'left' },
-    'Label Cargo': { position: { top: 80, left: 40 }, size: { fontSize: 10 }, text: 'Cargo:', textAlign: 'left' },
+    'Label Data de Batismo': { position: { top: 74, left: 40 }, size: { fontSize: 10 }, text: 'Data de Batismo:', textAlign: 'left' },
+    'Label CPF': { position: { top: 80, left: 40 }, size: { fontSize: 10 }, text: 'CPF:', textAlign: 'left' },
+    'Label Cargo': { position: { top: 86, left: 40 }, size: { fontSize: 10 }, text: 'Cargo:', textAlign: 'left' },
 
     // Values (to be filled dynamically)
     'Valor Nome': { position: { top: 60, left: 52 }, size: { fontSize: 11 }, text: memberSample.name, fontWeight: 'normal', textAlign: 'left' },
     'Valor Nº Reg.': { position: { top: 68, left: 52 }, size: { fontSize: 10 }, text: memberSample.recordNumber, textAlign: 'left' },
-    'Valor CPF': { position: { top: 74, left: 48 }, size: { fontSize: 10 }, text: memberSample.cpf, textAlign: 'left' },
-    'Valor Cargo': { position: { top: 80, left: 52 }, size: { fontSize: 10 }, text: memberSample.role, textAlign: 'left' },
-
+    'Valor Data de Batismo': { position: { top: 74, left: 63 }, size: { fontSize: 10 }, text: '01/01/2024', textAlign: 'left' },
+    'Valor CPF': { position: { top: 80, left: 48 }, size: { fontSize: 10 }, text: memberSample.cpf, textAlign: 'left' },
+    'Valor Cargo': { position: { top: 86, left: 52 }, size: { fontSize: 10 }, text: memberSample.role, textAlign: 'left' },
+    
     'Logo Igreja': { position: { top: 38, left: 80 }, size: { width: 70, height: 70 }, src: churchLogoPlaceholder?.imageUrl || '' },
     
     // --- Verso ---
@@ -884,3 +886,5 @@ export default function CardStudioPage() {
     </>
   );
 }
+
+    

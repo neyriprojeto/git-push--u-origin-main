@@ -87,6 +87,7 @@ interface Member {
     status: 'Ativo' | 'Inativo' | 'Pendente';
     gender?: 'Masculino' | 'Feminino';
     dataNascimento?: string | { seconds: number; nanoseconds: number };
+    dataBatismo?: string | { seconds: number; nanoseconds: number };
     maritalStatus?: 'Solteiro(a)' | 'Casado(a)' | 'Divorciado(a)' | 'Viúvo(a)';
     cpf?: string;
     rg?: string;
@@ -102,6 +103,7 @@ interface Member {
     bairro?: string;
     cidade?: string;
     estado?: string;
+    complemento?: string;
     congregacao?: string;
 }
 
@@ -110,13 +112,34 @@ const formSchema = z.object({
   email: z.string().email("E-mail inválido").optional(),
   phone: z.string().optional(),
   whatsapp: z.string().optional(),
+  
+  // Endereço
   cep: z.string().optional(),
   logradouro: z.string().optional(),
   numero: z.string().optional(),
+  complemento: z.string().optional(),
   bairro: z.string().optional(),
   cidade: z.string().optional(),
   estado: z.string().optional(),
+  
   avatar: z.string().optional(),
+
+  // Dados Pessoais
+  dataNascimento: z.string().optional(),
+  rg: z.string().optional(),
+  cpf: z.string().optional(),
+  gender: z.enum(['Masculino', 'Feminino']).optional(),
+  maritalStatus: z.enum(['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)']).optional(),
+  naturalness: z.string().optional(),
+  nationality: z.string().optional(),
+
+  // Dados de Membro (apenas admins e pastores podem editar)
+  cargo: z.string().optional(),
+  status: z.enum(['Ativo', 'Inativo', 'Pendente']).optional(),
+  congregacao: z.string().optional(),
+  dataBatismo: z.string().optional(),
+  dataMembro: z.string().optional(),
+  recordNumber: z.string().optional(),
 });
 
 type MemberFormData = z.infer<typeof formSchema>;
@@ -245,17 +268,12 @@ export default function MemberProfilePage() {
   const form = useForm<MemberFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      nome: '',
-      email: '',
-      phone: '',
-      whatsapp: '',
-      cep: '',
-      logradouro: '',
-      numero: '',
-      bairro: '',
-      cidade: '',
-      estado: '',
-      avatar: '',
+      nome: '', email: '', phone: '', whatsapp: '', cep: '',
+      logradouro: '', numero: '', complemento: '', bairro: '', cidade: '', estado: '',
+      avatar: '', dataNascimento: '', rg: '', cpf: '', gender: 'Masculino',
+      maritalStatus: 'Solteiro(a)', naturalness: '', nationality: '',
+      cargo: '', status: 'Pendente', congregacao: '', dataBatismo: '',
+      dataMembro: '', recordNumber: ''
     },
   });
 
@@ -269,10 +287,24 @@ export default function MemberProfilePage() {
         cep: member.cep || '',
         logradouro: member.logradouro || '',
         numero: member.numero || '',
+        complemento: member.complemento || '',
         bairro: member.bairro || '',
         cidade: member.cidade || '',
         estado: member.estado || '',
         avatar: member.avatar || '',
+        dataNascimento: formatDate(member.dataNascimento) || '',
+        rg: member.rg || '',
+        cpf: member.cpf || '',
+        gender: member.gender || 'Masculino',
+        maritalStatus: member.maritalStatus || 'Solteiro(a)',
+        naturalness: member.naturalness || '',
+        nationality: member.nationality || '',
+        cargo: member.cargo || '',
+        status: member.status || 'Pendente',
+        congregacao: member.congregacao || '',
+        dataBatismo: formatDate(member.dataBatismo) || '',
+        dataMembro: formatDate(member.dataMembro) || '',
+        recordNumber: member.recordNumber || '',
       });
     }
   }, [member, form]);
@@ -283,9 +315,10 @@ export default function MemberProfilePage() {
     setIsSubmitting(true);
     try {
         await updateMember(firestore, memberId, data);
-        toast({ title: "Sucesso!", description: "Seus dados foram atualizados." });
+        toast({ title: "Sucesso!", description: "Os dados do membro foram atualizados." });
     } catch (error) {
-        toast({ variant: "destructive", title: "Erro", description: "Não foi possível atualizar seus dados." });
+        console.error("Update error: ", error);
+        toast({ variant: "destructive", title: "Erro", description: "Não foi possível atualizar os dados do membro." });
     } finally {
         setIsSubmitting(false);
     }
@@ -622,7 +655,7 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
             <CardContent>
                 <div className="flex gap-2 mt-1">
                 <Badge variant="secondary">{member.cargo}</Badge>
-                <Badge variant={member.status === "Ativo" ? "default" : "destructive"}>{member.status}</Badge>
+                <Badge variant={member.status === "Ativo" ? "default" : member.status === 'Pendente' ? 'outline' : "destructive"}>{member.status}</Badge>
                 </div>
                 {canManage && (
                     <div className="flex gap-2 mt-4">
@@ -677,7 +710,9 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
                     </CardHeader>
                     <CardContent>
                          <Form {...form}>
-                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                                
+                                {/* --- Foto e Nome --- */}
                                 <div className="space-y-4">
                                      <div className="flex items-center gap-4">
                                         <Avatar className="h-20 w-20 border">
@@ -706,6 +741,11 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
                                             </FormItem>
                                         )}
                                     />
+                                </div>
+                                
+                                {/* --- Dados de Acesso --- */}
+                                <div className="space-y-4">
+                                    <h3 className="font-medium text-lg border-b pb-2">Dados de Acesso</h3>
                                     <FormField
                                         control={form.control}
                                         name="email"
@@ -718,48 +758,137 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
                                             </FormItem>
                                         )}
                                     />
+                                </div>
+
+                                {/* --- Dados Eclesiásticos --- */}
+                                {canManage && (
+                                    <div className="space-y-4">
+                                        <h3 className="font-medium text-lg border-b pb-2">Dados Eclesiásticos</h3>
+                                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                             <FormField control={form.control} name="recordNumber" render={({ field }) => (<FormItem><FormLabel>Nº da Ficha</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                            <FormField control={form.control} name="cargo" render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Cargo Ministerial</FormLabel>
+                                                    <Select onValueChange={field.onChange} value={field.value}>
+                                                        <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
+                                                        <SelectContent>
+                                                            <SelectItem value="Membro">Membro</SelectItem>
+                                                            <SelectItem value="Cooperador(a)">Cooperador(a)</SelectItem>
+                                                            <SelectItem value="Diácono(a)">Diácono(a)</SelectItem>
+                                                            <SelectItem value="Presbítero">Presbítero</SelectItem>
+                                                            <SelectItem value="Evangelista">Evangelista</SelectItem>
+                                                            <SelectItem value="Missionário(a)">Missionário(a)</SelectItem>
+                                                            <SelectItem value="Pastor(a)">Pastor(a)</SelectItem>
+                                                            <SelectItem value="Pastor Dirigente/Local">Pastor Dirigente/Local</SelectItem>
+                                                            <SelectItem value="Administrador">Administrador</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )} />
+                                            <FormField control={form.control} name="status" render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Status</FormLabel>
+                                                    <Select onValueChange={field.onChange} value={field.value}>
+                                                        <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
+                                                        <SelectContent>
+                                                            <SelectItem value="Ativo">Ativo</SelectItem>
+                                                            <SelectItem value="Inativo">Inativo</SelectItem>
+                                                            <SelectItem value="Pendente">Pendente</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )} />
+                                            <FormField control={form.control} name="congregacao" render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Congregação</FormLabel>
+                                                    <Select onValueChange={field.onChange} value={field.value} disabled={loadingCongregacoes}>
+                                                        <FormControl><SelectTrigger><SelectValue placeholder={loadingCongregacoes ? "Carregando..." : "Selecione a congregação"} /></SelectTrigger></FormControl>
+                                                        <SelectContent>
+                                                            {congregacoes?.map((c) => <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>)}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )} />
+                                             <FormField control={form.control} name="dataMembro" render={({ field }) => (<FormItem><FormLabel>Data de Membresia</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                             <FormField control={form.control} name="dataBatismo" render={({ field }) => (<FormItem><FormLabel>Data de Batismo</FormLabel><FormControl><Input type="date" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                        </div>
+                                    </div>
+                                )}
+                                
+                                {/* --- Dados Pessoais --- */}
+                                <div className="space-y-4">
+                                     <h3 className="font-medium text-lg border-b pb-2">Dados Pessoais</h3>
+                                      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        <FormField control={form.control} name="dataNascimento" render={({ field }) => (<FormItem><FormLabel>Data de Nascimento</FormLabel><FormControl><Input type="date" {...field} disabled={!canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField control={form.control} name="cpf" render={({ field }) => (<FormItem><FormLabel>CPF</FormLabel><FormControl><Input {...field} disabled={!canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField control={form.control} name="rg" render={({ field }) => (<FormItem><FormLabel>RG</FormLabel><FormControl><Input {...field} disabled={!canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField control={form.control} name="gender" render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Gênero</FormLabel>
+                                                <Select onValueChange={field.onChange} value={field.value} disabled={!canEdit}>
+                                                    <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="Masculino">Masculino</SelectItem>
+                                                        <SelectItem value="Feminino">Feminino</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )} />
+                                         <FormField control={form.control} name="maritalStatus" render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Estado Civil</FormLabel>
+                                                <Select onValueChange={field.onChange} value={field.value} disabled={!canEdit}>
+                                                    <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="Solteiro(a)">Solteiro(a)</SelectItem>
+                                                        <SelectItem value="Casado(a)">Casado(a)</SelectItem>
+                                                        <SelectItem value="Divorciado(a)">Divorciado(a)</SelectItem>
+                                                        <SelectItem value="Viúvo(a)">Viúvo(a)</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )} />
+                                    </div>
                                     <div className="grid md:grid-cols-2 gap-4">
-                                         <FormField
-                                            control={form.control}
-                                            name="phone"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Telefone</FormLabel>
-                                                    <FormControl><Input {...field} disabled={!canEdit} /></FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                         <FormField
-                                            control={form.control}
-                                            name="whatsapp"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>WhatsApp</FormLabel>
-                                                    <FormControl><Input {...field} disabled={!canEdit} /></FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
+                                         <FormField control={form.control} name="naturalness" render={({ field }) => (<FormItem><FormLabel>Naturalidade</FormLabel><FormControl><Input {...field} disabled={!canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                         <FormField control={form.control} name="nationality" render={({ field }) => (<FormItem><FormLabel>Nacionalidade</FormLabel><FormControl><Input {...field} disabled={!canEdit} /></FormControl><FormMessage /></FormItem>)} />
                                     </div>
                                 </div>
+
+                                {/* --- Contato --- */}
                                 <div className="space-y-4">
-                                    <h3 className="font-medium text-lg">Endereço</h3>
+                                     <h3 className="font-medium text-lg border-b pb-2">Contato</h3>
+                                     <div className="grid md:grid-cols-2 gap-4">
+                                         <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Telefone</FormLabel><FormControl><Input {...field} disabled={!canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                         <FormField control={form.control} name="whatsapp" render={({ field }) => (<FormItem><FormLabel>WhatsApp</FormLabel><FormControl><Input {...field} disabled={!canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                    </div>
+                                </div>
+
+                                {/* --- Endereço --- */}
+                                <div className="space-y-4">
+                                    <h3 className="font-medium text-lg border-b pb-2">Endereço</h3>
                                     <div className="grid md:grid-cols-3 gap-4">
                                         <FormField name="cep" control={form.control} render={({ field }) => (<FormItem><FormLabel>CEP</FormLabel><FormControl><Input {...field} disabled={!canEdit} /></FormControl><FormMessage /></FormItem>)} />
                                         <FormField name="logradouro" control={form.control} render={({ field }) => (<FormItem className="md:col-span-2"><FormLabel>Logradouro</FormLabel><FormControl><Input {...field} disabled={!canEdit} /></FormControl><FormMessage /></FormItem>)} />
                                     </div>
-                                    <div className="grid md:grid-cols-4 gap-4">
+                                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                                         <FormField name="numero" control={form.control} render={({ field }) => (<FormItem><FormLabel>Número</FormLabel><FormControl><Input {...field} disabled={!canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField name="complemento" control={form.control} render={({ field }) => (<FormItem><FormLabel>Complemento</FormLabel><FormControl><Input {...field} disabled={!canEdit} /></FormControl><FormMessage /></FormItem>)} />
                                         <FormField name="bairro" control={form.control} render={({ field }) => (<FormItem><FormLabel>Bairro</FormLabel><FormControl><Input {...field} disabled={!canEdit} /></FormControl><FormMessage /></FormItem>)} />
                                         <FormField name="cidade" control={form.control} render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><FormControl><Input {...field} disabled={!canEdit} /></FormControl><FormMessage /></FormItem>)} />
                                         <FormField name="estado" control={form.control} render={({ field }) => (<FormItem><FormLabel>Estado</FormLabel><FormControl><Input {...field} disabled={!canEdit} /></FormControl><FormMessage /></FormItem>)} />
                                     </div>
                                 </div>
+                                
                                 {canEdit && (
                                     <Button type="submit" disabled={isSubmitting || isUploading}>
-                                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                                        {isSubmitting ? 'Salvando...' : 'Salvar Alterações'}
+                                        {isSubmitting || isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                                        {isSubmitting || isUploading ? 'Salvando...' : 'Salvar Alterações'}
                                     </Button>
                                 )}
                             </form>
@@ -861,3 +990,5 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
     </div>
   );
 }
+
+    

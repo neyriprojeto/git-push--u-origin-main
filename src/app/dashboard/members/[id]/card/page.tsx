@@ -90,11 +90,11 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
     const getMemberDataForField = (fieldId: string) => {
         const valueKey = fieldId.replace('Valor ', '');
         switch (valueKey) {
-            case 'Nome': return member.nome || '';
-            case 'Nº Reg.': return member.recordNumber || '';
-            case 'CPF': return member.cpf || '';
-            case 'Data de Batismo': return formatDate(member.dataBatismo) || '';
-            case 'Cargo': return member.cargo || '';
+            case 'Nome': return `Nome: ${member.nome || ''}`;
+            case 'Nº Reg.': return `Nº Reg.: ${member.recordNumber || ''}`;
+            case 'CPF': return `CPF: ${member.cpf || ''}`;
+            case 'Data de Batismo': return `Data de Batismo: ${formatDate(member.dataBatismo) || ''}`;
+            case 'Cargo': return `Cargo: ${member.cargo || ''}`;
             case 'Membro Desde': return `Membro desde: ${formatDate(member.dataMembro) || ''}`;
             default: return null;
         }
@@ -165,7 +165,7 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
                 dynamicText = `Membro desde: ${formatDate(member.dataMembro) || ''}`;
             }
 
-            if (id.includes('Título') || id.includes('Label') || id.includes('Valor') || id.includes('Assinatura Pastor') || id.includes('Validade') || id.includes('Membro Desde')) {
+            if (id.includes('Título') || id.includes('Valor') || id.includes('Assinatura Pastor') || id.includes('Validade') || id.includes('Membro Desde')) {
                 style.whiteSpace = 'nowrap';
             }
 
@@ -364,5 +364,3 @@ export default function MemberCardPage() {
         </div>
     );
 }
-
-    

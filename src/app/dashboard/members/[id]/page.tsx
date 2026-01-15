@@ -488,11 +488,11 @@ export default function MemberProfilePage() {
   const getMemberDataForField = (fieldId: string) => {
     const valueKey = fieldId.replace('Valor ', '');
     switch (valueKey) {
-        case 'Nome': return member.nome || '';
-        case 'Nº Reg.': return member.recordNumber || '';
-        case 'CPF': return member.cpf || '';
-        case 'Data de Batismo': return formatDate(member.dataBatismo, 'dd/MM/yyyy') || '';
-        case 'Cargo': return member.cargo || '';
+        case 'Nome': return `Nome: ${member.nome || ''}`;
+        case 'Nº Reg.': return `Nº Reg.: ${member.recordNumber || ''}`;
+        case 'CPF': return `CPF: ${member.cpf || ''}`;
+        case 'Data de Batismo': return `Data de Batismo: ${formatDate(member.dataBatismo, 'dd/MM/yyyy') || ''}`;
+        case 'Cargo': return `Cargo: ${member.cargo || ''}`;
         case 'Membro Desde': return `Membro desde: ${formatDate(member.dataMembro, 'dd/MM/yyyy') || ''}`;
         default: return null;
     }
@@ -569,7 +569,7 @@ export default function MemberProfilePage() {
             dynamicText = `Membro desde: ${formatDate(member.dataMembro, 'dd/MM/yyyy') || ''}`;
         }
         
-        if (id.includes('Título') || id.includes('Label') || id.includes('Valor') || id.includes('Assinatura Pastor') || id.includes('Validade') || id.includes('Membro Desde')) {
+        if (id.includes('Título') || id.includes('Valor') || id.includes('Assinatura Pastor') || id.includes('Validade') || id.includes('Membro Desde')) {
             style.whiteSpace = 'nowrap';
         }
         
@@ -1054,5 +1054,3 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
     </div>
   );
 }
-
-    

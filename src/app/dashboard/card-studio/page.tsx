@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Slider } from '@/components/ui/slider';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Minus, Plus, Palette, Image as ImageIcon, Type, Upload, Save, Loader2 } from 'lucide-react';
 import { members } from '@/data/members';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -71,20 +71,13 @@ const defaultElements: CardElements = {
     'Congregação': { position: { top: 18, left: 50 }, size: { fontSize: 14 }, text: 'SEDE', fontWeight: 'normal', textAlign: 'center' },
     'Endereço': { position: { top: 23, left: 50 }, size: { fontSize: 8 }, text: 'Rua Presidente Prudente, N°28\nEldorado, Diadema-SP', textAlign: 'center' },
     'Foto do Membro': { position: { top: 40, left: 15 }, size: { width: 80, height: 100 }, src: '' },
-    
-    // Labels
-    'Label Nome': { position: { top: 60, left: 40 }, size: { fontSize: 11 }, text: 'Nome:', fontWeight: 'bold', textAlign: 'left' },
-    'Label Nº Reg.': { position: { top: 68, left: 40 }, size: { fontSize: 10 }, text: 'Nº Reg.:', textAlign: 'left' },
-    'Label Data de Batismo': { position: { top: 74, left: 40 }, size: { fontSize: 10 }, text: 'Data de Batismo:', textAlign: 'left' },
-    'Label CPF': { position: { top: 80, left: 40 }, size: { fontSize: 10 }, text: 'CPF:', textAlign: 'left' },
-    'Label Cargo': { position: { top: 86, left: 40 }, size: { fontSize: 10 }, text: 'Cargo:', textAlign: 'left' },
 
-    // Values (to be filled dynamically)
-    'Valor Nome': { position: { top: 60, left: 52 }, size: { fontSize: 11 }, text: memberSample.name, fontWeight: 'normal', textAlign: 'left' },
-    'Valor Nº Reg.': { position: { top: 68, left: 52 }, size: { fontSize: 10 }, text: memberSample.recordNumber, textAlign: 'left' },
-    'Valor Data de Batismo': { position: { top: 74, left: 63 }, size: { fontSize: 10 }, text: '01/01/2024', textAlign: 'left' },
-    'Valor CPF': { position: { top: 80, left: 48 }, size: { fontSize: 10 }, text: memberSample.cpf, textAlign: 'left' },
-    'Valor Cargo': { position: { top: 86, left: 50 }, size: { fontSize: 10 }, text: memberSample.role, textAlign: 'left' },
+    // Values (to be filled dynamically) - Rótulo e valor unificados
+    'Valor Nome': { position: { top: 60, left: 40 }, size: { fontSize: 11 }, text: `Nome: ${memberSample.name}`, fontWeight: 'normal', textAlign: 'left' },
+    'Valor Nº Reg.': { position: { top: 68, left: 40 }, size: { fontSize: 10 }, text: `Nº Reg.: ${memberSample.recordNumber}`, textAlign: 'left' },
+    'Valor Data de Batismo': { position: { top: 74, left: 40 }, size: { fontSize: 10 }, text: 'Data de Batismo: 01/01/2024', textAlign: 'left' },
+    'Valor CPF': { position: { top: 80, left: 40 }, size: { fontSize: 10 }, text: `CPF: ${memberSample.cpf}`, textAlign: 'left' },
+    'Valor Cargo': { position: { top: 86, left: 40 }, size: { fontSize: 10 }, text: `Cargo: ${memberSample.role}`, textAlign: 'left' },
     
     'Logo Igreja': { position: { top: 38, left: 80 }, size: { width: 70, height: 70 }, src: churchLogoPlaceholder?.imageUrl || '' },
     
@@ -527,7 +520,7 @@ export default function CardStudioPage() {
             style.textAlign = el.textAlign;
             style.whiteSpace = 'pre-wrap';
 
-            if (id.includes('Título') || id.includes('Label') || id.includes('Valor') || id.includes('Assinatura Pastor') || id.includes('Validade') || id.includes('Membro Desde')) {
+            if (id.includes('Título') || id.includes('Valor') || id.includes('Assinatura Pastor') || id.includes('Validade') || id.includes('Membro Desde')) {
                 style.whiteSpace = 'nowrap';
             }
         } else { // isImage

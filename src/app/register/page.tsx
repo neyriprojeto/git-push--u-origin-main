@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -145,9 +146,9 @@ export default function RegisterPage() {
               <Card className="w-full max-w-lg">
                   <CardContent className="p-8 text-center">
                     <CheckCircle className="mx-auto h-16 w-16 text-green-500 mb-4" />
-                    <h2 className="text-2xl font-bold mb-2">Cadastro Enviado!</h2>
+                    <h2 className="text-2xl font-bold mb-2">Cadastro Enviado para Análise!</h2>
                     <p className="text-muted-foreground mb-6">
-                        Obrigado por se cadastrar. Seus dados foram enviados para análise. Um administrador irá revisar e aprovar seu cadastro em breve.
+                        Obrigado por se cadastrar. Seus dados foram enviados para aprovação. Assim que seu cadastro for aprovado, você receberá uma notificação em seu e-mail.
                     </p>
                     <Button asChild>
                         <Link href="/login">Voltar para o Login</Link>
@@ -433,3 +434,5 @@ export default function RegisterPage() {
     </div>
   );
 }
+
+    

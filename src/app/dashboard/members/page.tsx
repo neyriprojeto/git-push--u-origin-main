@@ -60,13 +60,12 @@ export default function MembersPage() {
       return query(
         collection(firestore, 'users'), 
         where('congregacao', '==', currentUserData.congregacao),
-        where('cargo', '!=', 'Administrador')
       );
     }
     
-    // Se for admin, mostra todos (exceto outros admins)
+    // Se for admin, mostra todos os usuários. A regra de segurança já impede que admins se vejam se necessário.
     if (currentUserData.cargo === 'Administrador') {
-       return query(collection(firestore, 'users'), where('cargo', '!=', 'Administrador'));
+       return query(collection(firestore, 'users'));
     }
 
     // Se for um membro comum ou qualquer outro caso, não deve ver ninguém.
@@ -78,6 +77,10 @@ export default function MembersPage() {
   const { data: members, isLoading } = useCollection<Member>(membersCollection);
 
   const showLoading = isLoading || isUserLoading || isCurrentUserLoading;
+  
+  // Filtra o próprio administrador da lista de membros no lado do cliente
+  const filteredMembers = members?.filter(member => member.id !== user?.uid || currentUserData?.cargo !== 'Administrador');
+
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -114,8 +117,8 @@ export default function MembersPage() {
                      <Loader2 className="mx-auto h-6 w-6 animate-spin" />
                   </TableCell>
                 </TableRow>
-              ) : members && members.length > 0 ? (
-                members.map((member) => {
+              ) : filteredMembers && filteredMembers.length > 0 ? (
+                filteredMembers.map((member) => {
                   const avatar = PlaceHolderImages.find(
                     (p) => p.id === member.avatar
                   );
@@ -137,7 +140,7 @@ export default function MembersPage() {
                       </TableCell>
                       <TableCell className="hidden md:table-cell">{member.cargo}</TableCell>
                       <TableCell className="hidden md:table-cell">
-                        <Badge variant={member.status === "Ativo" ? "default" : "secondary"}>
+                        <Badge variant={member.status === "Ativo" ? "default" : member.status === "Pendente" ? "outline" : "destructive"}>
                           {member.status}
                         </Badge>
                       </TableCell>

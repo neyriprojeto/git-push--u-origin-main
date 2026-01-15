@@ -617,7 +617,7 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
                             position: 'absolute', 
                             borderTop: '1px solid black', 
                             width: '40%', 
-                            top: `calc(${signatureLineElement.position.top}% - 2px)`,
+                            top: `${signatureLineElement.position.top + 7}%`,
                             left: `${signatureLineElement.position.left}%`,
                             transform: 'translateX(-50%)'
                         }}
@@ -1054,3 +1054,4 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
     </div>
   );
 }
+

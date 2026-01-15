@@ -91,7 +91,6 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
             return html2canvas(frontRef.current, { 
                 scale: 4, // Increase scale for better quality
                 useCORS: true, // Allow cross-origin images
-                allowTaint: true, // Important for external images
                 backgroundColor: null, // Use transparent background
              });
         },
@@ -100,7 +99,6 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
             return html2canvas(backRef.current, { 
                 scale: 4, // Increase scale for better quality
                 useCORS: true, // Allow cross-origin images
-                allowTaint: true, // Important for external images
                 backgroundColor: null, // Use transparent background
              });
         },
@@ -226,7 +224,7 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
                     {signatureLineElement && (
                         <div style={{
                             position: 'absolute', borderTop: '1px solid black', width: '40%',
-                            top: `calc(${signatureLineElement.position.top}% - 2px)`,
+                            top: `${signatureLineElement.position.top + 7}%`,
                             left: `${signatureLineElement.position.left}%`,
                             transform: 'translateX(-50%)'
                         }} />

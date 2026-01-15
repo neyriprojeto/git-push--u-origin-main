@@ -57,7 +57,7 @@ export const memberApprovalFlow = onFlow(
     if (beforeStatus === 'Pendente' && afterStatus === 'Ativo') {
       console.log(`Approving member ${memberName} (${memberEmail}). Sending welcome email.`);
       
-      // Check for required environment variables
+      // Check for required environment variables for email sending
       if (!process.env.EMAIL_HOST || !process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
         console.error("Email environment variables (EMAIL_HOST, EMAIL_USER, EMAIL_PASS) are not set. Skipping email.");
         return;
@@ -69,14 +69,19 @@ export const memberApprovalFlow = onFlow(
         port: Number(process.env.EMAIL_PORT || 587),
         secure: process.env.EMAIL_SECURE === 'true', // true for 465, false for other ports
         auth: {
-          user: process.env.EMAIL_USER, // Your email user
+          user: process.env.EMAIL_USER, // Your email user (for login)
           pass: process.env.EMAIL_PASS, // Your email password
         },
       });
 
+      // Define the sender's name and address. Prioritize .env variables.
+      const fromName = process.env.EMAIL_FROM_NAME || 'A.D.KAIROS CONNECT';
+      // Use the dedicated FROM address if provided, otherwise fallback to the user login email.
+      const fromEmail = process.env.EMAIL_FROM_ADDRESS || process.env.EMAIL_USER;
+
       // Email content
       const mailOptions = {
-        from: `"${process.env.EMAIL_FROM_NAME || 'A.D.KAIROS CONNECT'}" <${process.env.EMAIL_FROM_ADDRESS || process.env.EMAIL_USER}>`,
+        from: `"${fromName}" <${fromEmail}>`,
         to: memberEmail,
         subject: 'Seu cadastro no A.D.KAIROS CONNECT foi aprovado!',
         html: `
@@ -92,7 +97,7 @@ export const memberApprovalFlow = onFlow(
       
       try {
         await transporter.sendMail(mailOptions);
-        console.log(`Welcome email sent successfully to ${memberEmail}.`);
+        console.log(`Welcome email sent successfully to ${memberEmail} from ${fromEmail}.`);
       } catch (error) {
         console.error(`Failed to send email to ${memberEmail}:`, error);
         // Optional: Add more robust error handling, like retries or logging to a different service.

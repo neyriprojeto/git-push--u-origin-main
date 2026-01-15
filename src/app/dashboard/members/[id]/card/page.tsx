@@ -95,6 +95,7 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
             case 'Data de Nascimento': return `Nasc: ${formatDate(member.dataNascimento) || ''}`;
             case 'Cargo': return `Cargo: ${member.cargo || ''}`;
             case 'Membro Desde': return `Membro desde: ${formatDate(member.dataMembro) || ''}`;
+            case 'Congregação': return member.congregacao || '';
             default: return null;
         }
     };
@@ -170,7 +171,7 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
         backgroundPosition: 'center',
     });
 
-    const frontElements = Object.keys(elements).filter(id => !id.includes('Convenção') && !id.includes('QR Code') && !id.includes('Assinatura') && !id.includes('Validade') && !id.includes('Membro Desde') && id !== 'Data de Batismo');
+    const frontElements = Object.keys(elements).filter(id => !id.includes('Convenção') && !id.includes('QR Code') && !id.includes('Assinatura') && !id.includes('Validade') && !id.includes('Membro Desde'));
     const backElements = Object.keys(elements).filter(id => id.includes('Convenção') || id.includes('QR Code') || id.includes('Assinatura') || id.includes('Validade') || id.includes('Membro Desde'));
     const signatureLineElement = elements['Assinatura Pastor'];
 
@@ -224,7 +225,7 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
     return (
         <>
             {/* For screen view with flip */}
-            <div className='print:hidden w-[85.6mm] h-[54mm] scale-[1.5] origin-center cursor-pointer' onClick={() => setIsFront(!isFront)}>
+            <div className='print:hidden w-[85.6mm] h-[54mm] scale-[1.2] origin-top cursor-pointer' onClick={() => setIsFront(!isFront)}>
                 <div className={cn("flip-card w-full h-full", {'flipped': !isFront})}>
                     <div className="flip-card-front"><CardFace isFrontFace={true} /></div>
                     <div className="flip-card-back"><CardFace isFrontFace={false} /></div>
@@ -332,18 +333,21 @@ export default function MemberCardPage() {
     }
 
     return (
-        <div className="bg-gray-200 min-h-screen print:bg-white">
-             <div className="fixed top-4 right-4 z-50 print:hidden">
+        <div className="bg-gray-200 min-h-screen print:bg-white flex flex-col justify-center items-center p-4 gap-8">
+             <div className="w-full max-w-sm flex flex-col gap-2 print:hidden">
                 <Button onClick={handlePrint}>
                     <Printer className="mr-2 h-4 w-4" />
                     Imprimir / Salvar PDF
                 </Button>
+                 <Button onClick={() => router.back()} variant="outline">Voltar</Button>
             </div>
-             <div className="w-full min-h-screen flex justify-center items-center print:hidden">
+             <div className="flex justify-center items-start print:hidden">
                 <CardView member={member} templateData={templateData} />
             </div>
             {/* The printable content is now inside CardView and managed by its ref */}
-            <CardView member={member} templateData={templateData} ref={printRef} />
+            <div className="hidden print:block">
+                <CardView member={member} templateData={templateData} ref={printRef} />
+            </div>
         </div>
     );
 }

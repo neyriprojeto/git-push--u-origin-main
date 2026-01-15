@@ -52,6 +52,7 @@ export const memberApprovalFlow = onFlow(
     const afterStatus = data.after.status;
     const memberName = data.after.nome;
     const memberEmail = data.after.email;
+    const churchLogoUrl = "https://images.unsplash.com/photo-1508345217145-6a58a75a74a1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxjaHJpc3RpYW4lMjBjcm9zc3xlbnwwfHx8fDE3MjE4MzY3NzF8MA&ixlib=rb-4.1.0&q=80&w=200";
 
     // Check if the status was changed from 'Pendente' to 'Ativo'.
     if (beforeStatus === 'Pendente' && afterStatus === 'Ativo') {
@@ -85,13 +86,26 @@ export const memberApprovalFlow = onFlow(
         to: memberEmail,
         subject: 'Seu cadastro no A.D. Kairós Connect foi aprovado!',
         html: `
-          <h1>Bem-vindo(a), ${memberName}!</h1>
-          <p>Temos o prazer de informar que seu cadastro em nossa comunidade foi aprovado.</p>
-          <p>Você já pode acessar a área de membros e desfrutar de todas as funcionalidades.</p>
-          <p>Seja bem-vindo(a) à família A.D. Kairós!</p>
-          <br>
-          <p>Atenciosamente,</p>
-          <p><strong>Ministério A.D. Kairós</strong></p>
+          <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
+            <div style="background-color: #0a2749; color: #fff; padding: 20px; text-align: center;">
+              <h1 style="margin: 0; font-size: 24px;">Bem-vindo(a) à A.D. Kairós Connect!</h1>
+            </div>
+            <div style="padding: 20px;">
+              <h2 style="font-size: 20px; color: #0a2749;">Olá ${memberName},</h2>
+              <p>É com grande alegria que confirmamos a aprovação do seu cadastro em nossa comunidade!</p>
+              <p>Agora você tem acesso completo à área de membros, onde poderá se conectar com a igreja, visualizar sua carteirinha digital, acompanhar os avisos e muito mais.</p>
+              <p style="text-align: center; margin: 30px 0;">
+                <a href="${process.env.NEXT_PUBLIC_APP_URL || '#'}/login" style="background-color: #2563eb; color: #fff; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-size: 16px;">Acessar o Portal</a>
+              </p>
+              <p>Seja bem-vindo(a) à família A.D. Kairós! Estamos felizes em ter você conosco.</p>
+            </div>
+            <div style="text-align: center; padding: 20px; background-color: #f9f9f9;">
+              <img src="${churchLogoUrl}" alt="Logo da Igreja" style="width: 100px; height: auto; margin-bottom: 10px;" />
+              <p style="font-size: 14px; color: #555;"><strong>Ministério A.D. Kairós</strong></p>
+              <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+              <p style="font-size: 12px; color: #777;">Este é um e-mail automático. Por favor, não responda.</p>
+            </div>
+          </div>
         `,
       };
       

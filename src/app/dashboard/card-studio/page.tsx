@@ -703,16 +703,18 @@ export default function CardStudioPage() {
                                     {Object.keys(elements)
                                         .filter(id => id.includes('Convenção') || id.includes('QR Code') || id.includes('Assinatura') || id.includes('Validade') || id.includes('Membro Desde'))
                                         .map(id => <React.Fragment key={id}>{renderElement(id)}</React.Fragment>)}
-                                    <div 
-                                        style={{
-                                            position: 'absolute', 
-                                            borderTop: '1px solid black', 
-                                            width: '40%', 
-                                            top: `calc(${elements['Assinatura Pastor']?.position.top}% - 2px)`,
-                                            left: `${elements['Assinatura Pastor']?.position.left}%`,
-                                            transform: 'translateX(-50%)'
-                                        }}
-                                    />
+                                    {elements['Assinatura Pastor'] && (
+                                        <div 
+                                            style={{
+                                                position: 'absolute', 
+                                                borderTop: '1px solid black', 
+                                                width: '40%', 
+                                                top: `calc(${elements['Assinatura Pastor'].position.top}% - 2px)`,
+                                                left: `${elements['Assinatura Pastor'].position.left}%`,
+                                                transform: 'translateX(-50%)'
+                                            }}
+                                        />
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -884,3 +886,5 @@ export default function CardStudioPage() {
     </>
   );
 }
+
+    

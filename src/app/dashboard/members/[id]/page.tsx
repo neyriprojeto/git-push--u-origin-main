@@ -213,31 +213,6 @@ export default function MemberProfilePage() {
   const { data: currentUserData, isLoading: isCurrentUserLoading } = useDoc(currentUserRef);
 
 
-  // Redirect if a non-owner member tries to access another member's page
-  useEffect(() => {
-    if (!isUserLoading && authUser && !isOwner) {
-      // Fetch the current user's role
-      const checkUserRole = async () => {
-        if (firestore) {
-          const userDocRef = doc(firestore, 'users', authUser.uid);
-          const userDocSnap = await getDoc(userDocRef);
-          if (userDocSnap.exists()) {
-            const userData = userDocSnap.data();
-            // This check should ONLY apply to the 'Membro' role
-            if (userData.cargo === 'Membro') {
-              router.push(`/dashboard/members/${authUser.uid}`);
-            }
-          } else {
-            // If the user document doesn't exist for some reason, deny access
-             router.push('/dashboard');
-          }
-        }
-      };
-      checkUserRole();
-    }
-  }, [isUserLoading, authUser, memberId, firestore, router, isOwner]);
-
-
   const memberRef = useMemoFirebase(() => (firestore ? doc(firestore, 'users', memberId) : null), [firestore, memberId]);
   const { data: member, isLoading: memberLoading, error: memberError } = useDoc<Member>(memberRef);
   

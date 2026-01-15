@@ -10,13 +10,21 @@ import {
 } from "@/components/ui/card";
 import { Users, UserPlus, ShieldCheck, UserCheck, Loader2 } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { useUser, useDoc, useFirestore, useMemoFirebase } from "@/firebase";
-import { doc } from "firebase/firestore";
+import { useUser, useDoc, useFirestore, useMemoFirebase, useCollection } from "@/firebase";
+import { doc, collection, query, where, getDocs, Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface UserData {
   cargo?: string;
+  dataMembro?: Timestamp;
+}
+
+interface DashboardStats {
+  totalMembers: number;
+  activeMembers: number;
+  newMembers: number;
+  leaders: number;
 }
 
 export default function DashboardPage() {
@@ -29,19 +37,50 @@ export default function DashboardPage() {
     [firestore, user]
   );
   const { data: userData, isLoading: isUserDataLoading } = useDoc<UserData>(userRef);
+  
+  const [stats, setStats] = useState<DashboardStats>({
+    totalMembers: 0,
+    activeMembers: 0,
+    newMembers: 0,
+    leaders: 0,
+  });
 
   useEffect(() => {
-    // Quando os dados do usuário carregarem, verificamos o cargo
-    if (!isUserDataLoading && user && (userData?.cargo === 'Membro' || userData?.cargo === 'Pastor Dirigente/Local')) {
-      // Se for membro ou pastor, redireciona para o próprio perfil
+    // Redireciona usuários que não são administradores
+    if (!isUserDataLoading && user && userData?.cargo && userData.cargo !== 'Administrador') {
       router.replace(`/dashboard/members/${user.uid}`);
     }
   }, [userData, isUserDataLoading, user, router]);
 
+  useEffect(() => {
+    const fetchStats = async () => {
+      if (!firestore || !userData || userData.cargo !== 'Administrador') return;
+
+      const usersCollection = collection(firestore, 'users');
+      const usersSnapshot = await getDocs(query(usersCollection, where('cargo', '!=', 'Administrador')));
+      
+      const allMembers = usersSnapshot.docs.map(doc => doc.data() as UserData);
+      
+      const totalMembers = allMembers.length;
+      const activeMembers = allMembers.filter(m => (m as any).status === 'Ativo').length;
+
+      const oneYearAgo = new Date();
+      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+      const newMembers = allMembers.filter(m => m.dataMembro && m.dataMembro.toDate() > oneYearAgo).length;
+
+      const leaderRoles = ['Pastor(a)', 'Pastor Dirigente/Local', 'Diácono(a)', 'Presbítero', 'Evangelista', 'Missionário(a)'];
+      const leaders = allMembers.filter(m => m.cargo && leaderRoles.includes(m.cargo)).length;
+
+      setStats({ totalMembers, activeMembers, newMembers, leaders });
+    };
+
+    fetchStats();
+  }, [firestore, userData]);
+
   const isLoading = isUserLoading || isUserDataLoading;
 
-  // Mostra um loader enquanto carrega ou enquanto redireciona para membros/pastores
-  if (isLoading || userData?.cargo === 'Membro' || userData?.cargo === 'Pastor Dirigente/Local') {
+  // Mostra um loader enquanto carrega ou redireciona
+  if (isLoading || (userData?.cargo && userData.cargo !== 'Administrador')) {
     return (
       <div className="flex-1 h-screen flex items-center justify-center">
         <Loader2 className="h-16 w-16 animate-spin" />
@@ -49,11 +88,7 @@ export default function DashboardPage() {
     );
   }
 
-  // TODO: Substituir dados mocados por dados do Firestore
-  const totalMembers = 0;
-  const activeMembers = 0;
-  const newMembers = 0;
-  const leaders = 0;
+  const { totalMembers, activeMembers, newMembers, leaders } = stats;
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -71,7 +106,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalMembers}</div>
-            <p className="text-xs text-muted-foreground">Membros cadastrados no sistema</p>
+            <p className="text-xs text-muted-foreground">Membros cadastrados (exceto Admins)</p>
           </CardContent>
         </Card>
         <Card>

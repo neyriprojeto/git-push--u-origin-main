@@ -63,7 +63,7 @@ export default function MembersPage() {
       );
     }
     
-    // Se for admin, mostra todos os usuários. A regra de segurança já impede que admins se vejam se necessário.
+    // Se for admin, mostra todos os usuários.
     if (currentUserData.cargo === 'Administrador') {
        return query(collection(firestore, 'users'));
     }
@@ -79,7 +79,7 @@ export default function MembersPage() {
   const showLoading = isLoading || isUserLoading || isCurrentUserLoading;
   
   // Filtra o próprio administrador da lista de membros no lado do cliente
-  const filteredMembers = members?.filter(member => member.id !== user?.uid || currentUserData?.cargo !== 'Administrador');
+  const filteredMembers = members?.filter(member => member.id !== user?.uid);
 
 
   return (
@@ -103,7 +103,7 @@ export default function MembersPage() {
               <TableRow>
                 <TableHead>Nome</TableHead>
                 <TableHead>Cargo</TableHead>
-                <TableHead className="hidden md:table-cell">Status</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead className="hidden md:table-cell">Congregação</TableHead>
                 <TableHead>
                   <span className="sr-only">Ações</span>
@@ -138,8 +138,8 @@ export default function MembersPage() {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="hidden md:table-cell">{member.cargo}</TableCell>
-                      <TableCell className="hidden md:table-cell">
+                      <TableCell>{member.cargo}</TableCell>
+                      <TableCell>
                         <Badge variant={member.status === "Ativo" ? "default" : member.status === "Pendente" ? "outline" : "destructive"}>
                           {member.status}
                         </Badge>

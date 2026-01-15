@@ -69,8 +69,11 @@ const formatDate = (dateValue?: string | { seconds: number; nanoseconds: number 
         } else {
            return '';
         }
-        date.setDate(date.getDate() + 1); // Adjust for timezone issues
-        return format(date, outputFormat);
+        // Ajuste para problemas de fuso horário que podem fazer a data voltar um dia
+        const timeZoneOffset = date.getTimezoneOffset() * 60000;
+        const adjustedDate = new Date(date.getTime() + timeZoneOffset);
+
+        return format(adjustedDate, outputFormat);
     } catch {
         return '';
     }
@@ -88,6 +91,7 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
             return html2canvas(frontRef.current, { 
                 scale: 4, // Increase scale for better quality
                 useCORS: true, // Allow cross-origin images
+                allowTaint: true, // Important for external images
                 backgroundColor: null, // Use transparent background
              });
         },
@@ -96,6 +100,7 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
             return html2canvas(backRef.current, { 
                 scale: 4, // Increase scale for better quality
                 useCORS: true, // Allow cross-origin images
+                allowTaint: true, // Important for external images
                 backgroundColor: null, // Use transparent background
              });
         },
@@ -111,11 +116,12 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
     }
     
     const getMemberDataForField = (fieldId: string) => {
+        const memberCargo = member.cargo === 'Pastor/dirigente' ? 'Pastor/dirigente' : member.cargo;
         switch (fieldId) {
             case 'Valor Nome': return `Nome: ${member.nome || ''}`;
             case 'Valor Nº Reg.': return `Nº Reg.: ${member.recordNumber || ''}`;
             case 'Valor CPF': return `CPF: ${member.cpf || ''}`;
-            case 'Valor Cargo': return `Cargo: ${member.cargo || ''}`;
+            case 'Valor Cargo': return `Cargo: ${memberCargo || ''}`;
             case 'Valor Data de Batismo': return `Data de Batismo: ${formatDate(member.dataBatismo) || ''}`;
             case 'Membro Desde': return `Membro desde: ${formatDate(member.dataMembro) || ''}`;
             default: return null;
@@ -178,17 +184,9 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
             style.textAlign = el.textAlign;
             style.whiteSpace = 'pre-wrap';
 
-            let dynamicText = el.text;
-            const memberCargo = member.cargo === 'Pastor/dirigente' ? 'Pastor Dirigente' : member.cargo;
+            let dynamicText = getMemberDataForField(id) ?? el.text;
 
-            if (id === 'Valor Nome') dynamicText = `Nome: ${member.nome || ''}`;
-            else if (id === 'Valor Nº Reg.') dynamicText = `Nº Reg.: ${member.recordNumber || ''}`;
-            else if (id === 'Valor CPF') dynamicText = `CPF: ${member.cpf || ''}`;
-            else if (id === 'Valor Cargo') dynamicText = `Cargo: ${memberCargo || ''}`;
-            else if (id === 'Valor Data de Batismo') dynamicText = `Data de Batismo: ${formatDate(member.dataBatismo) || ''}`;
-            else if (id === 'Congregação') dynamicText = member.congregacao || el.text;
-            else if (id === 'Membro Desde') dynamicText = `Membro desde: ${formatDate(member.dataMembro) || ''}`;
-
+            if (id === 'Congregação') dynamicText = member.congregacao || el.text;
 
             if (id.includes('Título') || id.includes('Valor') || id.includes('Assinatura Pastor') || id.includes('Validade') || id.includes('Membro Desde')) {
                 style.whiteSpace = 'nowrap';
@@ -399,4 +397,5 @@ export default function MemberCardPage() {
     );
 }
 
+    
     

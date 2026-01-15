@@ -126,7 +126,7 @@ body {
 
 @media print {
     @page {
-        size: A4 landscape; /* Define a orientação paisagem */
+        size: A4;
         margin: 0;
     }
     body {
@@ -134,18 +134,9 @@ body {
         print-color-adjust: exact;
         margin: 0;
     }
-    .print-container {
-      display: block;
-    }
     .print-page {
         page-break-after: always;
         box-shadow: none !important;
         border: none !important;
     }
-    /* Esconde a segunda página na tela, mas a mostra na impressão */
-    .print-container .print-page:nth-of-type(2) {
-      display: flex !important;
-    }
 }
-
-    

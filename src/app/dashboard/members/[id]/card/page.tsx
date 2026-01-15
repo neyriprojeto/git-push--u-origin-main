@@ -153,14 +153,11 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
             style.fontWeight = el.fontWeight;
             style.textAlign = el.textAlign;
             style.whiteSpace = 'pre-wrap'; // Default to pre-wrap for multi-line like address
+            style.lineHeight = '1';
+
 
             // Handle specific cases for text content and styling
             let dynamicText = getMemberDataForField(id) ?? el.text;
-            if (id === 'Cargo' && member.cargo === 'Pastor/dirigente') {
-                dynamicText = 'Cargo: Pastor\nDirigente/Local';
-            } else if (id === 'Cargo') {
-                dynamicText = `Cargo: ${member.cargo || ''}`;
-            }
 
             if (id.includes('Título') || id.includes('Assinatura Pastor') || id.includes('Validade') || id.includes('Membro Desde')) {
                 style.whiteSpace = 'nowrap';
@@ -168,10 +165,6 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
             if (id === 'Nome') {
                 style.whiteSpace = 'nowrap';
                 dynamicText = `Nome: ${member.nome || ''}`;
-            }
-             if (id === 'Cargo') {
-                // Adjust line-height for multi-line cargo
-                style.lineHeight = '1.1';
             }
 
 
@@ -243,7 +236,7 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
     return (
         <>
             {/* For screen view with flip */}
-            <div className='print:hidden w-[85.6mm] h-[54mm] scale-[1.2] origin-top cursor-pointer' onClick={() => setIsFront(!isFront)}>
+            <div className='print:hidden w-[85.6mm] h-[54mm] scale-100 origin-top cursor-pointer' onClick={() => setIsFront(!isFront)}>
                 <div className={cn("flip-card w-full h-full", {'flipped': !isFront})}>
                     <div className="flip-card-front"><CardFace isFrontFace={true} /></div>
                     <div className="flip-card-back"><CardFace isFrontFace={false} /></div>

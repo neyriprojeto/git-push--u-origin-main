@@ -80,6 +80,21 @@ export const addCongregacao = async (firestore: Firestore, nome: string) => {
         });
 }
 
+export const updateCongregacao = async (firestore: Firestore, id: string, data: { endereco?: string }) => {
+    if (!firestore) {
+        throw new Error('Firestore is not initialized');
+    }
+    const congregacaoRef = doc(firestore, 'congregacoes', id);
+    updateDoc(congregacaoRef, data)
+        .catch(error => {
+            errorEmitter.emit('permission-error', new FirestorePermissionError({
+                path: congregacaoRef.path,
+                operation: 'update',
+                requestResourceData: data,
+            }));
+        });
+};
+
 export const deleteCongregacao = async (firestore: Firestore, id: string) => {
     if (!firestore) {
         throw new Error('Firestore is not initialized');

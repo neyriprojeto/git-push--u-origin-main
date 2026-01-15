@@ -4,11 +4,10 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { addCongregacao, deleteCongregacao } from '@/firebase/firestore/mutations';
-import { Trash2 } from 'lucide-react';
+import { addCongregacao, deleteCongregacao, updateCongregacao } from '@/firebase/firestore/mutations';
+import { Trash2, Save } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,10 +20,13 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { collection } from 'firebase/firestore';
+import { Loader2 } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 
 type Congregacao = {
   id: string;
   nome: string;
+  endereco?: string;
 };
 
 export default function CongregationsPage() {
@@ -38,7 +40,33 @@ export default function CongregationsPage() {
     [firestore]
   );
   const { data: congregacoes, isLoading: loading } = useCollection<Congregacao>(congregacoesCollection);
+  
+  // State to hold addresses being edited
+  const [addresses, setAddresses] = useState<Record<string, string>>({});
 
+  const handleAddressChange = (id: string, value: string) => {
+    setAddresses(prev => ({ ...prev, [id]: value }));
+  };
+
+  const handleSaveAddress = async (id: string) => {
+    if (!firestore) return;
+    const address = addresses[id];
+    if (typeof address === 'undefined') return; // Nothing to save
+
+    try {
+      await updateCongregacao(firestore, id, { endereco: address });
+      toast({
+        title: 'Sucesso!',
+        description: 'Endereço da congregação atualizado.',
+      });
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao salvar',
+        description: error.message || 'Não foi possível salvar o endereço.',
+      });
+    }
+  };
 
   const handleAddCongregacao = async () => {
     if (!firestore || newCongregacao.trim() === '') {
@@ -91,7 +119,7 @@ export default function CongregationsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Gerenciar Congregações</CardTitle>
-            <CardDescription>Adicione ou remova congregações da sua igreja.</CardDescription>
+            <CardDescription>Adicione ou remova congregações da sua igreja e gerencie seus endereços para a página inicial.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex w-full max-w-sm items-center space-x-2">
@@ -103,7 +131,7 @@ export default function CongregationsPage() {
                 disabled={isSubmitting}
               />
               <Button onClick={handleAddCongregacao} disabled={isSubmitting}>
-                {isSubmitting ? 'Adicionando...' : 'Adicionar'}
+                {isSubmitting ? <Loader2 className="animate-spin h-4 w-4" /> : 'Adicionar'}
               </Button>
             </div>
           </CardContent>
@@ -115,35 +143,50 @@ export default function CongregationsPage() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <p>Carregando congregações...</p>
+              <div className="flex justify-center p-8">
+                <Loader2 className="h-8 w-8 animate-spin" />
+              </div>
             ) : congregacoes && congregacoes.length === 0 ? (
-                <p>Nenhuma congregação cadastrada.</p>
+                <p className="text-muted-foreground text-center p-4">Nenhuma congregação cadastrada.</p>
             ) : (
-              <ul className="space-y-2">
-                {congregacoes && congregacoes.map((c) => (
-                  <li key={c.id} className="flex items-center justify-between p-2 border rounded-md">
-                    <span>{c.nome}</span>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                         <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                            <Trash2 className="h-4 w-4" />
+              <ul className="space-y-4">
+                {congregacoes?.map((c) => (
+                  <li key={c.id} className="flex flex-col gap-2 p-4 border rounded-md">
+                    <div className='flex items-center justify-between'>
+                      <span className="font-medium">{c.nome}</span>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                           <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                              <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Essa ação não pode ser desfeita. Isso removerá permanentemente a congregação.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeleteCongregacao(c.id)} className="bg-destructive hover:bg-destructive/90">
+                              Excluir
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                     <div className="space-y-2">
+                        <Textarea
+                          placeholder="Digite o endereço da congregação..."
+                          value={addresses[c.id] ?? c.endereco ?? ''}
+                          onChange={(e) => handleAddressChange(c.id, e.target.value)}
+                        />
+                        <Button size="sm" onClick={() => handleSaveAddress(c.id)} disabled={typeof addresses[c.id] === 'undefined'}>
+                          <Save className="mr-2 h-4 w-4" />
+                          Salvar Endereço
                         </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Essa ação não pode ser desfeita. Isso removerá permanentemente a congregação.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleDeleteCongregacao(c.id)} className="bg-destructive hover:bg-destructive/90">
-                            Excluir
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                      </div>
                   </li>
                 ))}
               </ul>

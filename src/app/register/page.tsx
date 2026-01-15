@@ -68,6 +68,7 @@ export default function RegisterPage() {
     const fetchCongregacoes = async () => {
       if (!firestore) return;
       try {
+        setLoadingCongregacoes(true);
         const congregacoesCollection = collection(firestore, 'congregacoes');
         const snapshot = await getDocs(congregacoesCollection);
         const congregacoesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Congregacao));
@@ -330,7 +331,7 @@ export default function RegisterPage() {
                                     </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                        {congregacoes && congregacoes.map((c) => (
+                                        {congregacoes?.map((c) => (
                                             <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>
                                         ))}
                                     </SelectContent>

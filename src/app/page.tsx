@@ -20,12 +20,29 @@ import {
 import { AppLogo } from "@/components/icons";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Users, Share2, Radio, Menu, Instagram, Youtube, Globe } from "lucide-react";
-import React from "react";
+import { Users, Share2, Radio, Menu, Instagram, Youtube, Globe, Loader2, MapPin } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { collection } from "firebase/firestore";
+
+
+type Congregacao = {
+  id: string;
+  nome: string;
+  endereco?: string;
+};
+
 
 export default function Home() {
   const churchBanner = PlaceHolderImages.find((p) => p.id === "church-banner");
   const pastorPhoto = PlaceHolderImages.find((p) => p.id === "pastor-photo");
+
+  const firestore = useFirestore();
+  const congregacoesCollectionRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'congregacoes') : null),
+    [firestore]
+  );
+  const { data: congregacoes, isLoading: loadingCongregacoes } = useCollection<Congregacao>(congregacoesCollectionRef);
 
   return (
     <div className="flex flex-col min-h-screen bg-secondary">
@@ -179,17 +196,37 @@ export default function Home() {
             
             {/* Congregações e Comissão */}
             <div className="grid md:grid-cols-2 gap-8">
-              <Card>
+               <Card>
                 <CardHeader>
-                  <CardTitle className="text-center">Congregações</CardTitle>
+                  <CardTitle className="text-center">Nossas Congregações</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground text-center">
-                    Nossas congregações são pontos de luz em diversas comunidades. 
-                    Encontre a mais próxima de você e venha nos visitar.
-                  </p>
+                  {loadingCongregacoes ? (
+                    <div className="flex justify-center">
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                    </div>
+                  ) : congregacoes && congregacoes.length > 0 ? (
+                    <ul className="space-y-4">
+                      {congregacoes.map((c) => (
+                        <li key={c.id} className="flex flex-col items-center text-center">
+                          <p className="font-semibold">{c.nome}</p>
+                          {c.endereco ? (
+                            <p className="text-sm text-muted-foreground flex items-center gap-1">
+                              <MapPin className="h-3 w-3" />
+                              {c.endereco}
+                            </p>
+                          ) : (
+                            <p className="text-sm text-muted-foreground italic">Endereço não informado</p>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-muted-foreground text-center">Nenhuma congregação cadastrada.</p>
+                  )}
                 </CardContent>
               </Card>
+
               <Card>
                 <CardHeader>
                   <CardTitle className="text-center">Comissão Executiva</CardTitle>

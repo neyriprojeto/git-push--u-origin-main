@@ -76,6 +76,7 @@ interface Member {
     cidade?: string;
     estado?: string;
     congregation?: string;
+    congregacao?: string; // Add this line
 }
 
 const formSchema = z.object({

@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { notFound, useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Label } from '@/components/ui/label';
 import { useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -204,4 +204,5 @@ export default function MemberCardPage() {
         </div>
     );
 }
+
     

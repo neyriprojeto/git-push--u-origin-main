@@ -262,35 +262,33 @@ export default function MemberProfilePage() {
 
   // Effect to check permissions
   useEffect(() => {
-    // Wait for all data to be loaded before checking permissions.
     if (isUserLoading || isCurrentUserLoading || !authUser) return;
-
-    // Data for the currently logged-in user (e.g., the admin) is available
+  
+    // This is the user trying to view the page.
     if (currentUserData) {
       const isAdmin = currentUserData.cargo === 'Administrador';
-      
-      // If the user being viewed exists, check permissions
+  
+      // Now, wait for the member profile data to decide permissions.
+      if (memberLoading) return;
+  
       if (member) {
         const isUserOwner = authUser.uid === member.id;
         const isPastorOfCongregation = currentUserData.cargo === 'Pastor Dirigente/Local' && currentUserData.congregacao === member.congregacao;
-
+  
         const canView = isUserOwner || isAdmin || isPastorOfCongregation;
         const canEdit = isUserOwner || isAdmin || isPastorOfCongregation;
         const canManage = isAdmin || isPastorOfCongregation;
-        
+  
         setPermission({ canView, canEdit, canManage, hasChecked: true });
-      } else if (!memberLoading) {
-        // The member profile doesn't exist (and we're not loading it anymore)
+      } else {
+        // Member not found, but we have checked.
         setPermission({ canView: false, canEdit: false, canManage: false, hasChecked: true });
       }
-
     } else if (!isCurrentUserLoading) {
-        // Current user's data is not available, and we are not loading it.
-        // This case indicates the current user has no profile document, so deny all.
-        setPermission({ canView: false, canEdit: false, canManage: false, hasChecked: true });
+      // The person viewing the page has no user document themselves.
+      setPermission({ canView: false, canEdit: false, canManage: false, hasChecked: true });
     }
-
-  }, [authUser, currentUserData, member, isUserLoading, isCurrentUserLoading, memberLoading]);
+  }, [authUser, currentUserData, member, memberId, isUserLoading, isCurrentUserLoading, memberLoading]);
 
 
   // Effect to reset form when member data is loaded
@@ -454,7 +452,7 @@ export default function MemberProfilePage() {
 
   // After loading, if permission has been checked and is still false, deny access.
   if (permission.hasChecked && !permission.canView) {
-      return (
+       return (
            <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
                 <Card className="border-destructive">
                     <CardHeader className="items-center text-center">
@@ -472,7 +470,7 @@ export default function MemberProfilePage() {
 
   // Handle case where member doc does not exist but user might have permission to view it (e.g. broken link)
   if (!member) {
-    return notFound();
+     return notFound();
   }
   
   if (!templateData) {
@@ -966,8 +964,7 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
                 </Card>
             </TabsContent>
         </Tabs>
-
-
+        
         {verse && (
           <Card>
             <CardHeader>
@@ -992,6 +989,7 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
             </CardContent>
           </Card>
         )}
+
 
         <div className="space-y-4">
             <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2"><LayoutGrid /> Mural de Avisos</h2>
@@ -1060,4 +1058,3 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
   );
 }
 
-    

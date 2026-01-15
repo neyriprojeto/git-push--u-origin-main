@@ -197,14 +197,14 @@ export default function Home() {
               className="object-cover"
             />
           )}
-          <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-center p-4">
+          <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-start pt-12 text-center p-4">
             <AppLogo className="h-16 w-16 mb-4" />
-            <h1 className="text-3xl font-bold md:text-4xl">Bem-vindo a AD Kairós</h1>
+            <h1 className="text-2xl font-bold md:text-4xl">Bem-vindo a AD Kairós</h1>
           </div>
         </div>
 
         {/* Content Section */}
-        <div className="container -mt-28 z-10 relative px-4 md:px-6">
+        <div className="container -mt-20 z-10 relative px-4 md:px-6">
           <div className="flex justify-center mb-6">
               <Avatar className="size-40 border-8 border-background bg-background shadow-lg">
                 <AvatarImage

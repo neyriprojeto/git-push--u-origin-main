@@ -262,13 +262,11 @@ export default function MemberProfilePage() {
 
   // Effect to check permissions
   useEffect(() => {
-    if (isUserLoading || isCurrentUserLoading || !authUser) return;
-  
-    // This is the user trying to view the page.
+    if (isCurrentUserLoading || !authUser) return;
+
     if (currentUserData) {
       const isAdmin = currentUserData.cargo === 'Administrador';
   
-      // Now, wait for the member profile data to decide permissions.
       if (memberLoading) return;
   
       if (member) {
@@ -280,15 +278,13 @@ export default function MemberProfilePage() {
         const canManage = isAdmin || isPastorOfCongregation;
   
         setPermission({ canView, canEdit, canManage, hasChecked: true });
-      } else {
-        // Member not found, but we have checked.
+      } else if (!memberLoading) {
         setPermission({ canView: false, canEdit: false, canManage: false, hasChecked: true });
       }
     } else if (!isCurrentUserLoading) {
-      // The person viewing the page has no user document themselves.
       setPermission({ canView: false, canEdit: false, canManage: false, hasChecked: true });
     }
-  }, [authUser, currentUserData, member, memberId, isUserLoading, isCurrentUserLoading, memberLoading]);
+  }, [authUser, currentUserData, member, isCurrentUserLoading, memberLoading]);
 
 
   // Effect to reset form when member data is loaded
@@ -342,14 +338,18 @@ export default function MemberProfilePage() {
   const handleDelete = async () => {
     if (!firestore || !memberId) return;
     setIsSubmitting(true);
+    // Redirect first to avoid 404 error after deletion
+    router.push('/dashboard/members'); 
     try {
       await deleteMember(firestore, memberId);
       toast({ title: "Sucesso!", description: "Membro excluído com sucesso." });
-      router.push('/dashboard/members');
     } catch (error) {
       console.error("Delete error: ", error);
       toast({ variant: "destructive", title: "Erro", description: "Não foi possível excluir o membro." });
-      setIsSubmitting(false);
+      // If deletion fails, we are already on the members page, so no need to redirect back.
+      // The user can try again from the members list.
+    } finally {
+        // No need to set isSubmitting to false, as we've navigated away.
     }
   }
 
@@ -597,7 +597,7 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
     };
 
     const frontElements = Object.keys(elements)
-        .filter(id => !id.includes('Convenção') && !id.includes('QR Code') && !id.includes('Assinatura') && !id.includes('Validade') && !id.includes('Membro Desde'));
+        .filter(id => !id.includes('Convenção') && !id.includes('QR Code') && !id.includes('Assinatura') && !id.includes('Validade') && !id.includes('Membro Desde') && id !== 'Data de Batismo');
     
     const backElements = Object.keys(elements)
         .filter(id => id.includes('Convenção') || id.includes('QR Code') || id.includes('Assinatura') || id.includes('Validade') || id.includes('Membro Desde'));

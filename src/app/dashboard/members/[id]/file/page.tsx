@@ -251,10 +251,12 @@ export default function MemberFilePage() {
             </div>
             
             {/* Flip container for screen view */}
-            <div className="w-full max-w-5xl print:hidden">
+            <div 
+                className="w-full max-w-5xl print:hidden cursor-pointer"
+                onClick={() => setIsFront(!isFront)}
+            >
                 <div 
-                    className="flip-card-container cursor-pointer aspect-[1/1.414]"
-                    onClick={() => setIsFront(!isFront)}
+                    className="flip-card-container aspect-[1/1.414]"
                 >
                     <div className={cn("flip-card w-full h-full transition-transform duration-700", { 'flipped': !isFront })} style={{ transformStyle: 'preserve-3d' }}>
                         <div className="flip-card-front">
@@ -265,18 +267,20 @@ export default function MemberFilePage() {
                         </div>
                     </div>
                 </div>
-                 <div className='flex gap-2 justify-center mt-4'>
-                    <Button variant={isFront ? 'default' : 'outline'} onClick={() => setIsFront(true)}>Frente</Button>
-                    <Button variant={!isFront ? 'default' : 'outline'} onClick={() => setIsFront(false)}>Verso</Button>
-                </div>
             </div>
+            
+            <div className='flex gap-2 justify-center mt-4 print:hidden'>
+                <Button variant={isFront ? 'default' : 'outline'} onClick={() => setIsFront(true)}>Frente</Button>
+                <Button variant={!isFront ? 'default' : 'outline'} onClick={() => setIsFront(false)}>Verso</Button>
+            </div>
+
 
             {/* Hidden container for printing */}
             <div className="hidden print:block">
                 <div className="print-page">
                    <FichaFrente />
                 </div>
-                <div className="print-page">
+                <div className="print-page" style={{ display: 'block' }}>
                    <FichaVerso />
                 </div>
             </div>

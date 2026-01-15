@@ -271,7 +271,7 @@ export default function MemberProfilePage() {
   
       if (member) {
         const isUserOwner = authUser.uid === member.id;
-        const isPastorOfCongregation = currentUserData.cargo === 'Pastor Dirigente' && currentUserData.congregacao === member.congregacao;
+        const isPastorOfCongregation = currentUserData.cargo === 'Pastor/dirigente' && currentUserData.congregacao === member.congregacao;
   
         const canView = isUserOwner || isAdmin || isPastorOfCongregation;
         const canEdit = isUserOwner || isAdmin || isPastorOfCongregation;
@@ -486,13 +486,12 @@ export default function MemberProfilePage() {
   const avatar = getAvatar(member.avatar);
 
   const getMemberDataForField = (fieldId: string) => {
-    const valueKey = fieldId.replace('Valor ', '');
-    switch (valueKey) {
-        case 'Nome': return `Nome: ${member.nome || ''}`;
-        case 'Nº Reg.': return `Nº Reg.: ${member.recordNumber || ''}`;
-        case 'CPF': return `CPF: ${member.cpf || ''}`;
-        case 'Data de Batismo': return `Data de Batismo: ${formatDate(member.dataBatismo, 'dd/MM/yyyy') || ''}`;
-        case 'Cargo': return `Cargo: ${member.cargo || ''}`;
+    switch (fieldId) {
+        case 'Valor Nome': return `Nome: ${member.nome || ''}`;
+        case 'Valor Nº Reg.': return `Nº Reg.: ${member.recordNumber || ''}`;
+        case 'Valor CPF': return `CPF: ${member.cpf || ''}`;
+        case 'Valor Data de Batismo': return `Data de Batismo: ${formatDate(member.dataBatismo, 'dd/MM/yyyy') || ''}`;
+        case 'Valor Cargo': return `Cargo: ${member.cargo || ''}`;
         case 'Membro Desde': return `Membro desde: ${formatDate(member.dataMembro, 'dd/MM/yyyy') || ''}`;
         default: return null;
     }
@@ -617,8 +616,8 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
                             position: 'absolute', 
                             borderTop: '1px solid black', 
                             width: '40%', 
-                            top: `calc(${signatureLineElement.position.top}% - 2px)`,
-                            left: `${signatureLineElement.position.left}%`,
+                            top: '85%',
+                            left: '50%',
                             transform: 'translateX(-50%)'
                         }}
                     />
@@ -818,7 +817,7 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
                                                             <SelectItem value="Evangelista">Evangelista</SelectItem>
                                                             <SelectItem value="Missionário(a)">Missionário(a)</SelectItem>
                                                             <SelectItem value="Pastor(a)">Pastor(a)</SelectItem>
-                                                            <SelectItem value="Pastor Dirigente">Pastor Dirigente</SelectItem>
+                                                            <SelectItem value="Pastor/dirigente">Pastor/dirigente</SelectItem>
                                                             <SelectItem value="Administrador">Administrador</SelectItem>
                                                         </SelectContent>
                                                     </Select>

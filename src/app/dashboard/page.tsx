@@ -91,7 +91,7 @@ export default function DashboardPage() {
         return memberDate > oneYearAgo;
       }).length;
 
-      const leaderRoles = ['Pastor(a)', 'Pastor Dirigente/Local', 'Diácono(a)', 'Presbítero', 'Evangelista', 'Missionário(a)'];
+      const leaderRoles = ['Pastor(a)', 'Pastor/dirigente', 'Diácono(a)', 'Presbítero', 'Evangelista', 'Missionário(a)'];
       const leaders = allMembers.filter(m => m.cargo && leaderRoles.includes(m.cargo)).length;
 
       setStats({ totalMembers, activeMembers, newMembers, leaders });

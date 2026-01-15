@@ -98,7 +98,7 @@ export default function MemberFilePage() {
 
         if (currentUser.cargo === 'Administrador') {
             setHasAccess(true);
-        } else if (currentUser.cargo === 'Pastor Dirigente/Local' && currentUser.congregacao === member.congregacao) {
+        } else if (currentUser.cargo === 'Pastor/dirigente' && currentUser.congregacao === member.congregacao) {
             setHasAccess(true);
         } else {
             setHasAccess(false);

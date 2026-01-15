@@ -113,12 +113,11 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
     }
     
     const getMemberDataForField = (fieldId: string) => {
-        const memberCargo = member.cargo === 'Pastor/dirigente' ? 'Pastor/dirigente' : member.cargo;
         switch (fieldId) {
             case 'Valor Nome': return `Nome: ${member.nome || ''}`;
             case 'Valor Nº Reg.': return `Nº Reg.: ${member.recordNumber || ''}`;
             case 'Valor CPF': return `CPF: ${member.cpf || ''}`;
-            case 'Valor Cargo': return `Cargo: ${memberCargo || ''}`;
+            case 'Valor Cargo': return `Cargo: ${member.cargo || ''}`;
             case 'Valor Data de Batismo': return `Data de Batismo: ${formatDate(member.dataBatismo) || ''}`;
             case 'Membro Desde': return `Membro desde: ${formatDate(member.dataMembro) || ''}`;
             default: return null;
@@ -165,14 +164,13 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
             if (!src) {
                  elementContent = <div style={{...style, border: '1px dashed #ccc'}} className="bg-gray-200/50 flex items-center justify-center text-xs text-gray-500">{id}</div>;
             } else {
-                 const objectFitStyle: React.CSSProperties = {
-                    objectFit: id === 'Foto do Membro' ? 'cover' : 'contain',
-                    width: '100%',
-                    height: '100%'
-                };
                 elementContent = (
                     <div style={style} className={cn("relative", {'rounded-md overflow-hidden': id !== 'Assinatura' })}>
-                        <img src={src} alt={id} style={objectFitStyle} crossOrigin="anonymous" />
+                         <img src={src} alt={id} style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: id === 'Foto do Membro' ? 'cover' : 'contain'
+                         }} crossOrigin="anonymous" />
                     </div>
                 );
             }
@@ -225,8 +223,8 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
                     {signatureLineElement && (
                         <div style={{
                             position: 'absolute', borderTop: '1px solid black', width: '40%',
-                            top: `calc(${signatureLineElement.position.top}% - 2px)`,
-                            left: `${signatureLineElement.position.left}%`,
+                            top: '85%',
+                            left: '50%',
                             transform: 'translateX(-50%)'
                         }} />
                     )}
@@ -400,3 +398,4 @@ export default function MemberCardPage() {
     
 
     
+

@@ -229,6 +229,8 @@ export default function MemberProfilePage() {
   const [isCardFlipped, setIsCardFlipped] = useState(false);
   const [posts, setPosts] = useState<Post[]>(initialPosts);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [canEdit, setCanEdit] = useState(false);
+  const [canManage, setCanManage] = useState(false);
 
   // State for image cropping
     const [crop, setCrop] = useState<Crop>();
@@ -253,7 +255,8 @@ export default function MemberProfilePage() {
   });
 
   useEffect(() => {
-    if (member) {
+    if (member && currentUserData) {
+      // Preenche o formulário com os dados do membro
       form.reset({
         nome: member.nome || '',
         email: member.email || '',
@@ -281,8 +284,17 @@ export default function MemberProfilePage() {
         dataMembro: formatDate(member.dataMembro) || '',
         recordNumber: member.recordNumber || '',
       });
+
+      // Define permissões de edição
+      const isUserOwner = authUser?.uid === memberId;
+      const isAdmin = currentUserData.cargo === 'Administrador';
+      const isPastorOfCongregation = currentUserData.cargo === 'Pastor Dirigente/Local' && currentUserData.congregacao === member.congregacao;
+
+      setCanEdit(isUserOwner || isAdmin || isPastorOfCongregation);
+      setCanManage(isAdmin || isPastorOfCongregation);
+
     }
-  }, [member, form]);
+  }, [member, currentUserData, form, authUser, memberId]);
 
 
   const onSubmit: SubmitHandler<MemberFormData> = async (data) => {
@@ -417,10 +429,6 @@ export default function MemberProfilePage() {
     }
 
   const avatar = getAvatar(member.avatar);
-  
-  const canEdit = isOwner || currentUserData?.cargo === 'Administrador' || (currentUserData?.cargo === 'Pastor Dirigente/Local' && currentUserData?.congregacao === member.congregacao);
-  const canManage = currentUserData?.cargo === 'Administrador' || currentUserData?.cargo === 'Pastor Dirigente/Local';
-
 
   const getMemberDataForField = (fieldId: string) => {
     switch (fieldId) {
@@ -965,5 +973,6 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
     </div>
   );
 }
+
 
     

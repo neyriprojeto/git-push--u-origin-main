@@ -102,8 +102,7 @@ interface Member {
     bairro?: string;
     cidade?: string;
     estado?: string;
-    congregation?: string;
-    congregacao?: string; // Add this line
+    congregacao?: string;
 }
 
 const formSchema = z.object({
@@ -862,5 +861,3 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
     </div>
   );
 }
-
-    

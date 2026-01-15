@@ -51,6 +51,7 @@ interface Member {
     cargo: string;
     dataNascimento?: string | { seconds: number; nanoseconds: number };
     dataMembro?: string | { seconds: number; nanoseconds: number };
+    dataBatismo?: string | { seconds: number; nanoseconds: number };
     congregacao?: string;
 }
 
@@ -94,6 +95,7 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
             case 'RG': return member.rg || '';
             case 'CPF': return member.cpf || '';
             case 'Data de Nascimento': return formatDate(member.dataNascimento) || '';
+            case 'Data de Batismo': return formatDate(member.dataBatismo) || '';
             case 'Cargo': return member.cargo || '';
             case 'Membro Desde': return `Membro desde: ${formatDate(member.dataMembro) || ''}`;
             default: return null;

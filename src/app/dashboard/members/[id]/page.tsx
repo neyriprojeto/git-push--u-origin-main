@@ -493,6 +493,7 @@ export default function MemberProfilePage() {
         case 'RG': return member.rg || '';
         case 'CPF': return member.cpf || '';
         case 'Data de Nascimento': return formatDate(member.dataNascimento, 'dd/MM/yyyy') || '';
+        case 'Data de Batismo': return formatDate(member.dataBatismo, 'dd/MM/yyyy') || '';
         case 'Cargo': return member.cargo || '';
         case 'Membro Desde': return `Membro desde: ${formatDate(member.dataMembro, 'dd/MM/yyyy') || ''}`;
         default: return null;
@@ -595,7 +596,7 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
     };
 
     const frontElements = Object.keys(elements)
-        .filter(id => !id.includes('Convenção') && !id.includes('QR Code') && !id.includes('Assinatura') && !id.includes('Validade') && !id.includes('Membro Desde') && id !== 'Data de Batismo');
+        .filter(id => !id.includes('Convenção') && !id.includes('QR Code') && !id.includes('Assinatura') && !id.includes('Validade') && !id.includes('Membro Desde'));
     
     const backElements = Object.keys(elements)
         .filter(id => id.includes('Convenção') || id.includes('QR Code') || id.includes('Assinatura') || id.includes('Validade') || id.includes('Membro Desde'));

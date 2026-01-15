@@ -11,7 +11,6 @@
  * - /churchInfo/{churchInfoId}: A singleton collection for publicly readable church information.
  * - /congregacoes/{congregacaoId}: A public list of church congregations.
  * - /cardTemplates/{templateId}: Stores the customizable template for member ID cards.
- * - /mail/{mailId}: Used by the "Trigger Email" extension. Only backend functions can write here.
  *
  * Key Security Decisions:
  * - Centralized User Data: All member-specific data is stored in `/users/{userId}`, where `{userId}`
@@ -150,18 +149,6 @@ service cloud.firestore {
      */
     match /cardTemplates/{templateId} {
       allow read, write: if isAdmin();
-    }
-
-    /**
-     * @description
-     *  Manages the 'mail' collection for the Trigger Email extension.
-     *  Only backend processes (like Cloud Functions or Genkit flows) can create documents here.
-     *  No client-side reads or writes are allowed.
-     * @path /mail/{mailId}
-     */
-    match /mail/{mailId} {
-        allow read, update, delete: if false;
-        allow create: if request.auth == null; // Only backend (server-side) can create
     }
   }
 }

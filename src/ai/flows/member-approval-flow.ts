@@ -2,20 +2,21 @@
 'use server';
 /**
  * @fileOverview A Genkit flow that triggers on Firestore document updates.
- * When a new member's status changes to "Ativo", it creates a document
- * in the 'mail' collection to be sent by the "Trigger Email" Firebase Extension.
+ * When a new member's status changes to "Ativo", it sends a welcome
+ * email directly using nodemailer.
  */
 
 import { onFlow } from '@genkit-ai/next';
 import { z } from 'zod';
-import { getFirestore } from 'firebase-admin/firestore';
 import { initializeApp, getApps } from 'firebase-admin/app';
+import * as nodemailer from 'nodemailer';
+import 'dotenv/config';
+
 
 // Initialize Firebase Admin SDK if it hasn't been already.
 if (!getApps().length) {
   initializeApp();
 }
-const db = getFirestore();
 
 // Define the schema for the data we expect from the Firestore trigger event.
 // This should match the structure of the 'users' documents.
@@ -54,29 +55,51 @@ export const memberApprovalFlow = onFlow(
 
     // Check if the status was changed from 'Pendente' to 'Ativo'.
     if (beforeStatus === 'Pendente' && afterStatus === 'Ativo') {
-      console.log(`Approving member ${memberName} (${memberEmail}). Creating email document.`);
+      console.log(`Approving member ${memberName} (${memberEmail}). Sending welcome email.`);
       
-      // Create a new document in the 'mail' collection.
-      // The "Trigger Email" extension will pick this up and send the email.
-      await db.collection('mail').add({
-        to: [memberEmail],
-        message: {
-          subject: 'Seu cadastro no A.D.KAIROS CONNECT foi aprovado!',
-          html: `
-            <h1>Bem-vindo(a), ${memberName}!</h1>
-            <p>Temos o prazer de informar que seu cadastro em nossa comunidade foi aprovado.</p>
-            <p>Você já pode acessar a área de membros e desfrutar de todas as funcionalidades.</p>
-            <p>Seja bem-vindo(a) à família A.D. Kairós!</p>
-            <br>
-            <p>Atenciosamente,</p>
-            <p><strong>Ministério A.D. Kairós</strong></p>
-          `,
+      // Check for required environment variables
+      if (!process.env.EMAIL_HOST || !process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+        console.error("Email environment variables (EMAIL_HOST, EMAIL_USER, EMAIL_PASS) are not set. Skipping email.");
+        return;
+      }
+
+      // Create a transporter object using the default SMTP transport
+      const transporter = nodemailer.createTransport({
+        host: process.env.EMAIL_HOST,
+        port: Number(process.env.EMAIL_PORT || 587),
+        secure: process.env.EMAIL_SECURE === 'true', // true for 465, false for other ports
+        auth: {
+          user: process.env.EMAIL_USER, // Your email user
+          pass: process.env.EMAIL_PASS, // Your email password
         },
       });
-      console.log(`Email document created for ${memberEmail}.`);
+
+      // Email content
+      const mailOptions = {
+        from: `"${process.env.EMAIL_FROM_NAME || 'A.D.KAIROS CONNECT'}" <${process.env.EMAIL_FROM_ADDRESS || process.env.EMAIL_USER}>`,
+        to: memberEmail,
+        subject: 'Seu cadastro no A.D.KAIROS CONNECT foi aprovado!',
+        html: `
+          <h1>Bem-vindo(a), ${memberName}!</h1>
+          <p>Temos o prazer de informar que seu cadastro em nossa comunidade foi aprovado.</p>
+          <p>Você já pode acessar a área de membros e desfrutar de todas as funcionalidades.</p>
+          <p>Seja bem-vindo(a) à família A.D. Kairós!</p>
+          <br>
+          <p>Atenciosamente,</p>
+          <p><strong>Ministério A.D. Kairós</strong></p>
+        `,
+      };
+      
+      try {
+        await transporter.sendMail(mailOptions);
+        console.log(`Welcome email sent successfully to ${memberEmail}.`);
+      } catch (error) {
+        console.error(`Failed to send email to ${memberEmail}:`, error);
+        // Optional: Add more robust error handling, like retries or logging to a different service.
+      }
 
     } else {
-      console.log('No status change to "Ativo", skipping email document creation.');
+      console.log('No status change to "Ativo", skipping email.');
     }
   }
 );

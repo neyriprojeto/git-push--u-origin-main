@@ -205,8 +205,8 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
         backgroundPosition: 'center',
     });
 
-    const frontElements = Object.keys(elements).filter(id => !id.includes('Convenção') && !id.includes('QR Code') && !id.includes('Assinatura') && !id.includes('Validade') && !id.includes('Membro Desde'));
-    const backElements = Object.keys(elements).filter(id => id.includes('Convenção') || id.includes('QR Code') || id.includes('Assinatura') || id.includes('Validade') || id.includes('Membro Desde'));
+    const frontElements = Object.keys(elements).filter(id => !id.includes('Convenção') && !id.includes('QR Code') && !id.includes('Assinatura') && !id.includes('Validade') && !id.includes('Membro Desde') && !id.includes('Assinatura Pastor'));
+    const backElements = Object.keys(elements).filter(id => id.includes('Convenção') || id.includes('QR Code') || id.includes('Assinatura') || id.includes('Validade') || id.includes('Membro Desde') || id.includes('Assinatura Pastor'));
     const signatureLineElement = elements['Assinatura Pastor'];
 
 
@@ -224,7 +224,7 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
                     {signatureLineElement && (
                         <div style={{
                             position: 'absolute', borderTop: '1px solid black', width: '40%',
-                            top: `${signatureLineElement.position.top + 7}%`,
+                            top: `calc(${signatureLineElement.position.top}% - 2px)`,
                             left: `${signatureLineElement.position.left}%`,
                             transform: 'translateX(-50%)'
                         }} />

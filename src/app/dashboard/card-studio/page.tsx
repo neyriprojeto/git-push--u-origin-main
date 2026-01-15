@@ -72,23 +72,22 @@ const defaultElements: CardElements = {
     'Endereço': { position: { top: 23, left: 50 }, size: { fontSize: 8 }, text: 'Rua Presidente Prudente, N°28\nEldorado, Diadema-SP', textAlign: 'center' },
     'Foto do Membro': { position: { top: 40, left: 15 }, size: { width: 80, height: 100 }, src: '' },
 
-    // Values (to be filled dynamically) - Rótulo e valor unificados
     'Valor Nome': { position: { top: 60, left: 40 }, size: { fontSize: 11 }, text: `Nome: ${memberSample.name}`, fontWeight: 'normal', textAlign: 'left' },
     'Valor Nº Reg.': { position: { top: 68, left: 40 }, size: { fontSize: 10 }, text: `Nº Reg.: ${memberSample.recordNumber}`, textAlign: 'left' },
     'Valor Data de Batismo': { position: { top: 74, left: 40 }, size: { fontSize: 10 }, text: 'Data de Batismo: 01/01/2024', textAlign: 'left' },
     'Valor CPF': { position: { top: 80, left: 40 }, size: { fontSize: 10 }, text: `CPF: ${memberSample.cpf}`, textAlign: 'left' },
     'Valor Cargo': { position: { top: 86, left: 40 }, size: { fontSize: 10 }, text: `Cargo: ${memberSample.role}`, textAlign: 'left' },
     
-    'Logo Igreja': { position: { top: 38, left: 80 }, size: { width: 70, height: 70 }, src: churchLogoPlaceholder?.imageUrl || '' },
+    'Logo Igreja': { position: { top: 38, left: 80 }, size: { width: 70, height: 70 }, src: churchLogoPlaceholder?.imageUrl || '', textAlign: 'center' },
     
     // --- Verso ---
-    'Logo Convenção 1': { position: { top: 15, left: 25 }, size: { width: 80, height: 80 }, src: '' },
-    'Logo Convenção 2': { position: { top: 15, left: 75 }, size: { width: 80, height: 80 }, src: '' },
-    'QR Code': { position: { top: 45, left: 25 }, size: { width: 80, height: 80 }, src: '' },
-    'Assinatura': { position: { top: 70, left: 65 }, size: { width: 150, height: 60 }, src: '' },
-    'Assinatura Pastor': { position: { top: 82, left: 50 }, size: { fontSize: 10 }, text: 'Assinatura Pastor Presidente', textAlign: 'center' },
-    'Validade': { position: { top: 88, left: 50 }, size: { fontSize: 10 }, text: 'Validade: 01/01/2026', fontWeight: 'bold', textAlign: 'center' },
-    'Membro Desde': { position: { top: 93, left: 50 }, size: { fontSize: 10 }, text: `Membro desde: ${new Date(memberSample.memberSince).toLocaleDateString('pt-BR')}`, fontWeight: 'bold', textAlign: 'center' },
+    'Logo Convenção 1': { position: { top: 10, left: 25 }, size: { width: 70, height: 70 }, src: '', textAlign: 'center' },
+    'Logo Convenção 2': { position: { top: 10, left: 75 }, size: { width: 70, height: 70 }, src: '', textAlign: 'center' },
+    'QR Code': { position: { top: 40, left: 25 }, size: { width: 70, height: 70 }, src: '', textAlign: 'center' },
+    'Validade': { position: { top: 40, left: 75 }, size: { fontSize: 10 }, text: 'Validade: 01/01/2026', fontWeight: 'bold', textAlign: 'center' },
+    'Membro Desde': { position: { top: 50, left: 75 }, size: { fontSize: 10 }, text: `Membro desde: ${new Date(memberSample.memberSince).toLocaleDateString('pt-BR')}`, fontWeight: 'bold', textAlign: 'center' },
+    'Assinatura': { position: { top: 70, left: 50 }, size: { width: 120, height: 40 }, src: '', textAlign: 'center' },
+    'Assinatura Pastor': { position: { top: 88, left: 50 }, size: { fontSize: 10 }, text: 'Assinatura Pastor Presidente', textAlign: 'center' },
 };
 
 
@@ -687,14 +686,14 @@ export default function CardStudioPage() {
                                 <div className='relative h-full w-full'>
                                     {/* Render all front elements individually */}
                                     {Object.keys(elements)
-                                        .filter(id => !id.includes('Convenção') && !id.includes('QR Code') && !id.includes('Assinatura') && !id.includes('Validade') && !id.includes('Membro Desde'))
+                                        .filter(id => !id.includes('Convenção') && !id.includes('QR Code') && !id.includes('Assinatura') && !id.includes('Validade') && !id.includes('Membro Desde') && !id.includes('Assinatura Pastor'))
                                         .map(id => <React.Fragment key={id}>{renderElement(id)}</React.Fragment>)}
                                 </div>
                             ) : (
                                 <div className='relative h-full w-full'>
                                     {/* Render all back elements individually */}
                                     {Object.keys(elements)
-                                        .filter(id => id.includes('Convenção') || id.includes('QR Code') || id.includes('Assinatura') || id.includes('Validade') || id.includes('Membro Desde'))
+                                        .filter(id => id.includes('Convenção') || id.includes('QR Code') || id.includes('Assinatura') || id.includes('Validade') || id.includes('Membro Desde') || id.includes('Assinatura Pastor'))
                                         .map(id => <React.Fragment key={id}>{renderElement(id)}</React.Fragment>)}
                                     {elements['Assinatura Pastor'] && (
                                         <div 

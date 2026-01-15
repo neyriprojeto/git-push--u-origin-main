@@ -594,10 +594,10 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
     };
 
     const frontElements = Object.keys(elements)
-        .filter(id => !id.includes('Convenção') && !id.includes('QR Code') && !id.includes('Assinatura') && !id.includes('Validade') && !id.includes('Membro Desde'));
+        .filter(id => !id.includes('Convenção') && !id.includes('QR Code') && !id.includes('Assinatura') && !id.includes('Validade') && !id.includes('Membro Desde') && !id.includes('Assinatura Pastor'));
     
     const backElements = Object.keys(elements)
-        .filter(id => id.includes('Convenção') || id.includes('QR Code') || id.includes('Assinatura') || id.includes('Validade') || id.includes('Membro Desde'));
+        .filter(id => id.includes('Convenção') || id.includes('QR Code') || id.includes('Assinatura') || id.includes('Validade') || id.includes('Membro Desde') || id.includes('Assinatura Pastor'));
 
     const signatureLineElement = elements['Assinatura Pastor'];
 
@@ -617,7 +617,7 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
                             position: 'absolute', 
                             borderTop: '1px solid black', 
                             width: '40%', 
-                            top: `${signatureLineElement.position.top + 7}%`,
+                            top: `calc(${signatureLineElement.position.top}% - 2px)`,
                             left: `${signatureLineElement.position.left}%`,
                             transform: 'translateX(-50%)'
                         }}
@@ -1054,4 +1054,3 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
     </div>
   );
 }
-

@@ -338,7 +338,6 @@ export default function MemberProfilePage() {
   const handleDelete = async () => {
     if (!firestore || !memberId) return;
     setIsSubmitting(true);
-    // Redirect first to avoid 404 error after deletion
     router.push('/dashboard/members'); 
     try {
       await deleteMember(firestore, memberId);
@@ -346,11 +345,7 @@ export default function MemberProfilePage() {
     } catch (error) {
       console.error("Delete error: ", error);
       toast({ variant: "destructive", title: "Erro", description: "Não foi possível excluir o membro." });
-      // If deletion fails, we are already on the members page, so no need to redirect back.
-      // The user can try again from the members list.
-    } finally {
-        // No need to set isSubmitting to false, as we've navigated away.
-    }
+    } 
   }
 
 
@@ -492,6 +487,10 @@ export default function MemberProfilePage() {
   const avatar = getAvatar(member.avatar);
 
   const getMemberDataForField = (fieldId: string) => {
+    let cargoText = member.cargo || '';
+    if (cargoText === 'Pastor Dirigente/Local') {
+        cargoText = 'Pastor\nDirigente/Local';
+    }
     switch (fieldId) {
         case 'Nome':
             return `Nome: ${member.nome || ''}`;
@@ -504,7 +503,7 @@ export default function MemberProfilePage() {
         case 'Data de Nascimento':
             return `Nasc: ${formatDate(member.dataNascimento, 'dd/MM/yyyy') || ''}`;
         case 'Cargo':
-            return `Cargo: ${member.cargo || ''}`;
+            return `Cargo: ${cargoText}`;
         case 'Membro Desde':
              return `Membro desde: ${formatDate(member.dataMembro, 'dd/MM/yyyy') || ''}`;
         default:
@@ -572,7 +571,7 @@ export default function MemberProfilePage() {
         style.color = color;
         style.fontWeight = el.fontWeight;
         style.textAlign = el.textAlign;
-        style.whiteSpace = id.includes('Endereço') ? 'pre-wrap' : 'nowrap';
+        style.whiteSpace = (id.includes('Endereço') || id === 'Cargo') ? 'pre-wrap' : 'nowrap';
         
         const dynamicText = getMemberDataForField(id) || el.text;
         
@@ -1058,3 +1057,4 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
   );
 }
 
+    

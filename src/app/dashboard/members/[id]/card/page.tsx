@@ -87,13 +87,18 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
     }
     
     const getMemberDataForField = (fieldId: string) => {
+        let cargoText = member.cargo || '';
+        if (cargoText === 'Pastor Dirigente/Local') {
+            cargoText = 'Pastor\nDirigente/Local';
+        }
+
         switch (fieldId) {
             case 'Nome': return `Nome: ${member.nome || ''}`;
             case 'Nº Reg.': return `Nº Reg.: ${member.recordNumber || ''}`;
             case 'RG': return `RG: ${member.rg || ''}`;
             case 'CPF': return `CPF: ${member.cpf || ''}`;
             case 'Data de Nascimento': return `Nasc: ${formatDate(member.dataNascimento) || ''}`;
-            case 'Cargo': return `Cargo: ${member.cargo || ''}`;
+            case 'Cargo': return `Cargo: ${cargoText}`;
             case 'Membro Desde': return `Membro desde: ${formatDate(member.dataMembro) || ''}`;
             default: return null;
         }
@@ -151,7 +156,7 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
             style.color = color;
             style.fontWeight = el.fontWeight;
             style.textAlign = el.textAlign;
-            style.whiteSpace = id.includes('Endereço') ? 'pre-wrap' : 'nowrap';
+            style.whiteSpace = (id.includes('Endereço') || id === 'Cargo') ? 'pre-wrap' : 'nowrap';
             
             const dynamicText = getMemberDataForField(id) ?? el.text;
             
@@ -200,7 +205,7 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
     return (
         <div ref={ref} className="w-full h-full bg-white flex flex-col justify-center items-center p-4">
             {/* For screen view with flip */}
-            <div className='print:hidden w-[85.6mm] h-[54mm] scale-[2.5] origin-center cursor-pointer' onClick={() => setIsFront(!isFront)}>
+            <div className='print:hidden w-[85.6mm] h-[54mm] scale-[1.5] origin-center cursor-pointer' onClick={() => setIsFront(!isFront)}>
                 <div className={cn("flip-card w-full h-full", {'flipped': !isFront})}>
                     <div className="flip-card-front"><CardFace isFrontFace={true} /></div>
                     <div className="flip-card-back"><CardFace isFrontFace={false} /></div>
@@ -255,6 +260,10 @@ export default function MemberCardPage() {
         }
     }, [currentUser, member, currentUserLoading, memberLoading, authUser, memberId]);
 
+    const handlePrint = () => {
+        window.print();
+    }
+
     const isLoading = memberLoading || currentUserLoading || isUserLoading || isTemplateLoading || hasAccess === null;
     
     if (isLoading) {
@@ -306,7 +315,7 @@ export default function MemberCardPage() {
     return (
         <div className="bg-gray-200 min-h-screen">
              <div className="fixed top-4 right-4 z-50 print:hidden">
-                <Button onClick={() => window.print()}>
+                <Button onClick={handlePrint}>
                     <Printer className="mr-2 h-4 w-4" />
                     Imprimir / Salvar PDF
                 </Button>
@@ -317,5 +326,7 @@ export default function MemberCardPage() {
         </div>
     );
 }
+
+    
 
     

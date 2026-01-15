@@ -11,6 +11,7 @@
  * - /churchInfo/{churchInfoId}: A singleton collection for publicly readable church information.
  * - /congregacoes/{congregacaoId}: A public list of church congregations.
  * - /cardTemplates/{templateId}: Stores the customizable template for member ID cards.
+ * - /leaders/{leaderId}: Stores the manually curated list of executive committee leaders for the homepage.
  *
  * Key Security Decisions:
  * - Centralized User Data: All member-specific data is stored in `/users/{userId}`, where `{userId}`
@@ -149,6 +150,17 @@ service cloud.firestore {
      */
     match /cardTemplates/{templateId} {
       allow read, write: if isAdmin();
+    }
+    
+    /**
+     * @description
+     *   Manages the executive committee leaders for the homepage.
+     *   Publicly readable, but only writable by an Admin.
+     * @path /leaders/{leaderId}
+     */
+    match /leaders/{leaderId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
     }
   }
 }

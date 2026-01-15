@@ -139,6 +139,45 @@
         "pastoralMessage",
         "aboutUs"
       ]
+    },
+    "Leader": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Leader",
+      "type": "object",
+      "description": "Represents a member of the executive committee displayed on the homepage.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Leader."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the leader."
+        },
+        "role": {
+          "type": "string",
+          "description": "The role or function of the leader (e.g., '1º Vice-presidente')."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL of the leader's photo.",
+          "format": "uri"
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the leader.",
+          "format": "email"
+        },
+        "order": {
+          "type": "number",
+          "description": "A number used for ordering the leaders in the list."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "role"
+      ]
     }
   },
   "auth": {
@@ -196,8 +235,24 @@
             }
           ]
         }
+      },
+      {
+        "path": "/leaders/{leaderId}",
+        "definition": {
+          "entityName": "Leader",
+          "schema": {
+            "$ref": "#/backend/entities/Leader"
+          },
+          "description": "Stores executive committee leader information for public display on the homepage.",
+          "params": [
+            {
+              "name": "leaderId",
+              "description": "The unique identifier for the leader."
+            }
+          ]
+        }
       }
     ],
-    "reasoning": "The Firestore structure is designed to manage church member data, group affiliations, and church information for the AdKairos Connect app. The structure prioritizes authorization independence and supports secure list operations. User authentication is handled via Firebase Auth, and roles are managed within the database using membership maps. This approach avoids hierarchical authorization dependencies and simplifies security rules.\n\nTo ensure **Authorization Independence**, the `groupIds` within each `Member` document, as well as the `memberIds` within each `Group` document are arrays of simple ID values, and do not require `get()` calls in the rules. For collaborative access, the structure uses a `members` map on the `/groups/{groupId}` document, containing user IDs as keys and their roles within the group as values. The `ChurchInfo` collection contains a single document with the church's banner image URL, pastor information, and pastoral message. This data is publicly accessible.\n\nTo support **QAPs**, the separation of member data and group data into distinct collections ensures that list operations can be performed securely. Rules will use `exists()` to determine access for individual members or groups, preventing unauthorized data retrieval."
+    "reasoning": "The Firestore structure is designed to manage church member data, group affiliations, and church information for the AdKairos Connect app. The structure prioritizes authorization independence and supports secure list operations. User authentication is handled via Firebase Auth, and roles are managed within the database using membership maps. This approach avoids hierarchical authorization dependencies and simplifies security rules.\n\nTo ensure **Authorization Independence**, the `groupIds` within each `Member` document, as well as the `memberIds` within each `Group` document are arrays of simple ID values, and do not require `get()` calls in the rules. For collaborative access, the structure uses a `members` map on the `/groups/{groupId}` document, containing user IDs as keys and their roles within the group as values. The `ChurchInfo` collection contains a single document with the church's banner image URL, pastor information, and pastoral message. This data is publicly accessible. The `leaders` collection stores a manually curated list of executive committee members for public display."
   }
 }

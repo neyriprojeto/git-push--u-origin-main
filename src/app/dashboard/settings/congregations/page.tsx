@@ -7,17 +7,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
-import { addCongregacao, deleteCongregacao, updateCongregacao } from '@/firebase/firestore/mutations';
-import { Trash2, Save, Loader2, Upload } from 'lucide-react';
+import { addCongregacao, deleteCongregacao, updateCongregacao, addLeader, updateLeader, deleteLeader } from '@/firebase/firestore/mutations';
+import { Trash2, Save, Loader2, Upload, GripVertical, Plus } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { collection, doc, setDoc } from 'firebase/firestore';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import Image from 'next/image';
 import 'react-image-crop/dist/ReactCrop.css';
 import { uploadArquivo } from '@/lib/cloudinary';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 type Congregacao = {
   id: string;
@@ -33,6 +35,16 @@ type ChurchInfo = {
     bannerImageUrl?: string;
     pastorImageUrl?: string;
 }
+
+type Leader = {
+  id: string;
+  name: string;
+  role: string;
+  email?: string;
+  imageUrl?: string;
+  order?: number;
+};
+
 
 function centerAspectCrop(
   mediaWidth: number,
@@ -52,11 +64,8 @@ export default function CongregationsPage() {
   const [newCongregacao, setNewCongregacao] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const congregacoesCollection = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'congregacoes') : null),
-    [firestore]
-  );
-  const { data: congregacoes, isLoading: loading } = useCollection<Congregacao>(congregacoesCollection);
+  const congregacoesCollection = useMemoFirebase(() => (firestore ? collection(firestore, 'congregacoes') : null), [firestore]);
+  const { data: congregacoes, isLoading: loadingCongregacoes } = useCollection<Congregacao>(congregacoesCollection);
   
   const [addresses, setAddresses] = useState<Record<string, string>>({});
 
@@ -65,6 +74,14 @@ export default function CongregationsPage() {
   const { data: churchInfoData, isLoading: loadingChurchInfo } = useDoc<ChurchInfo>(churchInfoRef);
   const [churchInfo, setChurchInfo] = useState<ChurchInfo>({});
   const [isSavingChurchInfo, setIsSavingChurchInfo] = useState(false);
+
+  // Leader State
+  const leadersCollection = useMemoFirebase(() => (firestore ? collection(firestore, 'leaders') : null), [firestore]);
+  const { data: leadersData, isLoading: loadingLeaders } = useCollection<Leader>(leadersCollection);
+  const [displayLeaders, setDisplayLeaders] = useState<Leader[]>([]);
+  const [newLeader, setNewLeader] = useState({ name: '', role: '', email: '' });
+  const [isAddLeaderOpen, setIsAddLeaderOpen] = useState(false);
+  const [savingLeaderId, setSavingLeaderId] = useState<string | null>(null);
 
   // Image Cropping State
   const [crop, setCrop] = useState<Crop>();
@@ -80,10 +97,15 @@ export default function CongregationsPage() {
   const [currentFile, setCurrentFile] = useState<File | null>(null);
 
   useEffect(() => {
-    if (churchInfoData) {
-      setChurchInfo(churchInfoData);
-    }
+    if (churchInfoData) setChurchInfo(churchInfoData);
   }, [churchInfoData]);
+
+  useEffect(() => {
+    if (leadersData) {
+      const sorted = [...leadersData].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+      setDisplayLeaders(sorted);
+    }
+  }, [leadersData]);
 
 
   const handleAddressChange = (id: string, value: string) => {
@@ -97,42 +119,24 @@ export default function CongregationsPage() {
 
     try {
       await updateCongregacao(firestore, id, { endereco: address });
-      toast({
-        title: 'Sucesso!',
-        description: 'Endereço da congregação atualizado.',
-      });
+      toast({ title: 'Sucesso!', description: 'Endereço da congregação atualizado.' });
     } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Erro ao salvar',
-        description: error.message || 'Não foi possível salvar o endereço.',
-      });
+      toast({ variant: 'destructive', title: 'Erro ao salvar', description: error.message || 'Não foi possível salvar o endereço.' });
     }
   };
 
   const handleAddCongregacao = async () => {
     if (!firestore || newCongregacao.trim() === '') {
-      toast({
-        variant: 'destructive',
-        title: 'Erro',
-        description: 'O nome da congregação não pode estar vazio.',
-      });
+      toast({ variant: 'destructive', title: 'Erro', description: 'O nome da congregação não pode estar vazio.' });
       return;
     }
     setIsSubmitting(true);
     try {
       await addCongregacao(firestore, newCongregacao);
       setNewCongregacao('');
-      toast({
-        title: 'Sucesso!',
-        description: 'Nova congregação adicionada.',
-      });
+      toast({ title: 'Sucesso!', description: 'Nova congregação adicionada.' });
     } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Erro ao adicionar',
-        description: error.message || 'Não foi possível adicionar a congregação.',
-      });
+      toast({ variant: 'destructive', title: 'Erro ao adicionar', description: error.message || 'Não foi possível adicionar a congregação.' });
     } finally {
       setIsSubmitting(false);
     }
@@ -142,16 +146,9 @@ export default function CongregationsPage() {
     if (!firestore) return;
     try {
       await deleteCongregacao(firestore, id);
-      toast({
-        title: 'Sucesso!',
-        description: 'Congregação removida.',
-      });
+      toast({ title: 'Sucesso!', description: 'Congregação removida.' });
     } catch (error: any) {
-         toast({
-        variant: 'destructive',
-        title: 'Erro ao remover',
-        description: error.message || 'Não foi possível remover a congregação.',
-      });
+         toast({ variant: 'destructive', title: 'Erro ao remover', description: error.message || 'Não foi possível remover a congregação.' });
     }
   }
 
@@ -173,6 +170,59 @@ export default function CongregationsPage() {
     const { name, value } = e.target;
     setChurchInfo(prev => ({ ...prev, [name]: value }));
   }
+
+  const handleLeaderFieldChange = (id: string, field: keyof Omit<Leader, 'id' | 'imageUrl'>, value: string | number) => {
+    setDisplayLeaders(prev => prev.map(l => l.id === id ? { ...l, [field]: value } : l));
+  };
+
+  const handleSaveLeader = async (id: string) => {
+    if (!firestore) return;
+    const leaderData = displayLeaders.find(l => l.id === id);
+    if (!leaderData) return;
+    
+    setSavingLeaderId(id);
+    try {
+        const { id: leaderId, ...dataToSave } = leaderData;
+        await updateLeader(firestore, leaderId, {
+            ...dataToSave,
+            order: Number(dataToSave.order) || 0,
+        });
+        toast({ title: 'Sucesso!', description: 'Líder atualizado.' });
+    } catch (error) {
+        toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível salvar o líder.' });
+    } finally {
+        setSavingLeaderId(null);
+    }
+  };
+
+  const handleAddNewLeader = async () => {
+    if (!firestore || !newLeader.name || !newLeader.role) {
+      toast({ variant: 'destructive', title: 'Erro', description: 'Nome e Cargo são obrigatórios.' });
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      await addLeader(firestore, { ...newLeader, order: displayLeaders.length });
+      setNewLeader({ name: '', role: '', email: '' });
+      setIsAddLeaderOpen(false);
+      toast({ title: 'Sucesso!', description: 'Novo líder adicionado.' });
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Erro ao adicionar', description: 'Não foi possível adicionar o líder.' });
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  const handleDeleteLeader = async (id: string) => {
+    if (!firestore) return;
+    try {
+      await deleteLeader(firestore, id);
+      toast({ title: 'Sucesso!', description: 'Líder removido.' });
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Erro ao remover', description: 'Não foi possível remover o líder.' });
+    }
+  }
+
 
   const triggerFileInput = (id: string, cropAspect: number | undefined) => {
     setCroppingId(id);
@@ -204,7 +254,7 @@ export default function CongregationsPage() {
   const saveCroppedImage = async () => {
     const image = imgRef.current;
     const canvas = previewCanvasRef.current;
-    if (!image || !canvas || !completedCrop) {
+    if (!image || !canvas || !completedCrop || !firestore) {
       toast({ variant: 'destructive', title: 'Erro de Corte' });
       return;
     }
@@ -232,20 +282,22 @@ export default function CongregationsPage() {
             const croppedFile = new File([blob], currentFile.name, { type: blob.type });
             const src = await uploadArquivo(croppedFile);
     
-            setChurchInfo(prev => ({...prev, [croppingId]: src }));
+            if (croppingId.startsWith('leader-')) {
+                const leaderId = croppingId.substring('leader-'.length);
+                await updateLeader(firestore, leaderId, { imageUrl: src });
+                toast({ title: 'Sucesso!', description: 'Foto do líder atualizada.' });
+            } else {
+                 setChurchInfo(prev => ({...prev, [croppingId]: src }));
+                 toast({ title: 'Sucesso', description: 'Imagem enviada! Clique em "Salvar Informações" para aplicar.' });
+            }
 
-            toast({ title: 'Sucesso', description: 'Imagem enviada! Clique em "Salvar Informações" para aplicar.' });
             setIsCropping(false);
             setImageToCrop('');
             setCroppingId('');
             setCurrentFile(null);
         } catch (error: any) {
             console.error(error);
-            toast({ 
-                variant: 'destructive', 
-                title: 'Erro de Upload', 
-                description: `Não foi possível enviar a imagem. Erro: ${error.message}`
-            });
+            toast({ variant: 'destructive', title: 'Erro de Upload', description: `Não foi possível enviar a imagem. Erro: ${error.message}` });
         } finally {
             setIsUploading(false);
         }
@@ -266,7 +318,7 @@ export default function CongregationsPage() {
             <Card>
                 <CardHeader>
                     <CardTitle>Informações da Página Inicial</CardTitle>
-                    <CardDescription>Edite os textos que aparecem na página de entrada do seu site.</CardDescription>
+                    <CardDescription>Edite os textos e imagens que aparecem na página de entrada do seu site.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     {loadingChurchInfo ? (
@@ -311,6 +363,88 @@ export default function CongregationsPage() {
             </Card>
 
             <Card>
+                <CardHeader>
+                    <CardTitle>Gerenciar Comissão Executiva</CardTitle>
+                    <CardDescription>Adicione, edite ou remova os líderes exibidos na página inicial.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                     <Dialog open={isAddLeaderOpen} onOpenChange={setIsAddLeaderOpen}>
+                        <DialogTrigger asChild>
+                            <Button><Plus className="mr-2 h-4 w-4" /> Adicionar Líder</Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader><DialogTitle>Adicionar Novo Líder</DialogTitle></DialogHeader>
+                            <div className="space-y-4 py-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="new-leader-name">Nome</Label>
+                                    <Input id="new-leader-name" value={newLeader.name} onChange={(e) => setNewLeader(p => ({ ...p, name: e.target.value }))} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="new-leader-role">Cargo / Função</Label>
+                                    <Input id="new-leader-role" value={newLeader.role} onChange={(e) => setNewLeader(p => ({ ...p, role: e.target.value }))} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="new-leader-email">Email (Opcional)</Label>
+                                    <Input id="new-leader-email" type="email" value={newLeader.email} onChange={(e) => setNewLeader(p => ({ ...p, email: e.target.value }))} />
+                                </div>
+                            </div>
+                            <DialogFooter>
+                                <Button variant="outline" onClick={() => setIsAddLeaderOpen(false)}>Cancelar</Button>
+                                <Button onClick={handleAddNewLeader} disabled={isSubmitting}>{isSubmitting ? 'Salvando...' : 'Salvar'}</Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                    {loadingLeaders ? (
+                        <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>
+                    ) : displayLeaders && displayLeaders.length > 0 ? (
+                        <ul className="space-y-4 pt-4">
+                            {displayLeaders.map(leader => (
+                                <li key={leader.id} className="p-4 border rounded-md space-y-4">
+                                    <div className="flex items-start gap-4">
+                                        <Avatar className="w-16 h-16 border">
+                                            <AvatarImage src={leader.imageUrl || PlaceHolderImages.find(p => p.id === 'member-avatar-1')?.imageUrl} />
+                                            <AvatarFallback>{leader.name.charAt(0)}</AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex-grow space-y-2">
+                                            <Input value={leader.name} onChange={(e) => handleLeaderFieldChange(leader.id, 'name', e.target.value)} placeholder="Nome do Líder"/>
+                                            <Input value={leader.role} onChange={(e) => handleLeaderFieldChange(leader.id, 'role', e.target.value)} placeholder="Cargo / Função"/>
+                                        </div>
+                                    </div>
+                                    <div className="grid sm:grid-cols-3 gap-4">
+                                        <Input value={leader.email || ''} onChange={(e) => handleLeaderFieldChange(leader.id, 'email', e.target.value)} placeholder="email@opcional.com" className="sm:col-span-2" />
+                                        <Input type="number" value={leader.order ?? ''} onChange={(e) => handleLeaderFieldChange(leader.id, 'order', Number(e.target.value))} placeholder="Ordem" />
+                                    </div>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <Button size="sm" variant="outline" onClick={() => triggerFileInput(`leader-${leader.id}`, 1/1)}><Upload className="mr-2 h-4 w-4"/> Foto</Button>
+                                        <Button size="sm" onClick={() => handleSaveLeader(leader.id)} disabled={savingLeaderId === leader.id}>
+                                            {savingLeaderId === leader.id ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                                            Salvar
+                                        </Button>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button size="sm" variant="destructive"><Trash2 className="h-4 w-4"/></Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader><AlertDialogTitle>Remover Líder?</AlertDialogTitle><AlertDialogDescription>Esta ação é permanente.</AlertDialogDescription></AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleDeleteLeader(leader.id)}>Remover</AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <p className="text-muted-foreground text-center p-4">Nenhum líder cadastrado.</p>
+                    )}
+
+                </CardContent>
+            </Card>
+
+            <Card>
             <CardHeader>
                 <CardTitle>Gerenciar Congregações</CardTitle>
                 <CardDescription>Adicione ou remova congregações e gerencie seus endereços.</CardDescription>
@@ -328,7 +462,7 @@ export default function CongregationsPage() {
                     {isSubmitting ? <Loader2 className="animate-spin h-4 w-4" /> : 'Adicionar'}
                 </Button>
                 </div>
-                 {loading ? (
+                 {loadingCongregacoes ? (
                     <div className="flex justify-center p-8">
                         <Loader2 className="h-8 w-8 animate-spin" />
                     </div>

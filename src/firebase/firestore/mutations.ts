@@ -129,3 +129,41 @@ export const deleteCongregacao = async (firestore: Firestore, id: string) => {
             }));
         });
 }
+
+export const addLeader = async (firestore: Firestore, leaderData: any) => {
+    if (!firestore) throw new Error('Firestore is not initialized');
+    const leadersRef = collection(firestore, 'leaders');
+    addDoc(leadersRef, { ...leaderData, criadoEm: serverTimestamp() })
+        .catch(error => {
+            errorEmitter.emit('permission-error', new FirestorePermissionError({
+                path: leadersRef.path,
+                operation: 'create',
+                requestResourceData: leaderData,
+            }));
+        });
+};
+
+export const updateLeader = async (firestore: Firestore, id: string, leaderData: any) => {
+    if (!firestore) throw new Error('Firestore is not initialized');
+    const leaderRef = doc(firestore, 'leaders', id);
+    updateDoc(leaderRef, { ...leaderData, atualizadoEm: serverTimestamp() })
+        .catch(error => {
+            errorEmitter.emit('permission-error', new FirestorePermissionError({
+                path: leaderRef.path,
+                operation: 'update',
+                requestResourceData: leaderData,
+            }));
+        });
+};
+
+export const deleteLeader = async (firestore: Firestore, id: string) => {
+    if (!firestore) throw new Error('Firestore is not initialized');
+    const leaderRef = doc(firestore, 'leaders', id);
+    deleteDoc(leaderRef)
+        .catch(error => {
+            errorEmitter.emit('permission-error', new FirestorePermissionError({
+                path: leaderRef.path,
+                operation: 'delete',
+            }));
+        });
+};

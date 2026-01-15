@@ -24,7 +24,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Users, Share2, Radio, Menu, Instagram, Youtube, Globe, Loader2, MapPin } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { useFirestore, useDoc, useMemoFirebase } from "@/firebase";
-import { doc, collection, getDocs, QuerySnapshot, DocumentData, query, where } from "firebase/firestore";
+import { doc, collection, getDocs, QuerySnapshot, DocumentData, query, where, orderBy } from "firebase/firestore";
 
 
 type Congregacao = {
@@ -41,12 +41,14 @@ type ChurchInfo = {
   pastorImageUrl?: string;
 }
 
-type Member = {
-    id: string;
-    nome: string;
-    avatar?: string;
-    cargo: string;
-}
+type Leader = {
+  id: string;
+  name: string;
+  role: string;
+  imageUrl?: string;
+  email?: string;
+  order?: number;
+};
 
 
 export default function Home() {
@@ -57,7 +59,7 @@ export default function Home() {
   const [congregacoes, setCongregacoes] = useState<Congregacao[]>([]);
   const [loadingCongregacoes, setLoadingCongregacoes] = useState(true);
 
-  const [leaders, setLeaders] = useState<Member[]>([]);
+  const [leaders, setLeaders] = useState<Leader[]>([]);
   const [loadingLeaders, setLoadingLeaders] = useState(true);
 
   // Fetch ChurchInfo
@@ -85,10 +87,9 @@ export default function Home() {
         if (!firestore) return;
         setLoadingLeaders(true);
         try {
-            const leaderRoles = ['Pastor(a)', 'Pastor/dirigente', 'Diácono(a)', 'Presbítero', 'Evangelista', 'Missionário(a)'];
-            const leadersQuery = query(collection(firestore, 'users'), where('cargo', 'in', leaderRoles));
+            const leadersQuery = query(collection(firestore, 'leaders'), orderBy('order'));
             const snapshot = await getDocs(leadersQuery);
-            const leadersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Member));
+            const leadersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Leader));
             setLeaders(leadersData);
         } catch (error) {
             console.error("Erro ao buscar líderes:", error);
@@ -101,11 +102,10 @@ export default function Home() {
     fetchLeaders();
   }, [firestore]);
 
-  const getLeaderAvatar = (leader: Member) => {
-    if (leader.avatar?.startsWith('http')) {
-        return leader.avatar;
-    }
-    const placeholder = PlaceHolderImages.find((p) => p.id === leader.avatar);
+  const getLeaderAvatar = (leader: Leader) => {
+    if (leader.imageUrl) return leader.imageUrl;
+    // Fallback placeholder
+    const placeholder = PlaceHolderImages.find((p) => p.id === 'member-avatar-1');
     return placeholder?.imageUrl || '';
   }
 
@@ -197,15 +197,15 @@ export default function Home() {
               className="object-cover"
             />
           )}
-          <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-start pt-12 text-center p-4">
-            <AppLogo className="h-16 w-16 mb-4" />
-            <h1 className="text-2xl font-bold md:text-4xl">Bem-vindo a AD Kairós</h1>
+          <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-center p-4">
+            <AppLogo className="h-16 w-16 mb-2" />
+            <h1 className="text-2xl font-bold md:text-3xl">Bem-vindo a AD Kairós</h1>
           </div>
         </div>
 
         {/* Content Section */}
-        <div className="container -mt-20 z-10 relative px-4 md:px-6">
-          <div className="flex justify-center mb-6">
+        <div className="container -mt-24 z-10 relative px-4 md:px-6">
+          <div className="flex justify-center mb-4">
               <Avatar className="size-40 border-8 border-background bg-background shadow-lg">
                 <AvatarImage
                   src={pastorPhotoUrl}
@@ -219,7 +219,7 @@ export default function Home() {
 
           <div className="max-w-4xl mx-auto grid gap-8">
             {/* Sobre */}
-            <Card className="text-center">
+            <Card className="text-center -mt-2">
               <CardHeader>
                 <CardTitle className="text-primary">{pastorName}</CardTitle>
                 <CardDescription>Pastor Presidente</CardDescription>
@@ -311,11 +311,12 @@ export default function Home() {
                                 <li key={leader.id} className="flex items-center gap-4">
                                 <Avatar>
                                     <AvatarImage src={avatarUrl} />
-                                    <AvatarFallback>{leader.nome.charAt(0)}</AvatarFallback>
+                                    <AvatarFallback>{leader.name.charAt(0)}</AvatarFallback>
                                 </Avatar>
                                 <div>
-                                    <p className="font-semibold">{leader.nome}</p>
-                                    <p className="text-sm text-muted-foreground">{leader.cargo}</p>
+                                    <p className="font-semibold">{leader.name}</p>
+                                    <p className="text-sm text-muted-foreground">{leader.role}</p>
+                                    {leader.email && <p className="text-xs text-muted-foreground">{leader.email}</p>}
                                 </div>
                                 </li>
                             );

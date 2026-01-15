@@ -24,7 +24,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Users, Share2, Radio, Menu, Instagram, Youtube, Globe, Loader2, MapPin } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { useFirestore, useDoc, useMemoFirebase } from "@/firebase";
-import { collection, getDocs, QuerySnapshot, DocumentData, query, where } from "firebase/firestore";
+import { doc, collection, getDocs, QuerySnapshot, DocumentData, query, where } from "firebase/firestore";
 
 
 type Congregacao = {

@@ -152,12 +152,30 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
             style.color = color;
             style.fontWeight = el.fontWeight;
             style.textAlign = el.textAlign;
-            style.whiteSpace = id.includes('Endereço') ? 'pre-wrap' : 'nowrap';
-            
-            const dynamicText = getMemberDataForField(id) ?? el.text;
-            
-            elementContent = <p style={style}>{dynamicText}</p>;
+            style.whiteSpace = 'pre-wrap'; // Default to pre-wrap for multi-line like address
 
+            // Handle specific cases for text content and styling
+            let dynamicText = getMemberDataForField(id) ?? el.text;
+            if (id === 'Cargo' && member.cargo === 'Pastor/dirigente') {
+                dynamicText = 'Cargo: Pastor\nDirigente/Local';
+            } else if (id === 'Cargo') {
+                dynamicText = `Cargo: ${member.cargo || ''}`;
+            }
+
+            if (id.includes('Título') || id.includes('Assinatura Pastor') || id.includes('Validade') || id.includes('Membro Desde')) {
+                style.whiteSpace = 'nowrap';
+            }
+            if (id === 'Nome') {
+                style.whiteSpace = 'nowrap';
+                dynamicText = `Nome: ${member.nome || ''}`;
+            }
+             if (id === 'Cargo') {
+                // Adjust line-height for multi-line cargo
+                style.lineHeight = '1.1';
+            }
+
+
+            elementContent = <p style={style}>{dynamicText}</p>;
         }
 
         return <React.Fragment key={id}>{elementContent}</React.Fragment>;
@@ -182,10 +200,10 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
             style={backgroundStyle(isFrontFace)}
         >
             {isFrontFace ? (
-                frontElements.map(id => renderElement(id, elements[id]))
+                frontElements.map(id => elements[id] ? renderElement(id, elements[id]) : null)
             ) : (
                 <>
-                    {backElements.map(id => renderElement(id, elements[id]))}
+                    {backElements.map(id => elements[id] ? renderElement(id, elements[id]) : null)}
                     {signatureLineElement && (
                         <div style={{
                             position: 'absolute', borderTop: '1px solid black', width: '40%',

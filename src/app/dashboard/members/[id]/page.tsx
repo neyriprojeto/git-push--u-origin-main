@@ -368,7 +368,8 @@ export default function MemberProfilePage() {
   const churchPicture = PlaceHolderImages.find((p) => p.id === "church-banner");
   
   const canEdit = isOwner || currentUserData?.cargo === 'Administrador' || (currentUserData?.cargo === 'Pastor Dirigente/Local' && currentUserData?.congregacao === member.congregacao);
-  const canManage = currentUserData?.cargo === 'Administrador' || (currentUserData?.cargo === 'Pastor Dirigente/Local');
+  const canManage = currentUserData?.cargo === 'Administrador' || currentUserData?.cargo === 'Pastor Dirigente/Local';
+
 
   return (
     <div className="flex-1 space-y-4 bg-secondary">
@@ -455,12 +456,12 @@ export default function MemberProfilePage() {
             </CardContent>
         </Card>
 
-        <Tabs defaultValue="perfil" className="w-full">
+        <Tabs defaultValue="carteirinha" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="perfil">Minha Carteirinha</TabsTrigger>
+                <TabsTrigger value="carteirinha">Minha Carteirinha</TabsTrigger>
                 <TabsTrigger value="dados">Meus Dados</TabsTrigger>
             </TabsList>
-            <TabsContent value="perfil">
+            <TabsContent value="carteirinha">
                 {/* Digital ID Card */}
                 <div className="space-y-4 pt-4">
                     <p className="text-center text-sm text-muted-foreground">
@@ -750,5 +751,3 @@ export default function MemberProfilePage() {
     </div>
   );
 }
-
-    

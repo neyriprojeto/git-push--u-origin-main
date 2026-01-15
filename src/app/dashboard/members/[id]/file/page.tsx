@@ -256,7 +256,7 @@ export default function MemberFilePage() {
                 onClick={() => setIsFront(!isFront)}
             >
                 <div 
-                    className="flip-card-container aspect-[1/1.414]"
+                    className="flip-card-container aspect-[1.414/1]"
                 >
                     <div className={cn("flip-card w-full h-full transition-transform duration-700", { 'flipped': !isFront })} style={{ transformStyle: 'preserve-3d' }}>
                         <div className="flip-card-front">
@@ -280,7 +280,7 @@ export default function MemberFilePage() {
                 <div className="print-page">
                    <FichaFrente />
                 </div>
-                <div className="print-page" style={{ display: 'block' }}>
+                <div className="print-page">
                    <FichaVerso />
                 </div>
             </div>

@@ -62,6 +62,7 @@ function centerAspectCrop(
 }
 
 const churchLogoPlaceholder = PlaceHolderImages.find((p) => p.id === 'church-logo');
+const memberSample = members[0];
 
 const defaultElements: CardElements = {
     // --- Frente ---
@@ -70,12 +71,23 @@ const defaultElements: CardElements = {
     'Congregação': { position: { top: 18, left: 50 }, size: { fontSize: 14 }, text: 'SEDE', fontWeight: 'normal', textAlign: 'center' },
     'Endereço': { position: { top: 23, left: 50 }, size: { fontSize: 8 }, text: 'Rua Presidente Prudente, N°28\nEldorado, Diadema-SP', textAlign: 'center' },
     'Foto do Membro': { position: { top: 40, left: 15 }, size: { width: 80, height: 100 }, src: '' },
-    'Nome': { position: { top: 60, left: 40 }, size: { fontSize: 11 }, text: `Nome: ${members[0].name}`, fontWeight: 'bold', textAlign: 'left' },
-    'Nº Reg.': { position: { top: 68, left: 40 }, size: { fontSize: 10 }, text: `Nº Reg.: ${members[0].recordNumber}`, textAlign: 'left' },
-    'RG': { position: { top: 68, left: 75 }, size: { fontSize: 10 }, text: `RG: ${members[0].rg}`, textAlign: 'left' },
-    'CPF': { position: { top: 74, left: 40 }, size: { fontSize: 10 }, text: `CPF: ${members[0].cpf}`, textAlign: 'left' },
-    'Data de Nascimento': { position: { top: 74, left: 75 }, size: { fontSize: 10 }, text: `Nasc: ${new Date(members[0].birthDate).toLocaleDateString('pt-BR')}`, textAlign: 'left' },
-    'Cargo': { position: { top: 80, left: 40 }, size: { fontSize: 10 }, text: `Cargo: ${members[0].role}`, textAlign: 'left' },
+    
+    // Labels
+    'Label Nome': { position: { top: 60, left: 40 }, size: { fontSize: 11 }, text: 'Nome:', fontWeight: 'bold', textAlign: 'left' },
+    'Label Nº Reg.': { position: { top: 68, left: 40 }, size: { fontSize: 10 }, text: 'Nº Reg.:', textAlign: 'left' },
+    'Label RG': { position: { top: 68, left: 70 }, size: { fontSize: 10 }, text: 'RG:', textAlign: 'left' },
+    'Label CPF': { position: { top: 74, left: 40 }, size: { fontSize: 10 }, text: 'CPF:', textAlign: 'left' },
+    'Label Data de Nascimento': { position: { top: 74, left: 70 }, size: { fontSize: 10 }, text: 'Nasc:', textAlign: 'left' },
+    'Label Cargo': { position: { top: 80, left: 40 }, size: { fontSize: 10 }, text: 'Cargo:', textAlign: 'left' },
+
+    // Values (to be filled dynamically)
+    'Valor Nome': { position: { top: 60, left: 52 }, size: { fontSize: 11 }, text: memberSample.name, fontWeight: 'normal', textAlign: 'left' },
+    'Valor Nº Reg.': { position: { top: 68, left: 52 }, size: { fontSize: 10 }, text: memberSample.recordNumber, textAlign: 'left' },
+    'Valor RG': { position: { top: 68, left: 76 }, size: { fontSize: 10 }, text: memberSample.rg, textAlign: 'left' },
+    'Valor CPF': { position: { top: 74, left: 50 }, size: { fontSize: 10 }, text: memberSample.cpf, textAlign: 'left' },
+    'Valor Data de Nascimento': { position: { top: 74, left: 80 }, size: { fontSize: 10 }, text: new Date(memberSample.birthDate).toLocaleDateString('pt-BR'), textAlign: 'left' },
+    'Valor Cargo': { position: { top: 80, left: 52 }, size: { fontSize: 10 }, text: memberSample.role, textAlign: 'left' },
+
     'Logo Igreja': { position: { top: 38, left: 80 }, size: { width: 70, height: 70 }, src: churchLogoPlaceholder?.imageUrl || '' },
     
     // --- Verso ---
@@ -85,7 +97,7 @@ const defaultElements: CardElements = {
     'Assinatura': { position: { top: 70, left: 65 }, size: { width: 150, height: 60 }, src: '' },
     'Assinatura Pastor': { position: { top: 82, left: 50 }, size: { fontSize: 10 }, text: 'Assinatura Pastor Presidente', textAlign: 'center' },
     'Validade': { position: { top: 88, left: 50 }, size: { fontSize: 10 }, text: 'Validade: 01/01/2026', fontWeight: 'bold', textAlign: 'center' },
-    'Membro Desde': { position: { top: 93, left: 50 }, size: { fontSize: 10 }, text: `Membro desde: ${new Date(members[0].memberSince).toLocaleDateString('pt-BR')}`, fontWeight: 'bold', textAlign: 'center' },
+    'Membro Desde': { position: { top: 93, left: 50 }, size: { fontSize: 10 }, text: `Membro desde: ${new Date(memberSample.memberSince).toLocaleDateString('pt-BR')}`, fontWeight: 'bold', textAlign: 'center' },
 };
 
 
@@ -517,7 +529,7 @@ export default function CardStudioPage() {
             style.textAlign = el.textAlign;
             style.whiteSpace = 'pre-wrap';
 
-            if (id.includes('Título') || id === 'Nome' || id.includes('Assinatura Pastor') || id.includes('Validade') || id.includes('Membro Desde')) {
+            if (id.includes('Título') || id.includes('Label') || id.includes('Valor') || id.includes('Assinatura Pastor') || id.includes('Validade') || id.includes('Membro Desde')) {
                 style.whiteSpace = 'nowrap';
             }
         } else { // isImage

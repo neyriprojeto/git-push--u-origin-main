@@ -271,7 +271,7 @@ export default function MemberProfilePage() {
   
       if (member) {
         const isUserOwner = authUser.uid === member.id;
-        const isPastorOfCongregation = currentUserData.cargo === 'Pastor/dirigente' && currentUserData.congregacao === member.congregacao;
+        const isPastorOfCongregation = currentUserData.cargo === 'Pastor Dirigente' && currentUserData.congregacao === member.congregacao;
   
         const canView = isUserOwner || isAdmin || isPastorOfCongregation;
         const canEdit = isUserOwner || isAdmin || isPastorOfCongregation;
@@ -337,7 +337,6 @@ export default function MemberProfilePage() {
 
   const handleDelete = async () => {
     if (!firestore || !memberId) return;
-    setIsSubmitting(true);
     router.push('/dashboard/members'); 
     try {
       await deleteMember(firestore, memberId);
@@ -487,25 +486,18 @@ export default function MemberProfilePage() {
   const avatar = getAvatar(member.avatar);
 
   const getMemberDataForField = (fieldId: string) => {
-    switch (fieldId) {
-        case 'Nome':
-            return `Nome: ${member.nome || ''}`;
-        case 'Nº Reg.':
-            return `Nº Reg.: ${member.recordNumber || ''}`;
-        case 'RG':
-            return `RG: ${member.rg || ''}`;
-        case 'CPF':
-            return `CPF: ${member.cpf || ''}`;
-        case 'Data de Nascimento':
-            return `Nasc: ${formatDate(member.dataNascimento, 'dd/MM/yyyy') || ''}`;
-        case 'Cargo':
-            return `Cargo: ${member.cargo || ''}`;
-        case 'Membro Desde':
-             return `Membro desde: ${formatDate(member.dataMembro, 'dd/MM/yyyy') || ''}`;
-        default:
-            return '';
+    const valueKey = fieldId.replace('Valor ', '');
+    switch (valueKey) {
+        case 'Nome': return member.nome || '';
+        case 'Nº Reg.': return member.recordNumber || '';
+        case 'RG': return member.rg || '';
+        case 'CPF': return member.cpf || '';
+        case 'Data de Nascimento': return formatDate(member.dataNascimento, 'dd/MM/yyyy') || '';
+        case 'Cargo': return member.cargo || '';
+        case 'Membro Desde': return `Membro desde: ${formatDate(member.dataMembro, 'dd/MM/yyyy') || ''}`;
+        default: return null;
     }
-  }
+  };
 
   const renderElement = (id: string, el: ElementStyle) => {
     if (!el) return null;
@@ -567,9 +559,20 @@ export default function MemberProfilePage() {
         style.color = color;
         style.fontWeight = el.fontWeight;
         style.textAlign = el.textAlign;
-        style.whiteSpace = id.includes('Endereço') ? 'pre-wrap' : 'nowrap';
+        style.whiteSpace = 'pre-wrap';
+
+        let dynamicText = el.text;
+        if (id.startsWith('Valor')) {
+            dynamicText = getMemberDataForField(id) ?? el.text;
+        } else if (id === 'Congregação') {
+            dynamicText = member.congregacao || el.text;
+        } else if (id === 'Membro Desde') {
+            dynamicText = `Membro desde: ${formatDate(member.dataMembro, 'dd/MM/yyyy') || ''}`;
+        }
         
-        const dynamicText = getMemberDataForField(id) || el.text;
+        if (id.includes('Título') || id.includes('Label') || id.includes('Valor') || id.includes('Assinatura Pastor') || id.includes('Validade') || id.includes('Membro Desde')) {
+            style.whiteSpace = 'nowrap';
+        }
         
         elementContent = <p style={style}>{dynamicText}</p>;
     }
@@ -816,7 +819,7 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
                                                             <SelectItem value="Evangelista">Evangelista</SelectItem>
                                                             <SelectItem value="Missionário(a)">Missionário(a)</SelectItem>
                                                             <SelectItem value="Pastor(a)">Pastor(a)</SelectItem>
-                                                            <SelectItem value="Pastor/dirigente">Pastor/dirigente</SelectItem>
+                                                            <SelectItem value="Pastor Dirigente">Pastor Dirigente</SelectItem>
                                                             <SelectItem value="Administrador">Administrador</SelectItem>
                                                         </SelectContent>
                                                     </Select>

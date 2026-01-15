@@ -87,18 +87,19 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
     }
     
     const getMemberDataForField = (fieldId: string) => {
-        switch (fieldId) {
-            case 'Nome': return `Nome: ${member.nome || ''}`;
-            case 'Nº Reg.': return `Nº Reg.: ${member.recordNumber || ''}`;
-            case 'RG': return `RG: ${member.rg || ''}`;
-            case 'CPF': return `CPF: ${member.cpf || ''}`;
-            case 'Data de Nascimento': return `Nasc: ${formatDate(member.dataNascimento) || ''}`;
-            case 'Cargo': return `Cargo: ${member.cargo || ''}`;
+        const valueKey = fieldId.replace('Valor ', '');
+        switch (valueKey) {
+            case 'Nome': return member.nome || '';
+            case 'Nº Reg.': return member.recordNumber || '';
+            case 'RG': return member.rg || '';
+            case 'CPF': return member.cpf || '';
+            case 'Data de Nascimento': return formatDate(member.dataNascimento) || '';
+            case 'Cargo': return member.cargo || '';
             case 'Membro Desde': return `Membro desde: ${formatDate(member.dataMembro) || ''}`;
-            case 'Congregação': return member.congregacao || '';
             default: return null;
         }
     };
+
 
     const renderElement = (id: string, el: ElementStyle) => {
         const isImage = 'src' in el;
@@ -119,6 +120,7 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
             position: 'absolute',
             top: `${el.position.top}%`,
             left: `${el.position.left}%`,
+            lineHeight: 1.2
         };
         
         if (el.textAlign === 'center') style.transform = 'translateX(-50%)';
@@ -152,19 +154,19 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
             style.color = color;
             style.fontWeight = el.fontWeight;
             style.textAlign = el.textAlign;
-            style.whiteSpace = 'pre-wrap'; // Default to pre-wrap for multi-line like address
-            style.lineHeight = '1';
+            style.whiteSpace = 'pre-wrap';
 
-
-            // Handle specific cases for text content and styling
-            let dynamicText = getMemberDataForField(id) ?? el.text;
-
-            if (id.includes('Título') || id.includes('Assinatura Pastor') || id.includes('Validade') || id.includes('Membro Desde')) {
-                style.whiteSpace = 'nowrap';
+            let dynamicText = el.text;
+            if (id.startsWith('Valor')) {
+                 dynamicText = getMemberDataForField(id) ?? el.text;
+            } else if (id === 'Congregação') {
+                dynamicText = member.congregacao || el.text;
+            } else if (id === 'Membro Desde') {
+                dynamicText = `Membro desde: ${formatDate(member.dataMembro) || ''}`;
             }
-            if (id === 'Nome') {
+
+            if (id.includes('Título') || id.includes('Label') || id.includes('Valor') || id.includes('Assinatura Pastor') || id.includes('Validade') || id.includes('Membro Desde')) {
                 style.whiteSpace = 'nowrap';
-                dynamicText = `Nome: ${member.nome || ''}`;
             }
 
 
@@ -282,7 +284,7 @@ export default function MemberCardPage() {
         
         const isOwner = authUser?.uid === memberId;
         const isAdmin = currentUser.cargo === 'Administrador';
-        const isPastorOfCongregation = currentUser.cargo === 'Pastor/dirigente' && currentUser.congregacao === member.congregacao;
+        const isPastorOfCongregation = currentUser.cargo === 'Pastor Dirigente' && currentUser.congregacao === member.congregacao;
 
         if (isOwner || isAdmin || isPastorOfCongregation) {
             setHasAccess(true);

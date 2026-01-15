@@ -86,8 +86,8 @@ const defaultElements: CardElements = {
     'QR Code': { position: { top: 40, left: 25 }, size: { width: 70, height: 70 }, src: '', textAlign: 'center' },
     'Validade': { position: { top: 40, left: 75 }, size: { fontSize: 10 }, text: 'Validade: 01/01/2026', fontWeight: 'bold', textAlign: 'center' },
     'Membro Desde': { position: { top: 50, left: 75 }, size: { fontSize: 10 }, text: `Membro desde: ${new Date(memberSample.memberSince).toLocaleDateString('pt-BR')}`, fontWeight: 'bold', textAlign: 'center' },
-    'Assinatura': { position: { top: 70, left: 50 }, size: { width: 120, height: 40 }, src: '', textAlign: 'center' },
-    'Assinatura Pastor': { position: { top: 88, left: 50 }, size: { fontSize: 10 }, text: 'Assinatura Pastor Presidente', textAlign: 'center' },
+    'Assinatura': { position: { top: 68, left: 50 }, size: { width: 120, height: 30 }, src: '', textAlign: 'center' },
+    'Assinatura Pastor': { position: { top: 90, left: 50 }, size: { fontSize: 10 }, text: 'Assinatura Pastor Presidente', textAlign: 'center' },
 };
 
 

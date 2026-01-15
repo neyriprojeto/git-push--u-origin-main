@@ -225,7 +225,7 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
                     {signatureLineElement && (
                         <div style={{
                             position: 'absolute', borderTop: '1px solid black', width: '40%',
-                            top: `calc(${signatureLineElement.position.top}% + 18px)`,
+                            top: `calc(${signatureLineElement.position.top}% - 2px)`,
                             left: `${signatureLineElement.position.left}%`,
                             transform: 'translateX(-50%)'
                         }} />

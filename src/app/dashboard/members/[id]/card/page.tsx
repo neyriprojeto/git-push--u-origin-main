@@ -153,19 +153,10 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
             style.textAlign = el.textAlign;
             style.whiteSpace = id.includes('Endereço') ? 'pre-wrap' : 'nowrap';
             
-            let dynamicText = getMemberDataForField(id) ?? el.text;
+            const dynamicText = getMemberDataForField(id) ?? el.text;
+            
+            elementContent = <p style={style}>{dynamicText}</p>;
 
-            if (id === 'Cargo' && member.cargo === 'Pastor Dirigente/Local') {
-                 elementContent = (
-                    <div style={style} className='leading-tight'>
-                        <p>Cargo:</p>
-                        <p>Pastor</p>
-                        <p>Dirigente/Local</p>
-                    </div>
-                 );
-            } else {
-                 elementContent = <p style={style}>{dynamicText}</p>;
-            }
         }
 
         return <React.Fragment key={id}>{elementContent}</React.Fragment>;
@@ -279,7 +270,7 @@ export default function MemberCardPage() {
         
         const isOwner = authUser?.uid === memberId;
         const isAdmin = currentUser.cargo === 'Administrador';
-        const isPastorOfCongregation = currentUser.cargo === 'Pastor Dirigente/Local' && currentUser.congregacao === member.congregacao;
+        const isPastorOfCongregation = currentUser.cargo === 'Pastor/dirigente' && currentUser.congregacao === member.congregacao;
 
         if (isOwner || isAdmin || isPastorOfCongregation) {
             setHasAccess(true);

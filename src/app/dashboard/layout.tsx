@@ -55,7 +55,7 @@ export default function DashboardLayout({
 
   const settingsLink = userRole === 'Administrador'
     ? "/dashboard/settings/congregations"
-    : userRole === 'Pastor Dirigente/Local' && userData?.congregacao
+    : userRole === 'Pastor/dirigente' && userData?.congregacao
     ? `/dashboard/settings/congregations/${encodeURIComponent(userData.congregacao)}`
     : "#";
 

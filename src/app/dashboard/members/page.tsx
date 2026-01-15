@@ -56,7 +56,7 @@ export default function MembersPage() {
     if (!firestore || !currentUserData) return null;
     
     // Se for Pastor Dirigente, filtra pela sua congregação
-    if (currentUserData.cargo === 'Pastor Dirigente/Local' && currentUserData.congregacao) {
+    if (currentUserData.cargo === 'Pastor/dirigente' && currentUserData.congregacao) {
       return query(
         collection(firestore, 'users'), 
         where('congregacao', '==', currentUserData.congregacao),
@@ -102,7 +102,7 @@ export default function MembersPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Nome</TableHead>
-                <TableHead>Cargo</TableHead>
+                <TableHead className="hidden md:table-cell">Cargo</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="hidden md:table-cell">Congregação</TableHead>
                 <TableHead>
@@ -138,7 +138,7 @@ export default function MembersPage() {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>{member.cargo}</TableCell>
+                      <TableCell className="hidden md:table-cell">{member.cargo}</TableCell>
                       <TableCell>
                         <Badge variant={member.status === "Ativo" ? "default" : member.status === "Pendente" ? "outline" : "destructive"}>
                           {member.status}

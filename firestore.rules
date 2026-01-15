@@ -17,7 +17,7 @@
  *   matches the Firebase Auth UID. This creates a direct ownership link.
  * - Role-Based Access: A `cargo` (role) field within each user's document dictates permissions.
  *   - 'Administrador': Can read/write all data across the system.
- *   - 'Pastor Dirigente/Local': Can read/write data for users within their own `congregacao`.
+ *   - 'Pastor/dirigente': Can read/write data for users within their own `congregacao`.
  *   - 'Membro': Can only read/write their *own* user document.
  * - Secure Defaults: Listing users is restricted to Admins and Pastors. Public registration is allowed
  *   (create a new user document), but the `status` is set to 'Pendente' by default via client-side logic,
@@ -56,10 +56,10 @@ service cloud.firestore {
     }
 
     /**
-     * Checks if the requesting user is a 'Pastor Dirigente/Local'.
+     * Checks if the requesting user is a 'Pastor/dirigente'.
      */
     function isPastor() {
-      return isSignedIn() && getRequestingUserData().cargo == 'Pastor Dirigente/Local';
+      return isSignedIn() && getRequestingUserData().cargo == 'Pastor/dirigente';
     }
 
     /**

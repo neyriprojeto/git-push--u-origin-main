@@ -36,7 +36,7 @@ export default function CongregationSettingsPage() {
     }
 
     // Security check: Ensure the logged-in pastor belongs to the congregation they are trying to view
-    if (userData?.cargo === 'Pastor Dirigente/Local' && userData?.congregacao !== congregationId) {
+    if (userData?.cargo === 'Pastor/dirigente' && userData?.congregacao !== congregationId) {
         return (
             <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
                 <Card className="border-destructive">

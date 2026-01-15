@@ -271,7 +271,7 @@ export default function MemberProfilePage() {
   
       if (member) {
         const isUserOwner = authUser.uid === member.id;
-        const isPastorOfCongregation = currentUserData.cargo === 'Pastor Dirigente/Local' && currentUserData.congregacao === member.congregacao;
+        const isPastorOfCongregation = currentUserData.cargo === 'Pastor/dirigente' && currentUserData.congregacao === member.congregacao;
   
         const canView = isUserOwner || isAdmin || isPastorOfCongregation;
         const canEdit = isUserOwner || isAdmin || isPastorOfCongregation;
@@ -487,10 +487,6 @@ export default function MemberProfilePage() {
   const avatar = getAvatar(member.avatar);
 
   const getMemberDataForField = (fieldId: string) => {
-    let cargoText = member.cargo || '';
-    if (cargoText === 'Pastor Dirigente/Local') {
-        cargoText = 'Pastor\nDirigente/Local';
-    }
     switch (fieldId) {
         case 'Nome':
             return `Nome: ${member.nome || ''}`;
@@ -503,7 +499,7 @@ export default function MemberProfilePage() {
         case 'Data de Nascimento':
             return `Nasc: ${formatDate(member.dataNascimento, 'dd/MM/yyyy') || ''}`;
         case 'Cargo':
-            return `Cargo: ${cargoText}`;
+            return `Cargo: ${member.cargo || ''}`;
         case 'Membro Desde':
              return `Membro desde: ${formatDate(member.dataMembro, 'dd/MM/yyyy') || ''}`;
         default:
@@ -571,7 +567,7 @@ export default function MemberProfilePage() {
         style.color = color;
         style.fontWeight = el.fontWeight;
         style.textAlign = el.textAlign;
-        style.whiteSpace = (id.includes('Endereço') || id === 'Cargo') ? 'pre-wrap' : 'nowrap';
+        style.whiteSpace = id.includes('Endereço') ? 'pre-wrap' : 'nowrap';
         
         const dynamicText = getMemberDataForField(id) || el.text;
         
@@ -820,7 +816,7 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
                                                             <SelectItem value="Evangelista">Evangelista</SelectItem>
                                                             <SelectItem value="Missionário(a)">Missionário(a)</SelectItem>
                                                             <SelectItem value="Pastor(a)">Pastor(a)</SelectItem>
-                                                            <SelectItem value="Pastor Dirigente/Local">Pastor Dirigente/Local</SelectItem>
+                                                            <SelectItem value="Pastor/dirigente">Pastor/dirigente</SelectItem>
                                                             <SelectItem value="Administrador">Administrador</SelectItem>
                                                         </SelectContent>
                                                     </Select>
@@ -1056,5 +1052,3 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
     </div>
   );
 }
-
-    

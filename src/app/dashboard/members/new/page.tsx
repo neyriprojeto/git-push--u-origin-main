@@ -259,7 +259,7 @@ export default function NewMemberPage() {
                                     <SelectItem value="Evangelista">Evangelista</SelectItem>
                                     <SelectItem value="Missionário(a)">Missionário(a)</SelectItem>
                                     <SelectItem value="Pastor(a)">Pastor(a)</SelectItem>
-                                    <SelectItem value="Pastor Dirigente/Local">Pastor Dirigente/Local</SelectItem>
+                                    <SelectItem value="Pastor/dirigente">Pastor/dirigente</SelectItem>
                                     </SelectContent>
                                 </Select>
                                 <FormMessage />
@@ -403,5 +403,3 @@ export default function NewMemberPage() {
     </div>
   );
 }
-
-    

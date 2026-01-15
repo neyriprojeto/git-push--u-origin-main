@@ -50,7 +50,34 @@ type Verse = {
   text: string;
 };
 
-// Interface correspondente aos dados no Firestore
+// --- Tipos para a Carteirinha do Studio ---
+type ElementStyle = {
+    position: { top: number; left: number };
+    size: { width?: number; height?: number; fontSize?: number };
+    text?: string;
+    fontWeight?: 'normal' | 'bold';
+    src?: string; 
+    textAlign?: 'left' | 'center' | 'right';
+};
+
+type CardElements = { [key: string]: ElementStyle };
+
+type CardTemplateData = {
+    elements: CardElements;
+    cardStyles: {
+        frontBackground: string;
+        backBackground: string;
+        frontBackgroundImage: string;
+        backBackgroundImage: string;
+    };
+    textColors: {
+        title: string;
+        personalData: string;
+        backText: string;
+    };
+};
+
+// --- Tipos para Dados do Membro ---
 interface Member {
     id: string;
     nome: string;
@@ -94,7 +121,6 @@ const formSchema = z.object({
 });
 
 type MemberFormData = z.infer<typeof formSchema>;
-
 
 type Congregacao = {
     id: string;
@@ -193,6 +219,9 @@ export default function MemberProfilePage() {
   const memberRef = useMemoFirebase(() => (firestore ? doc(firestore, 'users', memberId) : null), [firestore, memberId]);
   const { data: member, isLoading: memberLoading, error: memberError } = useDoc<Member>(memberRef);
   
+  const templateRef = useMemoFirebase(() => firestore ? doc(firestore, 'cardTemplates', 'default') : null, [firestore]);
+  const { data: templateData, isLoading: isTemplateLoading } = useDoc<CardTemplateData>(templateRef);
+
   const congregacoesCollection = useMemoFirebase(
     () => (firestore ? collection(firestore, 'congregacoes') : null),
     [firestore]
@@ -351,7 +380,7 @@ export default function MemberProfilePage() {
   }
 
 
-  if (memberLoading || isUserLoading || isCurrentUserLoading) {
+  if (memberLoading || isUserLoading || isCurrentUserLoading || isTemplateLoading) {
       return (
           <div className="flex-1 h-screen flex items-center justify-center bg-secondary">
               <Loader2 className="h-16 w-16 animate-spin" />
@@ -364,11 +393,170 @@ export default function MemberProfilePage() {
     return notFound();
   }
 
+  if (!templateData) {
+        return (
+            <div className="flex-1 h-screen flex items-center justify-center bg-secondary">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Template Não Encontrado</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p>O template da carteirinha ainda não foi configurado.</p>
+                        <p>Por favor, vá para o <Link href="/dashboard/card-studio" className="underline text-primary">Estúdio de Carteirinha</Link> para criá-lo.</p>
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    }
+
   const avatar = getAvatar(member.avatar);
-  const churchPicture = PlaceHolderImages.find((p) => p.id === "church-banner");
   
   const canEdit = isOwner || currentUserData?.cargo === 'Administrador' || (currentUserData?.cargo === 'Pastor Dirigente/Local' && currentUserData?.congregacao === member.congregacao);
   const canManage = currentUserData?.cargo === 'Administrador' || currentUserData?.cargo === 'Pastor Dirigente/Local';
+
+
+  const getMemberDataForField = (fieldId: string) => {
+    switch (fieldId) {
+        case 'Nome':
+            return `Nome: ${member.nome || ''}`;
+        case 'Nº Reg.':
+            return `Nº Reg.: ${member.recordNumber || ''}`;
+        case 'RG':
+            return `RG: ${member.rg || ''}`;
+        case 'CPF':
+            return `CPF: ${member.cpf || ''}`;
+        case 'Data de Nascimento':
+            return `Nasc: ${formatDate(member.dataNascimento, 'dd/MM/yyyy') || ''}`;
+        case 'Cargo':
+            return `Cargo: ${member.cargo || ''}`;
+        case 'Membro Desde':
+             return `Membro desde: ${formatDate(member.dataMembro, 'dd/MM/yyyy') || ''}`;
+        // Adicione outros campos conforme necessário
+        default:
+            return '';
+    }
+  }
+
+  const renderElement = (id: string, el: ElementStyle) => {
+    if (!el) return null;
+    
+    const isImage = 'src' in el;
+    const isText = 'text' in el;
+
+    let color = '#000000';
+    if (isText && templateData) {
+        const { textColors } = templateData;
+        const isTitle = id.includes('Título') || id === 'Congregação' || id === 'Endereço';
+        const isBackText = id.includes('Assinatura') || id.includes('Validade') || id.includes('Membro Desde');
+        
+        if (isTitle) color = textColors.title;
+        else if (isBackText) color = textColors.backText;
+        else color = textColors.personalData;
+    }
+
+    const style: React.CSSProperties = {
+        position: 'absolute',
+        top: `${el.position.top}%`,
+        left: `${el.position.left}%`,
+    };
+    
+    if (el.textAlign === 'center') style.transform = 'translateX(-50%)';
+    else if (el.textAlign === 'right') style.transform = 'translateX(-100%)';
+    
+    let elementContent: React.ReactNode;
+
+    if (isImage) {
+        style.width = el.size.width ? `${el.size.width}px` : 'auto';
+        style.height = el.size.height ? `${el.size.height}px` : 'auto';
+
+        let src = el.src;
+        if (id === 'Foto do Membro' && avatar) {
+            src = avatar.imageUrl;
+        }
+
+        if (!src) {
+             elementContent = <div style={{...style, border: '1px dashed #ccc'}} className="bg-gray-200/50 flex items-center justify-center text-xs text-gray-500">{id}</div>;
+        } else {
+             const objectFitStyle: React.CSSProperties = {
+                objectFit: id === 'Foto do Membro' ? 'cover' : 'contain'
+            };
+            elementContent = (
+                <div style={style} className="relative">
+                    <Image
+                        src={src}
+                        alt={id}
+                        fill
+                        style={objectFitStyle}
+                        className={cn({ 'rounded-md': id !== 'Assinatura'})}
+                    />
+                </div>
+            );
+        }
+    } else if (isText) {
+        style.fontSize = el.size.fontSize ? `${el.size.fontSize}px` : undefined;
+        style.color = color;
+        style.fontWeight = el.fontWeight;
+        style.textAlign = el.textAlign;
+        style.whiteSpace = id.includes('Endereço') ? 'pre-wrap' : 'nowrap';
+        
+        // Substitui placeholders por dados reais do membro
+        const dynamicText = getMemberDataForField(id) || el.text;
+        
+        elementContent = <p style={style}>{dynamicText}</p>;
+    }
+
+    return <div key={id}>{elementContent}</div>;
+};
+
+const StudioCard = ({ isFront }: { isFront: boolean }) => {
+    if (isTemplateLoading || !templateData || !member) {
+        return <div className="flex items-center justify-center h-full"><Loader2 className="animate-spin" /></div>;
+    }
+
+    const { elements, cardStyles } = templateData;
+
+    const backgroundStyle: React.CSSProperties = {
+        backgroundColor: isFront ? cardStyles.frontBackground : cardStyles.backBackground,
+        backgroundImage: `url(${isFront ? cardStyles.frontBackgroundImage : cardStyles.backBackgroundImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+    };
+
+    const frontElements = Object.keys(elements)
+        .filter(id => !id.includes('Convenção') && !id.includes('QR Code') && !id.includes('Assinatura') && !id.includes('Validade') && !id.includes('Membro Desde'));
+    
+    const backElements = Object.keys(elements)
+        .filter(id => id.includes('Convenção') || id.includes('QR Code') || id.includes('Assinatura') || id.includes('Validade') || id.includes('Membro Desde'));
+
+    const signatureLineElement = elements['Assinatura Pastor'];
+
+    return (
+        <Card 
+            className="h-full w-full overflow-hidden shadow-lg relative"
+            style={backgroundStyle}
+        >
+            {isFront ? (
+                frontElements.map(id => renderElement(id, elements[id]))
+            ) : (
+                <>
+                {backElements.map(id => renderElement(id, elements[id]))}
+                {signatureLineElement && (
+                     <div 
+                        style={{
+                            position: 'absolute', 
+                            borderTop: '1px solid black', 
+                            width: '40%', 
+                            top: `calc(${signatureLineElement.position.top}% - 2px)`,
+                            left: `${signatureLineElement.position.left}%`,
+                            transform: 'translateX(-50%)'
+                        }}
+                    />
+                )}
+                </>
+            )}
+        </Card>
+    );
+};
 
 
   return (
@@ -462,98 +650,21 @@ export default function MemberProfilePage() {
                 <TabsTrigger value="dados">Meus Dados</TabsTrigger>
             </TabsList>
             <TabsContent value="carteirinha">
-                {/* Digital ID Card */}
                 <div className="space-y-4 pt-4">
                     <p className="text-center text-sm text-muted-foreground">
                     Clique na carteirinha para visualizar o verso.
                     </p>
 
                     <div 
-                    className="max-w-lg mx-auto flip-card-container cursor-pointer" 
-                    style={{ height: '390px' }} 
-                    onClick={() => setIsCardFlipped(!isCardFlipped)}
+                        className="max-w-lg mx-auto flip-card-container cursor-pointer aspect-[85.6/54]"
+                        onClick={() => setIsCardFlipped(!isCardFlipped)}
                     >
                         <div className={cn("flip-card w-full h-full", { 'flipped': isCardFlipped })}>
-                            {/* Card Front */}
                             <div className="flip-card-front">
-                            <Card className="h-full w-full overflow-hidden shadow-lg bg-[#0a2749] text-white flex flex-col">
-                                <div className="p-4">
-                                    <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        {churchPicture && 
-                                        <Image src={churchPicture.imageUrl} alt="Igreja" width={60} height={60} className="rounded-md" />
-                                        }
-                                        <div>
-                                        <h3 className="font-bold text-sm sm:text-base">ASSEMBLEIA DE DEUS</h3>
-                                        <h4 className="font-semibold text-xs sm:text-sm">MINISTÉRIO KAIRÓS</h4>
-                                        <p className="text-xs opacity-80">Tempo de Deus</p>
-                                        </div>
-                                    </div>
-                                    <div className="text-center">
-                                        <AppLogo className="h-8 w-8 mx-auto" />
-                                        <span className="text-[10px] font-bold">A.D. K</span>
-                                    </div>
-                                    </div>
-                                    <p className="text-center text-xs opacity-80 mt-2">Rua Presidente Prudente, 28, Eldorado, Diadema - SP, 09972-300</p>
-                                </div>
-                                <div className="bg-white text-gray-800 p-4 space-y-3 flex-1">
-                                    <div className="flex items-center gap-4">
-                                        <div className="relative">
-                                            <Avatar className="h-20 w-20 border">
-                                                {avatar && <AvatarImage src={avatar.imageUrl} alt={member.nome} />}
-                                                <AvatarFallback className="text-3xl">
-                                                    {member.nome.charAt(0)}
-                                                </AvatarFallback>
-                                            </Avatar>
-                                        </div>
-                                        <div className="border-b pb-1 flex-1">
-                                            <Label className="text-xs text-muted-foreground">NOME</Label>
-                                            <p className="font-bold text-sm">{member.nome}</p>
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="border-b pb-1">
-                                            <Label className="text-xs text-muted-foreground">RG</Label>
-                                            <p className="font-bold text-sm">{member.rg || 'N/A'}</p>
-                                        </div>
-                                        <div className="border-b pb-1">
-                                            <Label className="text-xs text-muted-foreground">CARGO</Label>
-                                            <p className="font-bold text-sm">{member.cargo}</p>
-                                        </div>
-                                        <div className="border-b pb-1">
-                                            <Label className="text-xs text-muted-foreground">NASCIMENTO</Label>
-                                            <p className="font-bold text-sm">{formatDate(member.dataNascimento, 'dd/MM/yyyy')}</p>
-                                        </div>
-                                            <div className="border-b pb-1">
-                                            <Label className="text-xs text-muted-foreground">MEMBRO DESDE</Label>
-                                            <p className="font-bold text-sm">{formatDate(member.dataMembro, 'dd/MM/yyyy')}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </Card>
+                                <StudioCard isFront={true} />
                             </div>
-
-                            {/* Card Back */}
                             <div className="flip-card-back">
-                                <Card className="h-full w-full overflow-hidden shadow-lg bg-[#0a2749] text-white flex flex-col justify-between">
-                                <div className="p-4">
-                                    <p className="text-xs text-center text-white/80">Válido em todo o território nacional.</p>
-                                </div>
-                                <div className="p-4 bg-white text-gray-800 space-y-4">
-                                    <div className="space-y-1">
-                                        <Label className="text-xs text-muted-foreground">ASSINATURA DO PASTOR</Label>
-                                        <div className="h-10 border-b border-gray-400"></div>
-                                    </div>
-                                        <div className="space-y-1">
-                                        <Label className="text-xs text-muted-foreground">ASSINATURA DO MEMBRO</Label>
-                                        <div className="h-10 border-b border-gray-400"></div>
-                                    </div>
-                                    <div className="text-center pt-4">
-                                        <p className="text-sm font-semibold">"Se o filho vos libertar, verdadeiramente sereis livres."</p>
-                                        <p className="text-xs text-muted-foreground">João 8:36</p>
-                                    </div>
-                                </div>
-                                </Card>
+                                 <StudioCard isFront={false} />
                             </div>
                         </div>
                     </div>
@@ -751,3 +862,5 @@ export default function MemberProfilePage() {
     </div>
   );
 }
+
+    

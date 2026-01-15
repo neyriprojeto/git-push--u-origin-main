@@ -17,7 +17,7 @@ import { useEffect, useState } from "react";
 
 interface UserData {
   cargo?: string;
-  dataMembro?: Timestamp;
+  dataMembro?: Timestamp | string;
 }
 
 interface DashboardStats {
@@ -66,7 +66,30 @@ export default function DashboardPage() {
 
       const oneYearAgo = new Date();
       oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-      const newMembers = allMembers.filter(m => m.dataMembro && m.dataMembro.toDate() > oneYearAgo).length;
+      
+      const newMembers = allMembers.filter(m => {
+        if (!m.dataMembro) return false;
+        
+        let memberDate: Date;
+        // It's a Firestore Timestamp if it has a toDate method
+        if (typeof (m.dataMembro as Timestamp).toDate === 'function') {
+          memberDate = (m.dataMembro as Timestamp).toDate();
+        } 
+        // It's a string
+        else if (typeof m.dataMembro === 'string') {
+          memberDate = new Date(m.dataMembro);
+        } 
+        else {
+          return false;
+        }
+
+        // Check for invalid date
+        if (isNaN(memberDate.getTime())) {
+            return false;
+        }
+        
+        return memberDate > oneYearAgo;
+      }).length;
 
       const leaderRoles = ['Pastor(a)', 'Pastor Dirigente/Local', 'Diácono(a)', 'Presbítero', 'Evangelista', 'Missionário(a)'];
       const leaders = allMembers.filter(m => m.cargo && leaderRoles.includes(m.cargo)).length;

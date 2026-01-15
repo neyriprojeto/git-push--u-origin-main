@@ -3,7 +3,6 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { notFound, useParams, useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
@@ -167,11 +166,13 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
                  elementContent = <div style={{...style, border: '1px dashed #ccc'}} className="bg-gray-200/50 flex items-center justify-center text-xs text-gray-500">{id}</div>;
             } else {
                  const objectFitStyle: React.CSSProperties = {
-                    objectFit: id === 'Foto do Membro' ? 'cover' : 'contain'
+                    objectFit: id === 'Foto do Membro' ? 'cover' : 'contain',
+                    width: '100%',
+                    height: '100%'
                 };
                 elementContent = (
-                    <div style={style} className="relative">
-                        <Image src={src} alt={id} fill style={objectFitStyle} className={cn({ 'rounded-md': id !== 'Assinatura'})} />
+                    <div style={style} className={cn("relative", {'rounded-md overflow-hidden': id !== 'Assinatura' })}>
+                        <img src={src} alt={id} style={objectFitStyle} crossOrigin="anonymous" />
                     </div>
                 );
             }
@@ -224,7 +225,7 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
                     {signatureLineElement && (
                         <div style={{
                             position: 'absolute', borderTop: '1px solid black', width: '40%',
-                            top: `calc(${signatureLineElement.position.top}% - 2px)`,
+                            top: `calc(${signatureLineElement.position.top}% + 18px)`,
                             left: `${signatureLineElement.position.left}%`,
                             transform: 'translateX(-50%)'
                         }} />
@@ -396,4 +397,6 @@ export default function MemberCardPage() {
 }
 
     
+    
+
     

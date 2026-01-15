@@ -945,7 +945,7 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
                                               <AlertDialogHeader>
                                                   <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
                                                   <AlertDialogDescription>
-                                                      Esta ação é permanente e não pode ser desfeita. O cadastro do membro será removido do banco de dados, mas a conta de autenticação (login e senha) precisará ser removida manualmente no console do Firebase, se necessário.
+                                                      Esta ação é permanente e não pode ser desfeita. O cadastro do membro será removido do banco de dados, mas a conta de autenticação (login e senha) precisará ser removida manually no console do Firebase, se necessário.
                                                   </AlertDialogDescription>
                                               </AlertDialogHeader>
                                               <AlertDialogFooter>

@@ -207,7 +207,8 @@ export default function MemberFilePage() {
 
                 {/* Content */}
                 <div className="flex-grow pt-[2vw] md:pt-6 grid grid-cols-12 gap-x-[2vw] md:gap-x-8 gap-y-[1vw] md:gap-y-4 font-sans text-[1.5vw] md:text-sm">
-                    <div className="col-span-12"><DetailItem label="Data de Membresia" value={member.dataMembro} /></div>
+                    <div className="col-span-6"><DetailItem label="Data de Membresia" value={member.dataMembro} /></div>
+                    <div className="col-span-6"><DetailItem label="Data de Batismo" value={member.dataBatismo} /></div>
                     
                     <div className="col-span-12"><DetailItem label="Congregação" value={member.congregacao}/></div>
                     

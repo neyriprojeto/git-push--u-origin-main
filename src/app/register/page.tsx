@@ -18,12 +18,12 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { addMember } from '@/firebase/firestore/mutations';
 import { useAuth, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { AppLogo } from '@/components/icons';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { collection } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 
 const formSchema = z.object({
@@ -61,11 +61,31 @@ export default function RegisterPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const congregacoesCollection = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'congregacoes') : null),
-    [firestore]
-  );
-  const { data: congregacoes, isLoading: loadingCongregacoes } = useCollection<Congregacao>(congregacoesCollection);
+  const [congregacoes, setCongregacoes] = useState<Congregacao[]>([]);
+  const [loadingCongregacoes, setLoadingCongregacoes] = useState(true);
+
+  useEffect(() => {
+    const fetchCongregacoes = async () => {
+      if (!firestore) return;
+      try {
+        const congregacoesCollection = collection(firestore, 'congregacoes');
+        const snapshot = await getDocs(congregacoesCollection);
+        const congregacoesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Congregacao));
+        setCongregacoes(congregacoesData);
+      } catch (error) {
+        console.error("Erro ao buscar congregações:", error);
+        toast({
+          variant: 'destructive',
+          title: 'Erro ao carregar dados',
+          description: 'Não foi possível carregar a lista de congregações.'
+        });
+      } finally {
+        setLoadingCongregacoes(false);
+      }
+    };
+
+    fetchCongregacoes();
+  }, [firestore, toast]);
 
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -434,5 +454,3 @@ export default function RegisterPage() {
     </div>
   );
 }
-
-    

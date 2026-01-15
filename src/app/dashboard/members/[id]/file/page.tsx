@@ -160,7 +160,7 @@ export default function MemberFilePage() {
                     <h1 className="text-[2.5vw] md:text-3xl font-bold">Ficha de Membro</h1>
                     <p className="text-[1.8vw] md:text-lg font-sans">Nº: {member.recordNumber}</p>
                 </div>
-                <div className="w-[12vw] h-[12vw] md:w-24 md:h-24 border border-gray-300 flex items-center justify-center shrink-0 bg-gray-100">
+                <div className="w-[12vw] h-[12vw] md:w-24 md:h-24 border border-gray-300 flex items-center justify-center shrink-0">
                     {fichaLogoUrl ? (
                         <Image src={fichaLogoUrl} alt="Logo da Ficha" width={96} height={96} className="object-contain p-1" />
                     ) : (

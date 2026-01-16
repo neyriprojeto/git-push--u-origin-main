@@ -3,7 +3,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { notFound, useParams, useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -200,10 +199,10 @@ export default function MemberFilePage() {
     const FichaFrente = () => (
         <div className="bg-white shadow-lg p-8 flex flex-col h-full font-sans">
             {/* Header */}
-            <div className="flex justify-between items-start pb-4 border-b border-black gap-4">
-                <div className="w-24 h-32 border border-gray-300 flex items-center justify-center shrink-0 bg-gray-100">
+            <div className="flex justify-between items-center pb-4 border-b border-black gap-4">
+                <div className="w-24 h-32 border border-gray-300 flex items-center justify-center shrink-0 bg-gray-100 overflow-hidden">
                     {avatar ? (
-                        <Image src={avatar.imageUrl} alt={member.nome} width={96} height={128} className="object-cover w-full h-full" crossOrigin="anonymous" />
+                        &lt;img src={avatar.imageUrl} alt={member.nome} style={{ objectFit: 'cover', width: '100%', height: '100%' }} crossOrigin="anonymous" /&gt;
                     ) : (
                         <span className="text-xs text-gray-400 text-center">Foto 3x4</span>
                     )}
@@ -214,7 +213,7 @@ export default function MemberFilePage() {
                 </div>
                 <div className="w-24 h-24 flex items-center justify-center shrink-0">
                     {fichaLogoUrl ? (
-                        <Image src={fichaLogoUrl} alt="Logo da Ficha" width={96} height={96} className="object-contain" crossOrigin="anonymous" />
+                         &lt;img src={fichaLogoUrl} alt="Logo da Ficha" style={{ objectFit: 'contain', width: '100%', height: '100%' }} crossOrigin="anonymous" /&gt;
                     ) : (
                         <span className="text-xs text-gray-500">Logo</span>
                     )}
@@ -295,7 +294,7 @@ export default function MemberFilePage() {
 
     return (
         <div className="w-full min-h-screen bg-secondary p-4 flex flex-col items-center font-serif">
-            <div className="w-full max-w-5xl mb-4 flex justify-end">
+            <div className="w-full max-w-5xl mb-4 flex justify-end print:hidden">
                 <Button onClick={handleGeneratePdf} disabled={isGeneratingPdf}>
                     {isGeneratingPdf ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Printer className="mr-2 h-4 w-4" />}
                     Gerar PDF
@@ -303,13 +302,13 @@ export default function MemberFilePage() {
             </div>
             
             {/* Viewer Container */}
-            <div className="w-full flex justify-center items-start overflow-x-auto p-2">
+            <div className="w-full flex justify-center items-start overflow-x-auto p-2 print:hidden">
                 {/* Scaled Container */}
                 <div className="origin-top transform scale-[0.3] sm:scale-[0.5] md:scale-[0.7] lg:scale-[0.8] xl:scale-100 transition-transform duration-300">
                     {/* Fixed Size Container with perspective for 3D flip */}
                     <div
                         className="flip-card-container cursor-pointer"
-                        style={{ width: '210mm', height: '148mm', perspective: '1000px' }}
+                        style={{ width: '210mm', height: '148mm' }}
                         onClick={() => setIsFront(!isFront)}
                     >
                         <div className={cn("flip-card w-full h-full", { 'flipped': !isFront })}>
@@ -324,7 +323,7 @@ export default function MemberFilePage() {
                 </div>
             </div>
 
-            <div className='flex gap-2 justify-center mt-4'>
+            <div className='flex gap-2 justify-center mt-4 print:hidden'>
                 <Button variant={isFront ? 'default' : 'outline'} onClick={() => setIsFront(true)}>Frente</Button>
                 <Button variant={!isFront ? 'default' : 'outline'} onClick={() => setIsFront(false)}>Verso</Button>
             </div>

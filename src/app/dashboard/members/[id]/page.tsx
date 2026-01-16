@@ -913,27 +913,6 @@ export default function MemberProfilePage() {
             </CardContent>
         </Card>
 
-        {churchInfo?.radioUrl && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Radio className="h-5 w-5 text-primary" />
-                Rádio Kairós
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="aspect-video w-full rounded-lg overflow-hidden bg-black">
-                <iframe
-                  src={churchInfo.radioUrl}
-                  className="w-full h-full border-0"
-                  allow="autoplay"
-                  title="Rádio Kairós Player"
-                />
-              </div>
-            </CardContent>
-          </Card>
-        )}
-        
         {verse && (
           <Card>
             <CardHeader>
@@ -957,6 +936,17 @@ export default function MemberProfilePage() {
               </blockquote>
             </CardContent>
           </Card>
+        )}
+
+        {churchInfo?.radioUrl && (
+          <div className="aspect-video w-full rounded-lg overflow-hidden bg-black border">
+            <iframe
+              src={churchInfo.radioUrl}
+              className="w-full h-full border-0"
+              allow="autoplay"
+              title="Rádio Kairós Player"
+            />
+          </div>
         )}
 
         <Tabs defaultValue="mural" className="w-full">

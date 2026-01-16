@@ -14,6 +14,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 // --- Types ---
 type Member = { 
@@ -23,7 +24,8 @@ type Member = {
     dataNascimento?: any;
     dataBatismo?: any;
     congregacao?: string; 
-    responsiblePastor?: string; 
+    responsiblePastor?: string;
+    gender?: 'Masculino' | 'Feminino';
 };
 type UserData = { nome: string; cargo?: string; congregacao?: string; };
 type ChurchInfo = { 
@@ -40,7 +42,8 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
     date: Date,
     city: string,
     celebrantPastor?: string,
-}>(({ churchInfo, member, date, city, celebrantPastor }, ref) => {
+    bgImage?: string;
+}>(({ churchInfo, member, date, city, celebrantPastor, bgImage }, ref) => {
     
     const formatDate = (d: any, isLong = false): string => {
         if (!d) return '___/___/______';
@@ -53,56 +56,33 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
         } catch { return '___/___/______'; }
     };
     
-    const logo1Url = churchInfo?.conventionLogo1Url;
-    const logo2Url = churchInfo?.conventionLogo2Url;
+    const genderTerm = member?.gender === 'Feminino' ? 'batizada' : 'batizado';
     const presidentName = churchInfo?.pastorName || '_________________________';
-    const congregationalPastorName = member?.responsiblePastor || '_________________________';
-
+    
     return (
-        <div ref={ref} className="w-full max-w-[297mm] aspect-[297/210] bg-white mx-auto shadow-lg p-6 font-serif text-black flex flex-col border-4 border-double border-gray-400 print:shadow-none print:border-0 print:w-[297mm] print:h-[210mm]">
-            
-            {/* Header */}
-            <header className="flex justify-between items-center pb-4">
-                <div className="w-24 h-24 relative">
-                    {logo1Url ? <img src={logo1Url} alt="Logo 1" style={{ objectFit: 'contain', width: '100%', height: '100%' }} crossOrigin="anonymous" /> : <div className="w-full h-full bg-gray-100" />}
-                </div>
-                <div className="text-center">
-                    <p className="text-xl">IGREJA EVANGÉLICA ASSEMBLEIA DE DEUS</p>
-                    <p className="text-lg">MINISTÉRIO KAIRÓS</p>
-                </div>
-                <div className="w-24 h-24 relative">
-                    {logo2Url ? <img src={logo2Url} alt="Logo 2" style={{ objectFit: 'contain', width: '100%', height: '100%' }} crossOrigin="anonymous" /> : <div className="w-full h-full bg-gray-100" />}
-                </div>
-            </header>
-
-            {/* Title */}
-            <div className="text-center my-6">
-                <h1 className="text-5xl" style={{ fontFamily: "'Times New Roman', Times, serif" }}>Certificado de Batismo</h1>
+        <div 
+            ref={ref} 
+            className="w-full max-w-[297mm] aspect-[297/210] bg-white mx-auto shadow-lg font-serif text-black relative print:shadow-none print:border-0 print:w-[297mm] print:h-[210mm]"
+            style={{
+                backgroundImage: bgImage ? `url(${bgImage})` : 'none',
+                backgroundSize: '100% 100%',
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'center',
+            }}
+        >
+             <div className="absolute top-[45%] left-1/2 -translate-x-1/2 w-[80%] text-center text-[#444]">
+                 <p className="font-bold text-4xl my-4 text-[#63532f]" style={{ fontFamily: "'Brush Script MT', cursive" }}>
+                    {member?.nome || '________________'}
+                </p>
+                <p className="text-lg leading-relaxed mt-4">
+                    Crendo e obedecendo nas sagradas Escrituras e as doutrinas ensinadas por 
+                    Jesus Cristo, foi {genderTerm} sob profissão de fé em nome do Pai, do Filho e do Espírito Santo,
+                    no dia <span className="font-semibold">{formatDate(member?.dataBatismo, true)}</span> na Assembleia de Deus Kairós congregação de {member?.congregacao || '____________'}.
+                </p>
             </div>
-
-            {/* Body */}
-            <main className="flex-grow text-center text-lg leading-relaxed px-12">
-                <p>Certificamos que</p>
-                <p className="font-bold text-3xl my-3 italic" style={{ fontFamily: "'Brush Script MT', cursive" }}>{member?.nome || '________________'}</p>
-                <p>
-                    nascido(a) em <span className="font-semibold">{formatDate(member?.dataNascimento, true)}</span>, foi batizado(a) em nome do Pai, do Filho e do Espírito Santo,
-                    no dia <span className="font-semibold">{formatDate(member?.dataBatismo, true)}</span>.
-                </p>
-                <p className="mt-4">
-                    Sendo-lhe ministrado pelo Pr. <span className="font-semibold">{celebrantPastor || '________________'}</span> e recebido como membro na Igreja Evangélica Assembleia de Deus Ministério Kairós em {member?.congregacao || '____________'}.
-                </p>
-                <p className="mt-8 text-base italic">
-                    "Portanto, ide, fazei discípulos de todas as nações, batizando-os em nome do Pai, e do Filho, e do Espírito Santo;"
-                    <br />
-                    <span className="font-semibold not-italic">Mateus 28:19</span>
-                </p>
-            </main>
             
             {/* Footer */}
-            <footer className="pt-8 mt-auto">
-                 <div className="text-center mb-10">
-                    <p>{city}, {format(date, "d 'de' MMMM 'de' yyyy", { locale: ptBR })}</p>
-                </div>
+            <footer className="absolute bottom-12 w-full px-16">
                 <div className="flex justify-around items-end">
                     <div className="text-center w-2/5">
                         <div className="border-b-2 border-black w-full" />
@@ -111,8 +91,8 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
                     </div>
                      <div className="text-center w-2/5">
                         <div className="border-b-2 border-black w-full" />
-                        <p className="text-sm mt-1">{congregationalPastorName}</p>
-                        <p className="text-xs italic">Pastor Dirigente</p>
+                        <p className="text-sm mt-1">{celebrantPastor || '________________'}</p>
+                        <p className="text-xs italic">Pastor Celebrante</p>
                     </div>
                 </div>
             </footer>
@@ -152,7 +132,7 @@ export default function BaptismCertificatePage() {
         if (!documentRef.current) return;
         setIsGeneratingPdf(true);
         try {
-            const canvas = await html2canvas(documentRef.current, { scale: 4, useCORS: true });
+            const canvas = await html2canvas(documentRef.current, { scale: 4, useCORS: true, backgroundColor: null });
             const imgData = canvas.toDataURL('image/png');
             
             // A4 landscape: 297mm x 210mm
@@ -170,6 +150,8 @@ export default function BaptismCertificatePage() {
     };
     
     const selectedMember = members?.find(m => m.id === selectedMemberId) || null;
+    const bgImage = PlaceHolderImages.find(p => p.id === 'baptism-certificate-bg')?.imageUrl;
+
 
     const isLoading = isAuthUserLoading || isUserDataLoading || isLoadingMembers || isChurchInfoLoading;
 
@@ -244,6 +226,7 @@ export default function BaptismCertificatePage() {
                     date={new Date()}
                     city="Veranópolis"
                     celebrantPastor={celebrantPastor}
+                    bgImage={bgImage}
                 />
             </div>
         </div>

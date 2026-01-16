@@ -69,7 +69,7 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
                     “E, cumprindo-se os dias da purificação dela, segundo a lei de Moisés, o levaram a Jerusalém, para o apresentarem ao Senhor.” <span className="font-semibold not-italic">Lucas 2:22</span>
                 </p>
 
-                <div className="flex-grow"></div>
+                <div style={{ flexGrow: 2 }}></div>
 
                 <footer className="w-full">
                     <div className="flex justify-around items-end">
@@ -96,6 +96,7 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
                         </div>
                     </div>
                 </footer>
+                <div style={{ flexGrow: 1 }}></div>
             </div>
         </div>
     );

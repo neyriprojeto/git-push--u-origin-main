@@ -15,6 +15,11 @@ const documents = [
         description: "Gere um certificado de batismo para um membro.",
         href: "/dashboard/documents/baptism",
     },
+    {
+        title: "Certificado de Apresentação",
+        description: "Gere um certificado de apresentação de criança.",
+        href: "/dashboard/documents/presentation",
+    },
 ];
 
 export default function DocumentsPage() {

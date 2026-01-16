@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -45,6 +44,7 @@ type ChurchInfo = {
     conventionLogo2Url?: string;
     baptismCertBgUrl?: string;
     baptismCertLogoUrl?: string;
+    presentationCertBgUrl?: string;
 }
 
 type Leader = {
@@ -495,13 +495,47 @@ export default function CongregationsPage() {
                                     <Button variant="outline" onClick={() => triggerFileInput('baptismCertLogoUrl', undefined)}>
                                         <Upload className="mr-2 h-4 w-4"/> Logo do Certificado
                                     </Button>
+                                     <Button variant="outline" onClick={() => triggerFileInput('pastorSignatureUrl', undefined)}>
+                                        <Upload className="mr-2 h-4 w-4" /> Assinatura do Pastor
+                                    </Button>
                                 </div>
                             </div>
                                 <div className='flex flex-wrap gap-4 mt-4'>
                                 {churchInfo.baptismCertBgUrl && <div><Label className='text-xs'>Fundo Atual</Label><Image src={churchInfo.baptismCertBgUrl} alt="Fundo do Certificado" width={297/2} height={210/2} className="rounded-md border object-cover p-2"/></div>}
                                 {churchInfo.baptismCertLogoUrl && <div><Label className='text-xs'>Logo Atual</Label><Image src={churchInfo.baptismCertLogoUrl} alt="Logo do Certificado" width={100} height={100} className="rounded-md border object-contain p-2"/></div>}
+                                {churchInfo.pastorSignatureUrl && <div><Label className='text-xs'>Assinatura Atual</Label><Image src={churchInfo.pastorSignatureUrl} alt="Assinatura" width={120} height={60} className="rounded-md border object-contain p-1"/></div>}
                             </div>
                                 <Button onClick={handleSaveChurchInfo} disabled={isSavingChurchInfo}>
+                                {isSavingChurchInfo ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                                {isSavingChurchInfo ? 'Salvando...' : 'Salvar Configurações do Certificado'}
+                            </Button>
+                        </>
+                    )}
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Configurações do Certificado de Apresentação</CardTitle>
+                    <CardDescription>Configure o fundo para o certificado de apresentação.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {loadingChurchInfo ? (
+                        <div className="flex justify-center p-8"> <Loader2 className="h-8 w-8 animate-spin" /></div>
+                    ) : (
+                        <>
+                            <div className="space-y-2">
+                                <Label>Imagem de Fundo</Label>
+                                <div className='flex flex-wrap gap-2'>
+                                    <Button variant="outline" onClick={() => triggerFileInput('presentationCertBgUrl', 297/210)}>
+                                        <Upload className="mr-2 h-4 w-4"/> Fundo do Certificado
+                                    </Button>
+                                </div>
+                            </div>
+                            <div className='flex flex-wrap gap-4 mt-4'>
+                                {churchInfo.presentationCertBgUrl && <div><Label className='text-xs'>Fundo Atual</Label><Image src={churchInfo.presentationCertBgUrl} alt="Fundo do Certificado de Apresentação" width={297/2} height={210/2} className="rounded-md border object-cover p-2"/></div>}
+                            </div>
+                            <Button onClick={handleSaveChurchInfo} disabled={isSavingChurchInfo}>
                                 {isSavingChurchInfo ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : <Save className="h-4 w-4 mr-2" />}
                                 {isSavingChurchInfo ? 'Salvando...' : 'Salvar Configurações do Certificado'}
                             </Button>

@@ -20,6 +20,7 @@ export default {
         body: ['PT Sans', 'sans-serif'],
         headline: ['PT Sans', 'sans-serif'],
         code: ['monospace'],
+        script: ['Great Vibes', 'cursive'],
       },
       colors: {
         background: 'hsl(var(--background))',

@@ -37,7 +37,6 @@ interface Member {
     dataBatismo?: string | Date;
     dataMembro?: string | Date;
     congregacao?: string;
-    originChurch?: string;
     responsiblePastor?: string;
     cargo?: string;
 }
@@ -212,7 +211,6 @@ export default function MemberFilePage() {
                     
                     <div className="col-span-12"><DetailItem label="Congregação" value={member.congregacao}/></div>
                     
-                    <div className="col-span-12"><DetailItem label="Igreja de Origem" value={member.originChurch} /></div>
                     <div className="col-span-12"><DetailItem label="Pastor Responsável" value={member.responsiblePastor} /></div>
                     
                     <div className="col-span-12 pt-[2vw] md:pt-8">

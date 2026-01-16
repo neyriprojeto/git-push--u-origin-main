@@ -27,7 +27,6 @@ export type Member = {
   addressState?: string;
   addressCep?: string;
   congregation?: string;
-  originChurch?: string;
   responsiblePastor?: string;
   observations?: string;
 };

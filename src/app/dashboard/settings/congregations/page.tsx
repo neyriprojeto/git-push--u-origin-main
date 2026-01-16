@@ -358,10 +358,10 @@ export default function CongregationsPage() {
                                 <div className="space-y-2">
                                      <Label>Assinatura Digital</Label>
                                     <div className='flex items-center gap-4'>
-                                        <Button variant="outline" onClick={() => triggerFileInput('pastorSignatureUrl', 1 / 1)}>
+                                        <Button variant="outline" onClick={() => triggerFileInput('pastorSignatureUrl', undefined)}>
                                             <Upload className="mr-2 h-4 w-4"/> Assinatura Pr. Presidente
                                         </Button>
-                                        {churchInfo.pastorSignatureUrl && <div className="h-[60px] w-[60px] rounded-md border p-1 bg-slate-100"><Image src={churchInfo.pastorSignatureUrl} alt="Assinatura" width={60} height={60} className="object-contain"/></div>}
+                                        {churchInfo.pastorSignatureUrl && <div className="h-[60px] w-[120px] rounded-md border p-1 bg-slate-100"><Image src={churchInfo.pastorSignatureUrl} alt="Assinatura" width={120} height={60} className="object-contain"/></div>}
                                     </div>
                                 </div>
                             </div>
@@ -453,10 +453,10 @@ export default function CongregationsPage() {
                             <div className="space-y-2">
                                 <Label>Imagens do Documento</Label>
                                 <div className='flex flex-wrap gap-2'>
-                                    <Button variant="outline" onClick={() => triggerFileInput('conventionLogo1Url', 1 / 1)}>
+                                    <Button variant="outline" onClick={() => triggerFileInput('conventionLogo1Url', undefined)}>
                                         <Upload className="mr-2 h-4 w-4"/> Logo Esquerda (Cabeçalho)
                                     </Button>
-                                    <Button variant="outline" onClick={() => triggerFileInput('conventionLogo2Url', 1 / 1)}>
+                                    <Button variant="outline" onClick={() => triggerFileInput('conventionLogo2Url', undefined)}>
                                         <Upload className="mr-2 h-4 w-4"/> Logo Direita (Cabeçalho)
                                     </Button>
                                 </div>

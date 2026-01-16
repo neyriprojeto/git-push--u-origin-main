@@ -51,36 +51,36 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
     const pastorSignatureUrl = churchInfo?.pastorSignatureUrl;
 
     return (
-        <div ref={ref} className="relative w-[148mm] h-[210mm] bg-white mx-auto shadow-lg p-[8mm] font-serif text-[11pt] text-black flex flex-col">
+        <div ref={ref} className="relative w-full max-w-[148mm] aspect-[148/210] h-auto bg-white mx-auto shadow-lg p-[2vw] md:p-[8mm] font-serif text-[2.5vw] md:text-[11pt] text-black flex flex-col print:w-[148mm] print:h-[210mm] print:p-[8mm] print:text-[11pt] print:shadow-none print:aspect-auto">
             
             {/* Header */}
-            <header className="flex justify-between items-center pb-4 border-b-2 border-black">
-                <div className="w-20 h-20 relative">
-                    {logo1Url ? <img src={logo1Url} alt="Logo Convenção 1" style={{ objectFit: 'contain', width: '100%', height: '100%' }} crossOrigin="anonymous" /> : <div className="w-full h-full bg-gray-100 flex items-center justify-center text-xs text-gray-400">Logo 1</div>}
+            <header className="flex justify-between items-center pb-[1vw] md:pb-4 border-b-2 border-black">
+                <div className="w-[12vw] h-[12vw] md:w-20 md:h-20 relative">
+                    {logo1Url ? <img src={logo1Url} alt="Logo Convenção 1" style={{ objectFit: 'contain', width: '100%', height: '100%' }} crossOrigin="anonymous" /> : <div className="w-full h-full bg-gray-100 flex items-center justify-center text-[1.5vw] md:text-xs text-gray-400">Logo 1</div>}
                 </div>
                 <div className="text-center">
-                    <p className="font-bold text-sm">IGREJA ASSEMBLEIA DE DEUS</p>
-                    <p className="font-bold text-sm">MINISTÉRIO KAIRÓS</p>
-                    <p className="text-xs">A.D. KAIRÓS</p>
-                    <p className="text-[10px] italic">TEMPO DE DEUS</p>
+                    <p className="font-bold text-[2.2vw] md:text-sm">IGREJA ASSEMBLEIA DE DEUS</p>
+                    <p className="font-bold text-[2.2vw] md:text-sm">MINISTÉRIO KAIRÓS</p>
+                    <p className="text-[1.8vw] md:text-xs">A.D. KAIRÓS</p>
+                    <p className="text-[1.5vw] md:text-[10px] italic">TEMPO DE DEUS</p>
                 </div>
-                <div className="w-20 h-20 relative">
-                    {logo2Url ? <img src={logo2Url} alt="Logo Convenção 2" style={{ objectFit: 'contain', width: '100%', height: '100%' }} crossOrigin="anonymous" /> : <div className="w-full h-full bg-gray-100 flex items-center justify-center text-xs text-gray-400">Logo 2</div>}
+                <div className="w-[12vw] h-[12vw] md:w-20 md:h-20 relative">
+                    {logo2Url ? <img src={logo2Url} alt="Logo Convenção 2" style={{ objectFit: 'contain', width: '100%', height: '100%' }} crossOrigin="anonymous" /> : <div className="w-full h-full bg-gray-100 flex items-center justify-center text-[1.5vw] md:text-xs text-gray-400">Logo 2</div>}
                 </div>
             </header>
 
             {/* Title */}
-            <div className="text-center my-8">
-                <p className="font-bold text-base mb-2">CARTA DE,</p>
-                <div className="flex justify-center gap-6 text-sm font-sans">
+            <div className="text-center my-[2vw] md:my-8">
+                <p className="font-bold text-[3vw] md:text-base mb-2">CARTA DE,</p>
+                <div className="flex justify-center gap-6 text-[2.5vw] md:text-sm font-sans">
                     <div className="flex items-center gap-2">RECOMENDAÇÃO ({docType === 'recomendacao' ? <span className="font-bold">X</span> : ' '})</div>
                     <div className="flex items-center gap-2">MUDANÇA ({docType === 'mudanca' ? <span className="font-bold">X</span> : ' '})</div>
                 </div>
             </div>
 
             {/* Body */}
-            <main className="space-y-4 leading-relaxed text-justify text-base">
-                <p className="font-bold text-center mb-6">Saudações no Senhor,</p>
+            <main className="space-y-[1vw] md:space-y-4 leading-relaxed text-justify text-[2.5vw] md:text-base">
+                <p className="font-bold text-center mb-[1.5vw] md:mb-6">Saudações no Senhor,</p>
                 <p>
                     A Igreja Evangélica Assembleia de Deus Ministério Kairós apresenta,
                     o(a) Irmão(ã): <span className="font-bold underline">{member?.nome || '...'}</span>
@@ -91,42 +91,42 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
                 <p>
                     Membro desde: <span className="font-bold underline">{formatDate(member?.dataMembro) || '...'}</span>
                 </p>
-                <p className="text-center font-bold my-8 text-sm">
+                <p className="text-center font-bold my-[2vw] md:my-8 text-[2.2vw] md:text-sm">
                     POR SE ACHAR EM COMUNHÃO COM ESSA IGREJA, RECOMENDAMOS QUE
                     O(A) RECEBAIS NO SENHOR, COMO COSTUMAM FAZER OS SANTOS.
                 </p>
             </main>
 
             {/* Date */}
-            <div className="text-center mt-6 font-sans">
+            <div className="text-center mt-[1.5vw] md:mt-6 font-sans text-[2.2vw] md:text-sm">
                 <p>{city}, {format(date, "d 'de' MMMM 'de' yyyy", { locale: ptBR })}</p>
             </div>
             
             {/* Signatures */}
-            <footer className="pt-4 mt-auto">
-                <div className="flex justify-between items-end w-[130mm] mx-auto">
+            <footer className="pt-[1vw] md:pt-4 mt-auto">
+                <div className="flex justify-around items-end w-full mx-auto">
                     {/* Left side: President */}
-                    <div className="text-center w-[60mm]">
-                         <div className="relative w-full mx-auto mb-1 flex items-center justify-center" style={{ minHeight: '30mm' }}>
-                             {pastorSignatureUrl && <img src={pastorSignatureUrl} alt="Assinatura Pastor Presidente" style={{ objectFit: 'contain', maxHeight: '30mm', maxWidth: '50mm' }} crossOrigin="anonymous" />}
+                    <div className="text-center w-[48%]">
+                         <div className="relative w-full mx-auto mb-1 flex items-center justify-center min-h-[12vw] md:min-h-[30mm]">
+                             {pastorSignatureUrl && <img src={pastorSignatureUrl} alt="Assinatura Pastor Presidente" className="object-contain max-h-[12vw] md:max-h-[30mm] max-w-full" crossOrigin="anonymous" />}
                         </div>
                         <div className="border-t border-black w-full" />
-                        <p className="text-sm font-sans mt-1">{presidentName}</p>
-                        <p className="text-xs font-sans italic">Pastor Presidente</p>
+                        <p className="text-[2.2vw] md:text-sm font-sans mt-1">{presidentName}</p>
+                        <p className="text-[1.8vw] md:text-xs font-sans italic">Pastor Presidente</p>
                     </div>
 
                     {/* Right side: Director */}
-                     <div className="text-center w-[60mm]">
-                         <div className="relative w-full mx-auto mb-1" style={{ minHeight: '30mm' }}>
+                     <div className="text-center w-[48%]">
+                         <div className="relative w-full mx-auto mb-1 min-h-[12vw] md:min-h-[30mm]">
                             {/* Empty space for manual signature */}
                         </div>
                         <div className="border-t border-black w-full" />
-                        <p className="text-sm font-sans mt-1">{directorName || ' '}</p>
-                        <p className="text-xs font-sans italic">Pastor Dirigente</p>
+                        <p className="text-[2.2vw] md:text-sm font-sans mt-1">{directorName || ' '}</p>
+                        <p className="text-[1.8vw] md:text-xs font-sans italic">Pastor Dirigente</p>
                     </div>
                 </div>
 
-                <div className="text-center text-xs font-sans mt-8">
+                <div className="text-center text-[1.8vw] md:text-xs font-sans mt-[2vw] md:mt-8">
                     <p>Válida por 30 dias</p>
                 </div>
             </footer>
@@ -249,7 +249,7 @@ export default function RecommendationLetterPage() {
                 </CardContent>
             </Card>
 
-            <div className="p-4 bg-muted/50 rounded-lg overflow-x-auto">
+            <div className="p-4 bg-muted/50 rounded-lg">
                  <DocumentRenderer 
                     ref={documentRef}
                     churchInfo={churchInfo}

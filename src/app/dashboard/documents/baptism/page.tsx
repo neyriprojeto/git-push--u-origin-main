@@ -82,7 +82,7 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
             )}
             <div className="absolute inset-0 flex flex-col items-center p-[15mm]">
 
-                <div style={{ flexGrow: 1.5 }}></div>
+                <div style={{ flexGrow: 2 }}></div>
 
                 <div className="w-[85%] text-center text-[#444]">
                    <p className="font-bold my-4 text-black uppercase" style={{ fontFamily: "serif", fontSize: '28pt', letterSpacing: '0.1em' }}>

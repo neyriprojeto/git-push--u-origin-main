@@ -137,7 +137,6 @@ export default function BaptismCertificatePage() {
     const documentRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const logoFileInputRef = useRef<HTMLInputElement>(null);
-    const signatureFileInputRef = useRef<HTMLInputElement>(null);
     
     // States
     const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
@@ -146,7 +145,6 @@ export default function BaptismCertificatePage() {
     const [isSaving, setIsSaving] = useState(false);
     const [bgImage, setBgImage] = useState('');
     const [logoImage, setLogoImage] = useState('');
-    const [signatureImage, setSignatureImage] = useState('');
 
 
     // Data fetching
@@ -168,15 +166,13 @@ export default function BaptismCertificatePage() {
         if (churchInfo) {
             setLogoImage(churchInfo.baptismCertLogoUrl || churchInfo.conventionLogo1Url || PlaceHolderImages.find(p => p.id === 'church-logo')?.imageUrl || '');
             setBgImage(churchInfo.baptismCertBgUrl || PlaceHolderImages.find(p => p.id === 'baptism-certificate-bg')?.imageUrl || '');
-            setSignatureImage(churchInfo.pastorSignatureUrl || '');
         } else if (!isChurchInfoLoading) {
             setLogoImage(PlaceHolderImages.find(p => p.id === 'church-logo')?.imageUrl || '');
             setBgImage(PlaceHolderImages.find(p => p.id === 'baptism-certificate-bg')?.imageUrl || '');
-            setSignatureImage('');
         }
     }, [churchInfo, isChurchInfoLoading]);
 
-    const onSelectFile = async (e: React.ChangeEvent<HTMLInputElement>, target: 'background' | 'logo' | 'signature') => {
+    const onSelectFile = async (e: React.ChangeEvent<HTMLInputElement>, target: 'background' | 'logo') => {
         const file = e.target.files?.[0];
         if (!file) return;
 
@@ -189,9 +185,6 @@ export default function BaptismCertificatePage() {
             } else if (target === 'logo') {
                 setLogoImage(src);
                 toast({ title: 'Sucesso', description: 'Logo atualizado. Clique em "Salvar Alterações" para persistir.' });
-            } else if (target === 'signature') {
-                setSignatureImage(src);
-                toast({ title: 'Sucesso', description: 'Assinatura atualizada. Clique em "Salvar Alterações" para persistir.' });
             }
         } catch (error: any) {
             toast({ variant: 'destructive', title: 'Erro de Upload', description: error.message });
@@ -215,7 +208,6 @@ export default function BaptismCertificatePage() {
             await setDoc(churchInfoRef, {
                 baptismCertBgUrl: bgImage,
                 baptismCertLogoUrl: logoImage,
-                pastorSignatureUrl: signatureImage,
             }, { merge: true });
             toast({ title: 'Sucesso!', description: 'As alterações foram salvas.' });
         } catch (error: any) {
@@ -372,22 +364,6 @@ export default function BaptismCertificatePage() {
                                 {isUploading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                 <Upload className="mr-2 h-4 w-4" />
                                 Trocar Logo
-                            </Button>
-                            <input
-                                type="file"
-                                accept="image/*"
-                                ref={signatureFileInputRef}
-                                onChange={(e) => onSelectFile(e, 'signature')}
-                                className="hidden"
-                            />
-                            <Button
-                                variant="outline"
-                                onClick={() => signatureFileInputRef.current?.click()}
-                                disabled={isUploading}
-                            >
-                                {isUploading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                <Upload className="mr-2 h-4 w-4" />
-                                Trocar Assinatura
                             </Button>
                         </div>
                     </div>

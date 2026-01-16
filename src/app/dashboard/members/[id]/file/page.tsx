@@ -244,7 +244,7 @@ export default function MemberFilePage() {
             <div className="w-full max-w-5xl mb-4 flex justify-end print:hidden">
                 <Button onClick={() => window.print()}>
                     <Printer className="mr-2 h-4 w-4" />
-                    Imprimir / Salvar PDF
+                    Gerar PDF
                 </Button>
             </div>
             

@@ -113,6 +113,7 @@ interface ChurchInfo {
   instagramUrl?: string;
   youtubeUrl?: string;
   websiteUrl?: string;
+  radioUrl?: string;
   radioPageUrl?: string;
 }
 
@@ -886,16 +887,6 @@ export default function MemberProfilePage() {
                           Este é o seu espaço central para interagir com as funcionalidades da igreja. Use o menu de navegação para explorar.
                       </CardDescription>
                   </div>
-                  <div className="flex items-center gap-1">
-                      {isChurchInfoLoading ? <Loader2 className="h-4 w-4 animate-spin"/> :
-                      <>
-                        {churchInfo?.instagramUrl && <Button asChild variant="ghost" size="icon"><Link href={churchInfo.instagramUrl} target="_blank"><Instagram className="h-4 w-4"/></Link></Button>}
-                        {churchInfo?.youtubeUrl && <Button asChild variant="ghost" size="icon"><Link href={churchInfo.youtubeUrl} target="_blank"><Youtube className="h-4 w-4"/></Link></Button>}
-                        {churchInfo?.websiteUrl && <Button asChild variant="ghost" size="icon"><Link href={churchInfo.websiteUrl} target="_blank"><Globe className="h-4 w-4"/></Link></Button>}
-                        {churchInfo?.radioPageUrl && <Button asChild variant="ghost" size="icon"><Link href={churchInfo.radioPageUrl} target="_blank"><Radio className="h-4 w-4"/></Link></Button>}
-                      </>
-                      }
-                  </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -922,32 +913,110 @@ export default function MemberProfilePage() {
             </CardContent>
         </Card>
 
-        <Tabs defaultValue="carteirinha" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="carteirinha">Minha Carteirinha</TabsTrigger>
-                <TabsTrigger value="dados">Meus Dados</TabsTrigger>
-            </TabsList>
-            <TabsContent value="carteirinha">
-                <div className="space-y-4 pt-4">
-                    <p className="text-center text-sm text-muted-foreground">
-                    Clique na carteirinha para visualizar o verso.
-                    </p>
-
-                    <div 
-                        className="max-w-lg mx-auto flip-card-container cursor-pointer aspect-[85.6/54]"
-                        onClick={() => setIsCardFlipped(!isCardFlipped)}
-                    >
-                        <div className={cn("flip-card w-full h-full", { 'flipped': isCardFlipped })}>
-                            <div className="flip-card-front">
-                                <StudioCard isFront={true} currentMember={member} />
-                            </div>
-                            <div className="flip-card-back">
-                                 <StudioCard isFront={false} currentMember={member} />
-                            </div>
-                        </div>
-                    </div>
+        {churchInfo?.radioUrl && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Radio className="h-5 w-5 text-primary" />
+                Rádio Kairós
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="aspect-video w-full rounded-lg overflow-hidden bg-black">
+                <iframe
+                  src={churchInfo.radioUrl}
+                  className="w-full h-full border-0"
+                  allow="autoplay"
+                  title="Rádio Kairós Player"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        )}
+        
+        {verse && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between text-lg">
+                <div className="flex items-center gap-2">
+                  <BookOpen className="h-5 w-5 text-primary" />
+                  Promessa do Dia
                 </div>
+                 <Button variant="ghost" size="icon" onClick={selectRandomVerse} className="h-8 w-8">
+                    <RefreshCw className="h-4 w-4" />
+                    <span className="sr-only">Nova Promessa</span>
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <blockquote className="border-l-4 border-primary pl-4 italic">
+                <p className="mb-2">"{verse.text}"</p>
+                <footer className="text-sm font-semibold not-italic">
+                  - {verse.book} {verse.chapter}:{verse.verse}
+                </footer>
+              </blockquote>
+            </CardContent>
+          </Card>
+        )}
+
+        <Tabs defaultValue="mural" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
+                <TabsTrigger value="mural"><LayoutGrid className="mr-2"/>Mural</TabsTrigger>
+                <TabsTrigger value="dados"><User className="mr-2"/>Meus Dados</TabsTrigger>
+                <TabsTrigger value="carteirinha"><CreditCard className="mr-2"/>Carteirinha</TabsTrigger>
+                <TabsTrigger value="contato"><MessageSquare className="mr-2"/>Fale Conosco</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="mural">
+              <Card className="mt-4">
+                <CardHeader>
+                  <CardTitle>Mural de Avisos</CardTitle>
+                  <CardDescription>Fique por dentro das últimas notícias da comunidade.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {isLoadingPosts ? (
+                    <div className="flex justify-center items-center py-10">
+                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : posts && posts.length > 0 ? (
+                      posts.map((post) => {
+                          const avatarMural = getPostAvatar(post);
+                          return (
+                              <Card key={post.id} className="shadow-none border">
+                              <CardHeader>
+                                  <div className="flex items-start gap-4">
+                                  <Avatar className="h-10 w-10 border">
+                                      {avatarMural && <AvatarImage src={avatarMural.imageUrl} alt={post.authorName} />}
+                                      <AvatarFallback>{post.authorName.charAt(0)}</AvatarFallback>
+                                  </Avatar>
+                                  <div className="grid gap-0.5">
+                                      <CardTitle className="text-lg">{post.title}</CardTitle>
+                                      <CardDescription>
+                                      Por {post.authorName} em {post.createdAt?.toDate().toLocaleDateString('pt-BR')}
+                                      </CardDescription>
+                                  </div>
+                                  </div>
+                              </CardHeader>
+                              <CardContent>
+                                  {post.imageUrl && (
+                                    <div className="mb-4 relative aspect-video w-full rounded-md overflow-hidden">
+                                      <Image src={post.imageUrl} alt={post.title} layout="fill" objectFit="cover" />
+                                    </div>
+                                  )}
+                                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{post.content}</p>
+                              </CardContent>
+                              </Card>
+                          )
+                      })
+                  ) : (
+                    <div className="p-8 text-center text-muted-foreground border-dashed border-2 rounded-md">
+                      <p>Nenhuma postagem no mural ainda.</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </TabsContent>
+
             <TabsContent value="dados">
                 <Card>
                     <CardHeader>
@@ -1283,145 +1352,100 @@ export default function MemberProfilePage() {
                     </CardContent>
                 </Card>
             </TabsContent>
-        </Tabs>
-        
-        {verse && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between text-lg">
-                <div className="flex items-center gap-2">
-                  <BookOpen className="h-5 w-5 text-primary" />
-                  Promessa do Dia
-                </div>
-                 <Button variant="ghost" size="icon" onClick={selectRandomVerse} className="h-8 w-8">
-                    <RefreshCw className="h-4 w-4" />
-                    <span className="sr-only">Nova Promessa</span>
-                </Button>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <blockquote className="border-l-4 border-primary pl-4 italic">
-                <p className="mb-2">"{verse.text}"</p>
-                <footer className="text-sm font-semibold not-italic">
-                  - {verse.book} {verse.chapter}:{verse.verse}
-                </footer>
-              </blockquote>
-            </CardContent>
-          </Card>
-        )}
-
-
-        <div className="space-y-4">
-            <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2"><LayoutGrid /> Mural de Avisos</h2>
-            {isLoadingPosts ? (
-                <div className="flex justify-center items-center py-10">
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                </div>
-            ) : posts && posts.length > 0 ? (
-                posts.map((post) => {
-                    const avatarMural = getPostAvatar(post);
-                    return (
-                        <Card key={post.id}>
-                        <CardHeader>
-                            <div className="flex items-start gap-4">
-                            <Avatar className="h-10 w-10 border">
-                                {avatarMural && <AvatarImage src={avatarMural.imageUrl} alt={post.authorName} />}
-                                <AvatarFallback>{post.authorName.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            <div className="grid gap-0.5">
-                                <CardTitle>{post.title}</CardTitle>
-                                <CardDescription>
-                                Por {post.authorName} em {post.createdAt?.toDate().toLocaleDateString('pt-BR')}
-                                </CardDescription>
+            
+            <TabsContent value="carteirinha">
+                <Card className="mt-4">
+                  <CardHeader>
+                    <CardTitle>Minha Carteirinha Digital</CardTitle>
+                    <CardDescription>Clique na carteirinha para visualizar o verso.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex justify-center items-center">
+                    <div 
+                        className="max-w-lg mx-auto flip-card-container cursor-pointer aspect-[85.6/54]"
+                        onClick={() => setIsCardFlipped(!isCardFlipped)}
+                    >
+                        <div className={cn("flip-card w-full h-full", { 'flipped': isCardFlipped })}>
+                            <div className="flip-card-front">
+                                <StudioCard isFront={true} currentMember={member} />
                             </div>
+                            <div className="flip-card-back">
+                                  <StudioCard isFront={false} currentMember={member} />
                             </div>
-                        </CardHeader>
-                        <CardContent>
-                             {post.imageUrl && (
-                                <div className="mb-4 relative aspect-video w-full rounded-md overflow-hidden">
-                                  <Image src={post.imageUrl} alt={post.title} layout="fill" objectFit="cover" />
-                                </div>
-                              )}
-                            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{post.content}</p>
-                        </CardContent>
-                        </Card>
-                    )
-                })
-            ) : (
-                <Card>
-                    <CardContent className="p-8 text-center text-muted-foreground">
-                    <p>Nenhuma postagem no mural ainda.</p>
-                    </CardContent>
+                        </div>
+                    </div>
+                  </CardContent>
                 </Card>
-            )}
-        </div>
+            </TabsContent>
 
-        <Card>
-        <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-                <MessageSquare className="h-5 w-5"/>
-                Fale com a Administração
-            </CardTitle>
-            <CardDescription>Envie sua mensagem, dúvida, ou anexe um documento.</CardDescription>
-        </CardHeader>
-        <CardContent>
-            <Form {...messageForm}>
-              <form onSubmit={messageForm.handleSubmit(onMessageSubmit)} className="space-y-4">
-                   <FormField
-                      control={messageForm.control}
-                      name="destinatario"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Enviar para</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value} disabled={loadingCongregacoes}>
-                              <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder={loadingCongregacoes ? "Carregando..." : "Selecione o destinatário"} />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                  <SelectItem value="Administração Geral">Administração Geral</SelectItem>
-                                  {congregacoes?.map(c => <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>)}
-                              </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  <FormField
-                      control={messageForm.control}
-                      name="assunto"
-                      render={({ field }) => (
-                          <FormItem>
-                              <FormLabel>Assunto</FormLabel>
-                              <FormControl>
-                                  <Input placeholder="Sobre o que você quer falar?" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                          </FormItem>
-                      )}
-                  />
-                  <FormField
-                      control={messageForm.control}
-                      name="mensagem"
-                      render={({ field }) => (
-                          <FormItem>
-                              <FormLabel>Mensagem</FormLabel>
-                              <FormControl>
-                                  <Textarea placeholder="Digite sua mensagem aqui..." {...field} />
-                              </FormControl>
-                              <FormMessage />
-                          </FormItem>
-                      )}
-                  />
-                  <Button type="submit" disabled={isSendingMessage}>
-                    {isSendingMessage ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
-                    {isSendingMessage ? 'Enviando...' : 'Enviar Mensagem'}
-                  </Button>
-              </form>
-            </Form>
-        </CardContent>
-        </Card>
+             <TabsContent value="contato">
+                <Card className="mt-4">
+                  <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                          <MessageSquare className="h-5 w-5"/>
+                          Fale com a Administração
+                      </CardTitle>
+                      <CardDescription>Envie sua mensagem, dúvida, ou anexe um documento.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                      <Form {...messageForm}>
+                        <form onSubmit={messageForm.handleSubmit(onMessageSubmit)} className="space-y-4">
+                            <FormField
+                                control={messageForm.control}
+                                name="destinatario"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Enviar para</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={loadingCongregacoes}>
+                                        <FormControl>
+                                          <SelectTrigger>
+                                              <SelectValue placeholder={loadingCongregacoes ? "Carregando..." : "Selecione o destinatário"} />
+                                          </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            <SelectItem value="Administração Geral">Administração Geral</SelectItem>
+                                            {congregacoes?.map(c => <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            <FormField
+                                control={messageForm.control}
+                                name="assunto"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Assunto</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Sobre o que você quer falar?" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={messageForm.control}
+                                name="mensagem"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Mensagem</FormLabel>
+                                        <FormControl>
+                                            <Textarea placeholder="Digite sua mensagem aqui..." {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <Button type="submit" disabled={isSendingMessage}>
+                              {isSendingMessage ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
+                              {isSendingMessage ? 'Enviando...' : 'Enviar Mensagem'}
+                            </Button>
+                        </form>
+                      </Form>
+                  </CardContent>
+                </Card>
+            </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

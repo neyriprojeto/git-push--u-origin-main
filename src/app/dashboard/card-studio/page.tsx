@@ -239,18 +239,16 @@ export default function CardStudioPage() {
                 setCroppingId(id);
                 setIsCropping(true);
 
+                const el = elements[id];
                 if (id.startsWith('Fundo')) {
                     setAspect(85.6 / 54);
-                } else if (id === 'Foto do Membro') {
-                    const elSize = elements[id]?.size;
-                    if (elSize?.width && elSize?.height) {
-                        setAspect(elSize.width / elSize.height);
-                    } else {
-                        setAspect(1); // Square aspect for member photo
-                    }
+                } else if (id === 'Logo da Ficha') {
+                    setAspect(1 / 1);
                 }
-                 else {
-                    setAspect(undefined); // Free crop for logos and signature
+                else if (el?.size?.width && el?.size?.height) {
+                    setAspect(el.size.width / el.size.height);
+                } else {
+                    setAspect(undefined); // Free crop for any other case
                 }
             })
             reader.readAsDataURL(file)

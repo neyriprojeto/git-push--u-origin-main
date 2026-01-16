@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -369,7 +370,7 @@ export default function CongregationsPage() {
                                 <div className="space-y-2">
                                     <Label>Assinatura Digital do Presidente</Label>
                                     <div className='flex items-center gap-4'>
-                                        <Button variant="outline" onClick={() => triggerFileInput('pastorSignatureUrl', undefined)}>
+                                        <Button variant="outline" onClick={() => triggerFileInput('pastorSignatureUrl', 4 / 1)}>
                                             <Upload className="mr-2 h-4 w-4"/> Enviar Assinatura
                                         </Button>
                                         {churchInfo.pastorSignatureUrl && <div className="h-[40px] w-[120px] rounded-md border p-1 bg-slate-100"><Image src={churchInfo.pastorSignatureUrl} alt="Assinatura" width={120} height={40} className="object-contain"/></div>}
@@ -395,10 +396,10 @@ export default function CongregationsPage() {
                                     <Button variant="outline" onClick={() => triggerFileInput('pastorImageUrl', 1/1)}>
                                         <Upload className="mr-2 h-4 w-4"/> Foto do Pastor
                                     </Button>
-                                    <Button variant="outline" onClick={() => triggerFileInput('conventionLogo1Url', undefined)}>
+                                    <Button variant="outline" onClick={() => triggerFileInput('conventionLogo1Url', 1 / 1)}>
                                         <Upload className="mr-2 h-4 w-4"/> Logo Convenção 1
                                     </Button>
-                                    <Button variant="outline" onClick={() => triggerFileInput('conventionLogo2Url', undefined)}>
+                                    <Button variant="outline" onClick={() => triggerFileInput('conventionLogo2Url', 1 / 1)}>
                                         <Upload className="mr-2 h-4 w-4"/> Logo Convenção 2
                                     </Button>
                                 </div>

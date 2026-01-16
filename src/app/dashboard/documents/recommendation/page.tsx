@@ -19,7 +19,7 @@ import html2canvas from 'html2canvas';
 // Tipos
 type Member = { id: string; nome: string; cargo: string; dataMembro?: any; congregacao?: string; };
 type UserData = { nome: string; cargo?: string; congregacao?: string; };
-type ChurchInfo = { pastorName?: string; };
+type ChurchInfo = { pastorName?: string; pastorSignatureUrl?: string; };
 
 const DocumentRenderer = React.forwardRef<HTMLDivElement, {
     templateUrl?: string,
@@ -29,17 +29,18 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
     city: string,
     presidentName?: string,
     directorName?: string,
-}>(({ templateUrl, member, docType, date, city, presidentName, directorName }, ref) => {
+    pastorSignatureUrl?: string,
+}>(({ templateUrl, member, docType, date, city, presidentName, directorName, pastorSignatureUrl }, ref) => {
     
     const formatDate = (d: any): string => {
-        if (!d) return '___/___/______';
+        if (!d) return '';
         try {
             const dateObj = d.toDate ? d.toDate() : new Date(d);
             // Corrige o problema de fuso horário
             const timeZoneOffset = dateObj.getTimezoneOffset() * 60000;
             const adjustedDate = new Date(dateObj.getTime() + timeZoneOffset);
             return format(adjustedDate, 'dd/MM/yyyy');
-        } catch { return 'Data inválida'; }
+        } catch { return ''; }
     };
 
     return (
@@ -54,30 +55,34 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
             
             <div className="absolute inset-0 font-serif text-[11pt] text-black">
                 {/* Checkboxes */}
-                <div className="absolute font-bold" style={{ top: '88.5mm', left: '79mm' }}>
-                    {docType === 'recomendacao' && <span className='text-lg'>X</span>}
+                <div className="absolute font-bold" style={{ top: '88mm', left: '79mm' }}>
+                    {docType === 'recomendacao' && <span className='text-xl'>X</span>}
                 </div>
-                <div className="absolute font-bold" style={{ top: '96.5mm', left: '79mm' }}>
-                    {docType === 'mudanca' && <span className='text-lg'>X</span>}
+                <div className="absolute font-bold" style={{ top: '96mm', left: '79mm' }}>
+                    {docType === 'mudanca' && <span className='text-xl'>X</span>}
                 </div>
 
                 {/* Member data */}
-                <div className="absolute" style={{ top: '124mm', left: '57mm' }}>{member?.nome || ''}</div>
-                <div className="absolute" style={{ top: '134mm', left: '36mm' }}>{member?.cargo || ''}</div>
-                <div className="absolute" style={{ top: '143.5mm', left: '50mm' }}>{formatDate(member?.dataMembro)}</div>
+                <div className="absolute" style={{ top: '123.5mm', left: '48mm' }}>{member?.nome || ''}</div>
+                <div className="absolute" style={{ top: '129.5mm', left: '30mm' }}>{member?.cargo || ''}</div>
+                <div className="absolute" style={{ top: '135mm', left: '46mm' }}>{formatDate(member?.dataMembro)}</div>
 
                 {/* Date */}
-                <div className="absolute" style={{ top: '188.5mm', left: '48mm' }}>{city}</div>
-                <div className="absolute" style={{ top: '188.5mm', left: '81mm' }}>{format(date, 'd')}</div>
-                <div className="absolute" style={{ top: '188.5mm', left: '96mm' }}>{format(date, 'MMMM', { locale: ptBR })}</div>
-                <div className="absolute" style={{ top: '188.5mm', left: '135mm' }}>{format(date, 'yyyy')}</div>
+                <div className="absolute" style={{ top: '166mm', left: '32mm' }}>{city}</div>
+                <div className="absolute" style={{ top: '166mm', left: '60mm' }}>{format(date, 'd')}</div>
+                <div className="absolute" style={{ top: '166mm', left: '80mm' }}>{format(date, 'MMMM', { locale: ptBR })}</div>
+                <div className="absolute" style={{ top: '166mm', left: '115mm' }}>{format(date, 'yy')}</div>
                 
                 {/* Signatures */}
-                 <div className="absolute text-center" style={{ bottom: '48mm', left: '38mm', width: '60mm' }}>
-                    <p className="text-[10pt]">{presidentName}</p>
-                </div>
-                 <div className="absolute text-center" style={{ bottom: '48mm', right: '39mm', width: '60mm' }}>
-                    <p className="text-[10pt]">{directorName}</p>
+                <div className="absolute text-center" style={{ bottom: '26mm', left: 0, right: 0 }}>
+                    {pastorSignatureUrl && (
+                        <div className="relative w-[60mm] h-[20mm] mx-auto -mb-2">
+                           <Image src={pastorSignatureUrl} alt="Assinatura Pastor" layout="fill" objectFit="contain" />
+                        </div>
+                    )}
+                    <div className="border-t border-black w-[70mm] mx-auto" />
+                    <p className="text-[10pt] mt-1">{presidentName}</p>
+                    <p className="text-[9pt] italic">Pastor Presidente</p>
                 </div>
 
             </div>
@@ -133,6 +138,7 @@ export default function RecommendationLetterPage() {
     
     const selectedMember = members?.find(m => m.id === selectedMemberId) || null;
     const presidentName = churchInfo?.pastorName || '';
+    const pastorSignatureUrl = churchInfo?.pastorSignatureUrl || '';
     const directorName = userData?.cargo === 'Pastor/dirigente' ? userData.nome : '';
 
     const isLoading = isAuthUserLoading || isUserDataLoading || isLoadingMembers || isLoadingTemplate || isChurchInfoLoading;
@@ -214,6 +220,7 @@ export default function RecommendationLetterPage() {
                     city="Veranópolis"
                     presidentName={presidentName}
                     directorName={directorName}
+                    pastorSignatureUrl={pastorSignatureUrl}
                 />
             </div>
         </div>

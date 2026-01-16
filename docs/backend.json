@@ -154,6 +154,11 @@
           "type": "string",
           "description": "URL for the radio page to be opened in a new tab.",
           "format": "uri"
+        },
+        "pastorSignatureUrl": {
+          "type": "string",
+          "description": "URL of the pastor's signature image.",
+          "format": "uri"
         }
       },
       "required": [

@@ -20,6 +20,11 @@ const documents = [
         description: "Gere um certificado de apresentação de criança.",
         href: "/dashboard/documents/presentation",
     },
+    {
+        title: "Estatuto da Igreja",
+        description: "Visualize ou baixe o estatuto oficial da igreja.",
+        href: "/dashboard/documents/statute",
+    },
 ];
 
 export default function DocumentsPage() {

@@ -19,6 +19,7 @@ import 'react-image-crop/dist/ReactCrop.css';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Separator } from '@/components/ui/separator';
+import { uploadArquivo } from '@/lib/cloudinary';
 
 type Congregacao = {
   id: string;
@@ -45,6 +46,7 @@ type ChurchInfo = {
     baptismCertLogoUrl?: string;
     presentationCertBgUrl?: string;
     presentationCertLogoUrl?: string;
+    statuteUrl?: string;
 }
 
 type Leader = {
@@ -85,7 +87,6 @@ export default function CongregationsPage() {
   const { data: churchInfoData, isLoading: loadingChurchInfo } = useDoc<ChurchInfo>(churchInfoRef);
   const [churchInfo, setChurchInfo] = useState<ChurchInfo>({});
   const [isSavingChurchInfo, setIsSavingChurchInfo] = useState(false);
-  const [isSavingLetterConfig, setIsSavingLetterConfig] = useState(false);
 
   // Leader State
   const leadersCollection = useMemoFirebase(() => (firestore ? collection(firestore, 'leaders') : null), [firestore]);
@@ -107,6 +108,10 @@ export default function CongregationsPage() {
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [currentFile, setCurrentFile] = useState<File | null>(null);
+  
+  const statuteInputRef = useRef<HTMLInputElement>(null);
+  const [isSavingStatute, setIsSavingStatute] = useState(false);
+
 
   useEffect(() => {
     if (churchInfoData) setChurchInfo(churchInfoData);
@@ -181,23 +186,6 @@ export default function CongregationsPage() {
     const { name, value } = e.target;
     setChurchInfo(prev => ({ ...prev, [name]: value }));
   }
-  
-  const handleSaveLetterConfig = async () => {
-    if (!churchInfoRef) return;
-    setIsSavingLetterConfig(true);
-    try {
-        // Save logos and signature to churchInfo
-        await setDoc(churchInfoRef, churchInfo, { merge: true });
-
-        toast({ title: 'Sucesso!', description: 'Configurações da carta atualizadas.' });
-    } catch (error) {
-        console.error("Error saving letter config:", error);
-        toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível salvar as configurações.' });
-    } finally {
-        setIsSavingLetterConfig(false);
-    }
-  };
-
 
   const handleLeaderFieldChange = (id: string, field: keyof Omit<Leader, 'id' | 'imageUrl'>, value: string | number) => {
     setDisplayLeaders(prev => prev.map(l => l.id === id ? { ...l, [field]: value } : l));
@@ -331,6 +319,52 @@ export default function CongregationsPage() {
    }, 'image/png');
   }
 
+    const handleStatuteFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (file.type !== 'application/pdf') {
+            toast({
+                variant: 'destructive',
+                title: 'Tipo de arquivo inválido',
+                description: 'Por favor, selecione um arquivo PDF.',
+            });
+            return;
+        }
+
+        setIsUploading(true);
+        try {
+            const src = await uploadArquivo(file);
+            setChurchInfo(prev => ({ ...prev, statuteUrl: src }));
+            toast({
+                title: 'Upload Concluído',
+                description: 'O novo estatuto foi carregado. Clique em "Salvar Estatuto" para confirmar a alteração.',
+            });
+        } catch (error: any) {
+            toast({
+                variant: 'destructive',
+                title: 'Erro no Upload',
+                description: error.message || 'Não foi possível enviar o arquivo.',
+            });
+        } finally {
+            setIsUploading(false);
+        }
+    };
+    
+    const handleSaveStatute = async () => {
+        if (!churchInfoRef) return;
+        setIsSavingStatute(true);
+        try {
+            await setDoc(churchInfoRef, { statuteUrl: churchInfo.statuteUrl }, { merge: true });
+            toast({ title: 'Sucesso!', description: 'Estatuto da igreja atualizado.' });
+        } catch (error) {
+            console.error("Error saving statute:", error);
+            toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível salvar o estatuto.' });
+        } finally {
+            setIsSavingStatute(false);
+        }
+    };
+
   return (
     <>
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -340,6 +374,30 @@ export default function CongregationsPage() {
                     <CardTitle>Configurações Gerais</CardTitle>
                     <CardDescription>Gerencie as informações e aparências da sua igreja.</CardDescription>
                 </CardHeader>
+            </Card>
+            
+            <Card>
+                <CardHeader>
+                    <CardTitle>Estatuto da Igreja</CardTitle>
+                    <CardDescription>Faça o upload do estatuto da igreja em formato PDF.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <input type="file" ref={statuteInputRef} onChange={handleStatuteFileUpload} className="hidden" accept="application/pdf" />
+                    <Button variant="outline" onClick={() => statuteInputRef.current?.click()} disabled={isUploading}>
+                        {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4"/>}
+                        {isUploading ? 'Enviando...' : 'Upload do Estatuto (PDF)'}
+                    </Button>
+                    {churchInfo.statuteUrl && (
+                        <div className="text-sm text-muted-foreground">
+                            <p>Estatuto atual:</p>
+                            <a href={churchInfo.statuteUrl} target="_blank" rel="noopener noreferrer" className="text-primary underline break-all">{churchInfo.statuteUrl}</a>
+                        </div>
+                    )}
+                     <Button onClick={handleSaveStatute} disabled={isSavingStatute || isUploading}>
+                        {isSavingStatute ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                        {isSavingStatute ? 'Salvando...' : 'Salvar Estatuto'}
+                    </Button>
+                </CardContent>
             </Card>
 
             <Card>

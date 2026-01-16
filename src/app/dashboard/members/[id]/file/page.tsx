@@ -294,31 +294,36 @@ export default function MemberFilePage() {
     );
 
     return (
-        <div className="w-full min-h-screen bg-secondary p-4 flex flex-col justify-center items-center font-serif">
-            <div className="w-full max-w-4xl mb-4 flex justify-end">
+        <div className="w-full min-h-screen bg-secondary p-4 flex flex-col items-center font-serif">
+            <div className="w-full max-w-5xl mb-4 flex justify-end">
                 <Button onClick={handleGeneratePdf} disabled={isGeneratingPdf}>
                     {isGeneratingPdf ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Printer className="mr-2 h-4 w-4" />}
                     Gerar PDF
                 </Button>
             </div>
             
-            {/* Flip container for screen view */}
-            <div 
-                className="w-full max-w-4xl cursor-pointer"
-                onClick={() => setIsFront(!isFront)}
-            >
-                 <div className="origin-top transform scale-[0.35] sm:scale-[0.5] md:scale-[0.7] lg:scale-[0.8] xl:scale-100 transition-transform duration-300 aspect-[297/210]">
-                    <div className={cn("flip-card w-full h-full transition-transform duration-700", { 'flipped': !isFront })} style={{ transformStyle: 'preserve-3d' }}>
-                        <div className="flip-card-front">
-                            <FichaFrente />
-                        </div>
-                        <div className="flip-card-back">
-                            <FichaVerso />
+            {/* Viewer Container */}
+            <div className="w-full flex justify-center items-start overflow-x-auto p-2">
+                {/* Scaled Container */}
+                <div className="origin-top transform scale-[0.3] sm:scale-[0.5] md:scale-[0.7] lg:scale-[0.8] xl:scale-100 transition-transform duration-300">
+                    {/* Fixed Size Container with perspective for 3D flip */}
+                    <div
+                        className="flip-card-container cursor-pointer"
+                        style={{ width: '297mm', height: '210mm', perspective: '1000px' }}
+                        onClick={() => setIsFront(!isFront)}
+                    >
+                        <div className={cn("flip-card w-full h-full", { 'flipped': !isFront })}>
+                            <div className="flip-card-front" style={{ borderRadius: 0 }}>
+                                <FichaFrente />
+                            </div>
+                            <div className="flip-card-back" style={{ borderRadius: 0 }}>
+                                <FichaVerso />
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-            
+
             <div className='flex gap-2 justify-center mt-4'>
                 <Button variant={isFront ? 'default' : 'outline'} onClick={() => setIsFront(true)}>Frente</Button>
                 <Button variant={!isFront ? 'default' : 'outline'} onClick={() => setIsFront(false)}>Verso</Button>
@@ -337,4 +342,3 @@ export default function MemberFilePage() {
     );
 }
 
-    

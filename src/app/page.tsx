@@ -197,7 +197,7 @@ export default function Home() {
               className="object-cover"
             />
           )}
-          <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-start text-center p-4 pt-6">
+          <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-center p-4">
             <AppLogo className="h-12 w-12" />
             <h1 className="text-xl md:text-2xl font-bold">Bem-vindo a AD Kairós</h1>
           </div>
@@ -217,15 +217,15 @@ export default function Home() {
               </Avatar>
           </div>
 
-          <div className="max-w-4xl mx-auto grid gap-8">
+          <div className="max-w-4xl mx-auto grid gap-8 -mt-12">
             {/* Sobre */}
-            <Card className="text-center -mt-2">
+            <Card className="text-center pt-12">
               <CardHeader>
                 <CardTitle className="text-primary">{pastorName}</CardTitle>
                 <CardDescription>Pastor Presidente</CardDescription>
               </CardHeader>
               <CardContent>
-                <h2 className="text-2xl font-bold mt-4 mb-2">
+                <h2 className="text-2xl font-bold mt-4 mb-2 text-primary">
                   Sobre a nossa Igreja
                 </h2>
                  {loadingChurchInfo ? (
@@ -252,7 +252,7 @@ export default function Home() {
             {/* Palavra Pastoral */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-center">Palavra Pastoral</CardTitle>
+                <CardTitle className="text-center text-primary">Palavra Pastoral</CardTitle>
               </CardHeader>
               <CardContent>
                 {loadingChurchInfo ? (
@@ -267,7 +267,7 @@ export default function Home() {
             <div className="grid md:grid-cols-2 gap-8">
                <Card>
                 <CardHeader>
-                  <CardTitle className="text-center">Nossas Congregações</CardTitle>
+                  <CardTitle className="text-center text-primary">Nossas Congregações</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {loadingCongregacoes ? (
@@ -298,7 +298,7 @@ export default function Home() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-center">Comissão Executiva</CardTitle>
+                  <CardTitle className="text-center text-primary">Comissão Executiva</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {loadingLeaders ? (

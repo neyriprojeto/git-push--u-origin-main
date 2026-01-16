@@ -43,6 +43,8 @@ type ChurchInfo = {
     radioPageUrl?: string;
     conventionLogo1Url?: string;
     conventionLogo2Url?: string;
+    baptismCertBgUrl?: string;
+    baptismCertLogoUrl?: string;
 }
 
 type Leader = {
@@ -468,6 +470,40 @@ export default function CongregationsPage() {
                              <Button onClick={handleSaveLetterConfig} disabled={isSavingLetterConfig}>
                                 {isSavingLetterConfig ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : <Save className="h-4 w-4 mr-2" />}
                                 {isSavingLetterConfig ? 'Salvando...' : 'Salvar Configurações da Carta'}
+                            </Button>
+                        </>
+                    )}
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Configurações do Certificado de Batismo</CardTitle>
+                    <CardDescription>Configure o fundo e o logo para o certificado de batismo.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {loadingChurchInfo ? (
+                        <div className="flex justify-center p-8"> <Loader2 className="h-8 w-8 animate-spin" /></div>
+                    ) : (
+                        <>
+                            <div className="space-y-2">
+                                <Label>Imagens do Certificado</Label>
+                                <div className='flex flex-wrap gap-2'>
+                                    <Button variant="outline" onClick={() => triggerFileInput('baptismCertBgUrl', 297/210)}>
+                                        <Upload className="mr-2 h-4 w-4"/> Fundo do Certificado
+                                    </Button>
+                                    <Button variant="outline" onClick={() => triggerFileInput('baptismCertLogoUrl', undefined)}>
+                                        <Upload className="mr-2 h-4 w-4"/> Logo do Certificado
+                                    </Button>
+                                </div>
+                            </div>
+                                <div className='flex flex-wrap gap-4 mt-4'>
+                                {churchInfo.baptismCertBgUrl && <div><Label className='text-xs'>Fundo Atual</Label><Image src={churchInfo.baptismCertBgUrl} alt="Fundo do Certificado" width={297/2} height={210/2} className="rounded-md border object-cover p-2"/></div>}
+                                {churchInfo.baptismCertLogoUrl && <div><Label className='text-xs'>Logo Atual</Label><Image src={churchInfo.baptismCertLogoUrl} alt="Logo do Certificado" width={100} height={100} className="rounded-md border object-contain p-2"/></div>}
+                            </div>
+                                <Button onClick={handleSaveChurchInfo} disabled={isSavingChurchInfo}>
+                                {isSavingChurchInfo ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                                {isSavingChurchInfo ? 'Salvando...' : 'Salvar Configurações do Certificado'}
                             </Button>
                         </>
                     )}

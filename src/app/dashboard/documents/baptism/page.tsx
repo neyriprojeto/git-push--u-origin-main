@@ -5,18 +5,15 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useUser, useFirestore, useMemoFirebase, useDoc, useCollection } from '@/firebase';
-import { doc, collection, query, where, setDoc } from 'firebase/firestore';
-import { Loader2, Printer, ShieldAlert, Upload, Save } from 'lucide-react';
+import { doc, collection, query, where } from 'firebase/firestore';
+import { Loader2, Printer, ShieldAlert } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { uploadArquivo } from '@/lib/cloudinary';
-import { useToast } from '@/hooks/use-toast';
 
 // --- Types ---
 type Member = { 
@@ -64,7 +61,7 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
     return (
         <div 
             ref={ref} 
-            className="w-[297mm] h-[210mm] bg-white font-serif text-black relative"
+            className="w-[297mm] h-[210mm] bg-white text-black relative"
             style={{
                 backgroundImage: bgImage ? `url(${bgImage})` : 'none',
                 backgroundSize: '100% 100%',
@@ -82,10 +79,10 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
             )}
             <div className="absolute inset-0 flex flex-col items-center p-[15mm]">
 
-                <div style={{ flexGrow: 2 }}></div>
+                <div style={{ flexGrow: 2.5 }}></div>
 
                 <div className="w-[85%] text-center text-[#444]">
-                   <p className="font-bold my-4 text-black uppercase" style={{ fontFamily: "serif", fontSize: '28pt', letterSpacing: '0.1em' }}>
+                   <p className="font-bold my-4 uppercase" style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: '28pt', letterSpacing: '0.1em' }}>
                        {member?.nome || '________________'}
                    </p>
                    <p className="leading-relaxed mt-4" style={{ fontSize: '12pt' }}>
@@ -132,17 +129,12 @@ DocumentRenderer.displayName = 'DocumentRenderer';
 // --- Page Component ---
 export default function BaptismCertificatePage() {
     const firestore = useFirestore();
-    const { toast } = useToast();
     const { user: authUser, isUserLoading: isAuthUserLoading } = useUser();
     const documentRef = useRef<HTMLDivElement>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const logoFileInputRef = useRef<HTMLInputElement>(null);
     
     // States
     const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
     const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
-    const [isUploading, setIsUploading] = useState(false);
-    const [isSaving, setIsSaving] = useState(false);
     const [bgImage, setBgImage] = useState('');
     const [logoImage, setLogoImage] = useState('');
 
@@ -172,60 +164,10 @@ export default function BaptismCertificatePage() {
         }
     }, [churchInfo, isChurchInfoLoading]);
 
-    const onSelectFile = async (e: React.ChangeEvent<HTMLInputElement>, target: 'background' | 'logo') => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        setIsUploading(true);
-        try {
-            const src = await uploadArquivo(file);
-            if (target === 'background') {
-                setBgImage(src);
-                toast({ title: 'Sucesso', description: 'Imagem de fundo atualizada. Clique em "Salvar Alterações" para persistir.' });
-            } else if (target === 'logo') {
-                setLogoImage(src);
-                toast({ title: 'Sucesso', description: 'Logo atualizado. Clique em "Salvar Alterações" para persistir.' });
-            }
-        } catch (error: any) {
-            toast({ variant: 'destructive', title: 'Erro de Upload', description: error.message });
-        } finally {
-            setIsUploading(false);
-        }
-    };
-
-    const handleSaveChanges = async () => {
-        if (!churchInfoRef) {
-            toast({
-                variant: 'destructive',
-                title: 'Erro de Conexão',
-                description: 'Não foi possível conectar ao banco de dados para salvar.',
-            });
-            return;
-        }
-
-        setIsSaving(true);
-        try {
-            await setDoc(churchInfoRef, {
-                baptismCertBgUrl: bgImage,
-                baptismCertLogoUrl: logoImage,
-            }, { merge: true });
-            toast({ title: 'Sucesso!', description: 'As alterações foram salvas.' });
-        } catch (error: any) {
-            console.error("Error saving certificate settings:", error);
-            toast({
-                variant: 'destructive',
-                title: 'Erro ao Salvar',
-                description: 'Não foi possível salvar as configurações do certificado.',
-            });
-        } finally {
-            setIsSaving(false);
-        }
-    };
-
     const handleGeneratePdf = async () => {
         const source = documentRef.current;
         if (!source || !source.parentElement) {
-            toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível encontrar o elemento do documento para gerar o PDF.' });
+            alert('Não foi possível encontrar o elemento do documento para gerar o PDF.');
             return;
         };
 
@@ -241,7 +183,7 @@ export default function BaptismCertificatePage() {
             await new Promise(resolve => setTimeout(resolve, 50));
 
             const canvas = await html2canvas(source, {
-                scale: 2,
+                scale: 4,
                 useCORS: true,
                 backgroundColor: null,
             });
@@ -260,7 +202,7 @@ export default function BaptismCertificatePage() {
             pdf.save(`certificado-batismo-${selectedMember?.nome.replace(/ /g, '_') || 'membro'}.pdf`);
         } catch (error) {
             console.error("Error generating PDF:", error);
-             toast({ variant: 'destructive', title: 'Erro ao gerar PDF', description: 'Não foi possível gerar o arquivo.' });
+             alert('Não foi possível gerar o arquivo.');
         } finally {
             scaledParent.className = originalClasses;
             scaledParent.style.transform = '';
@@ -302,10 +244,6 @@ export default function BaptismCertificatePage() {
             <div className="flex flex-wrap items-center justify-between gap-4">
                 <h2 className="text-3xl font-bold tracking-tight">Gerar Certificado de Batismo</h2>
                 <div className="flex flex-wrap gap-2">
-                    <Button onClick={handleSaveChanges} disabled={isSaving || isUploading}>
-                        {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                        {isSaving ? 'Salvando...' : 'Salvar Alterações'}
-                    </Button>
                     <Button onClick={handleGeneratePdf} disabled={isGeneratingPdf || !selectedMember}>
                         {isGeneratingPdf ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Printer className="mr-2 h-4 w-4" />}
                         {isGeneratingPdf ? 'Gerando...' : 'Gerar PDF'}
@@ -316,10 +254,10 @@ export default function BaptismCertificatePage() {
             <Card>
                 <CardHeader>
                     <CardTitle>Configurar Certificado</CardTitle>
-                    <CardDescription>Selecione o membro e as imagens para gerar o documento.</CardDescription>
+                    <CardDescription>Selecione o membro para gerar o documento.</CardDescription>
                 </CardHeader>
-                <CardContent className="grid md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
+                <CardContent>
+                    <div className="space-y-2 max-w-sm">
                         <Label>Selecione o Membro</Label>
                         <Select onValueChange={setSelectedMemberId} disabled={!members}>
                             <SelectTrigger>
@@ -330,50 +268,11 @@ export default function BaptismCertificatePage() {
                             </SelectContent>
                         </Select>
                     </div>
-                     <div className="space-y-2">
-                        <Label>Imagens do Certificado</Label>
-                        <div className='flex flex-wrap gap-2'>
-                            <input
-                                type="file"
-                                accept="image/*"
-                                ref={fileInputRef}
-                                onChange={(e) => onSelectFile(e, 'background')}
-                                className="hidden"
-                            />
-                            <Button
-                                variant="outline"
-                                onClick={() => fileInputRef.current?.click()}
-                                disabled={isUploading}
-                            >
-                                {isUploading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                <Upload className="mr-2 h-4 w-4" />
-                                Trocar Fundo
-                            </Button>
-                             <input
-                                type="file"
-                                accept="image/*"
-                                ref={logoFileInputRef}
-                                onChange={(e) => onSelectFile(e, 'logo')}
-                                className="hidden"
-                            />
-                            <Button
-                                variant="outline"
-                                onClick={() => logoFileInputRef.current?.click()}
-                                disabled={isUploading}
-                            >
-                                {isUploading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                <Upload className="mr-2 h-4 w-4" />
-                                Trocar Logo
-                            </Button>
-                        </div>
-                    </div>
                 </CardContent>
             </Card>
 
             <div className="p-4 bg-muted/50 rounded-lg w-full flex justify-center items-start overflow-x-auto">
-                <div 
-                    className="origin-top transform scale-[0.3] sm:scale-[0.5] md:scale-[0.6] lg:scale-[0.8] xl:scale-[0.9] transition-transform duration-300"
-                >
+                <div className="origin-top transform scale-[0.3] sm:scale-[0.5] md:scale-[0.7] lg:scale-[0.8] transition-transform duration-300">
                     <DocumentRenderer 
                         ref={documentRef}
                         churchInfo={churchInfo}

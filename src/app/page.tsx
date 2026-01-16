@@ -197,7 +197,7 @@ export default function Home() {
               className="object-cover"
             />
           )}
-          <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-center p-4">
+          <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-center p-4 pb-12">
             <AppLogo className="h-12 w-12" />
             <h1 className="text-xl md:text-2xl font-bold">Bem-vindo a AD Kairós</h1>
           </div>
@@ -217,11 +217,11 @@ export default function Home() {
               </Avatar>
           </div>
 
-          <div className="max-w-4xl mx-auto grid gap-8 -mt-12">
+          <div className="max-w-4xl mx-auto grid gap-8 -mt-16">
             {/* Sobre */}
-            <Card className="text-center pt-12">
+            <Card className="text-center pt-16">
               <CardHeader>
-                <CardTitle className="text-primary">{pastorName}</CardTitle>
+                <CardTitle className="text-primary text-2xl">{pastorName}</CardTitle>
                 <CardDescription>Pastor Presidente</CardDescription>
               </CardHeader>
               <CardContent>

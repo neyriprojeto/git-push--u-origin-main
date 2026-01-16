@@ -49,7 +49,7 @@ const defaultElements: DocElements = {
     'Certificamos': { position: { top: 30, left: 50 }, size: { fontSize: 12 }, text: 'CERTIFICAMOS QUE', textAlign: 'center', color: '#333' },
     'NomeCrianca': { position: { top: 40, left: 50 }, size: { fontSize: 36 }, text: 'Nome da Criança', fontFamily: 'Great Vibes, cursive', textAlign: 'center', color: 'black' },
     'Detalhes': { position: { top: 55, left: 50 }, size: { fontSize: 11 }, text: 'Detalhes da criança...', textAlign: 'center', color: '#333', lineHeight: 1.5, width: 600 },
-    'Versiculo': { position: { top: 70, left: 50 }, size: { fontSize: 9 }, text: '“E, cumprindo-se os dias da purificação dela...” Lucas 2:22', textAlign: 'center', color: '#333', fontStyle: 'italic', width: 500 },
+    'Versiculo': { position: { top: 70, left: 50 }, size: { fontSize: 9 }, text: '“E, cumprindo-se os dias da purificação dela, segundo a lei de Moisés, o levaram a Jerusalém, para o apresentarem ao Senhor.” (Lucas 2:22)', textAlign: 'center', color: '#333', fontStyle: 'italic', width: 500 },
     'AssinaturaPresidente': { position: { top: 82, left: 25 }, size: { width: 180, height: 50, fontSize: 12 }, src: '' },
     'LinhaPresidente': { position: { top: 90, left: 25 }, size: { fontSize: 12, width: 250, height: 2 } },
     'NomePresidente': { position: { top: 92, left: 25 }, size: { fontSize: 9 }, text: 'Pastor Presidente', textAlign: 'center' },
@@ -154,7 +154,7 @@ export default function PresentationCertificatePage() {
         const initialElements = churchInfo?.presentationCertElements ? { ...defaultElements, ...churchInfo.presentationCertElements } : defaultElements;
         
         initialElements['NomeCrianca'].text = childName || '________________';
-        initialElements['Detalhes'].text = `${childDetails || 'Nascida no dia ___ de ________ de _____, filha(o) de ______________ e ______________'}\nfoi apresentada oficialmente ao SENHOR JESUS CRISTO, na Igreja Evangélica Assembleia de Deus Ministério Kairós.\nNo dia ${today}`;
+        initialElements['Detalhes'].text = `${childDetails || 'Nascida no dia ___ de ________ de _____, filha(o) de ______________ e ______________'}\nfoi apresentada oficialmente ao SENHOR JESUS CRISTO,\nna Igreja Evangélica Assembleia de Deus Ministério Kairós.\nNo dia ${today}`;
         initialElements['AssinaturaPresidente'].src = churchInfo?.pastorSignatureUrl || '';
         initialElements['NomePresidente'].text = churchInfo?.pastorName || '____________________';
         initialElements['NomePastorDirigente'].text = localPastor || '____________________';

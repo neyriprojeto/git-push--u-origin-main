@@ -10,7 +10,11 @@ const documents = [
         description: "Gere uma carta de recomendação ou mudança para um membro.",
         href: "/dashboard/documents/recommendation",
     },
-    // Futuros documentos podem ser adicionados aqui
+    {
+        title: "Certificado de Batismo",
+        description: "Gere um certificado de batismo para um membro.",
+        href: "/dashboard/documents/baptism",
+    },
 ];
 
 export default function DocumentsPage() {

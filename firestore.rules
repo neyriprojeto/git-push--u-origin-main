@@ -13,6 +13,8 @@
  * - /cardTemplates/{templateId}: Stores the customizable template for member ID cards.
  * - /leaders/{leaderId}: Stores the manually curated list of executive committee leaders for the homepage.
  * - /logos/{logoId}: Stores official church logos for download by authorized users.
+ * - /posts/{postId}: Stores announcements for the public mural.
+ * - /messages/{messageId}: Stores messages sent from users to admins/pastors.
  *
  * Key Security Decisions:
  * - Centralized User Data: All member-specific data is stored in `/users/{userId}`, where `{userId}`
@@ -184,6 +186,30 @@ service cloud.firestore {
     match /logos/{logoId} {
       allow get, list: if isSignedIn();
       allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description
+     *   Stores announcements for the mural. Publicly readable by anyone.
+     *   Only Admins can create, update, or delete posts.
+     * @path /posts/{postId}
+     */
+    match /posts/{postId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description
+     *   Stores messages sent from users to administration or pastors.
+     *   Any authenticated user can create a message.
+     *   Only admins or the recipient pastor can read/list them.
+     * @path /messages/{messageId}
+     */
+    match /messages/{messageId} {
+      allow create: if isSignedIn();
+      allow read, list: if isAdmin() || (isPastor() && resource.data.recipient == getRequestingUserData().congregacao);
+      allow update, delete: if isAdmin();
     }
   }
 }

@@ -132,6 +132,37 @@
             "imageUrl": { "type": "string", "format": "uri", "description": "URL of the logo image (PNG)." }
         },
         "required": ["name", "imageUrl"]
+    },
+    "Post": {
+      "title": "Post",
+      "type": "object",
+      "description": "Represents an announcement on the mural.",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "authorId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "authorAvatar": { "type": "string", "format": "uri" },
+        "imageUrl": { "type": "string", "format": "uri" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "content", "authorId", "authorName", "createdAt"]
+    },
+    "Message": {
+      "title": "Message",
+      "type": "object",
+      "description": "Represents a message sent to the administration or a congregation.",
+      "properties": {
+        "id": { "type": "string" },
+        "senderId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "recipient": { "type": "string" },
+        "subject": { "type": "string" },
+        "body": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["senderId", "senderName", "recipient", "subject", "body", "createdAt"]
     }
   },
   "auth": {
@@ -169,6 +200,14 @@
     "/logos/{logoId}": {
         "schema": { "$ref": "#/entities/ChurchLogo" },
         "description": "Stores church logos for download."
+    },
+    "/posts/{postId}": {
+        "schema": { "$ref": "#/entities/Post" },
+        "description": "Stores announcements for the mural."
+    },
+    "/messages/{messageId}": {
+        "schema": { "$ref": "#/entities/Message" },
+        "description": "Stores messages sent via the contact form."
     }
   }
 }

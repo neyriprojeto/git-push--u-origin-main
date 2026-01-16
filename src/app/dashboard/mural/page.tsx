@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,52 +14,122 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { posts as initialPosts, Post } from '@/data/posts';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { PlusCircle } from 'lucide-react';
-import { useDoc, useFirestore, useUser, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { PlusCircle, Loader2, Upload, Trash2 } from 'lucide-react';
+import { useDoc, useFirestore, useUser, useMemoFirebase, useCollection } from '@/firebase';
+import { doc, collection, query, orderBy, Timestamp } from 'firebase/firestore';
+import { addPost, deletePost } from '@/firebase/firestore/mutations';
+import { useToast } from '@/hooks/use-toast';
+import { uploadArquivo } from '@/lib/cloudinary';
+import Image from 'next/image';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+
 
 interface UserData {
   cargo?: string;
+  nome: string;
+  avatar?: string;
 }
 
+type Post = {
+  id: string;
+  title: string;
+  content: string;
+  authorId: string;
+  authorName: string;
+  authorAvatar?: string;
+  imageUrl?: string;
+  createdAt: Timestamp;
+};
+
+
 export default function MuralPage() {
-  const [posts, setPosts] = useState<Post[]>(initialPosts);
   const [newPostTitle, setNewPostTitle] = useState('');
   const [newPostContent, setNewPostContent] = useState('');
-  
+  const [newPostImage, setNewPostImage] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
+  const imageInputRef = useRef<HTMLInputElement>(null);
+
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
+  
   const userRef = useMemoFirebase(
     () => (firestore && user ? doc(firestore, 'users', user.uid) : null),
     [firestore, user]
   );
   const { data: userData, isLoading: isUserDataLoading } = useDoc<UserData>(userRef);
 
+  const postsCollection = useMemoFirebase(
+    () => (firestore ? query(collection(firestore, 'posts'), orderBy('createdAt', 'desc')) : null),
+    [firestore]
+  );
+  const { data: posts, isLoading: isLoadingPosts } = useCollection<Post>(postsCollection);
+
+
   const canPost = userData?.cargo === 'Administrador';
 
-  const handleAddPost = () => {
-    if (newPostTitle.trim() === '' || newPostContent.trim() === '') return;
+  const handleAddPost = async () => {
+    if (!firestore || !user || !userData) {
+      toast({ variant: 'destructive', title: 'Erro', description: 'Você precisa estar logado para postar.' });
+      return;
+    }
+    if (newPostTitle.trim() === '' || newPostContent.trim() === '') {
+      toast({ variant: 'destructive', title: 'Erro', description: 'Título e conteúdo são obrigatórios.' });
+      return;
+    }
 
-    const newPost: Post = {
-      id: `${posts.length + 1}`,
-      title: newPostTitle,
-      content: newPostContent,
-      author: 'Admin', // This would be dynamic in a real app
-      authorAvatar: 'member-avatar-1', // Placeholder
-      date: new Date().toISOString(),
-    };
+    setIsSubmitting(true);
+    
+    try {
+      let imageUrl: string | undefined = undefined;
+      if (newPostImage) {
+        imageUrl = await uploadArquivo(newPostImage);
+      }
 
-    setPosts([newPost, ...posts]);
-    setNewPostTitle('');
-    setNewPostContent('');
+      const postData = {
+        title: newPostTitle,
+        content: newPostContent,
+        authorId: user.uid,
+        authorName: userData.nome,
+        authorAvatar: userData.avatar || '',
+        imageUrl: imageUrl,
+      };
+
+      await addPost(firestore, postData);
+      
+      setNewPostTitle('');
+      setNewPostContent('');
+      setNewPostImage(null);
+      if(imageInputRef.current) imageInputRef.current.value = '';
+
+      toast({ title: 'Sucesso!', description: 'Sua postagem foi publicada no mural.' });
+    } catch (error) {
+      console.error("Error adding post: ", error);
+      toast({ variant: 'destructive', title: 'Erro ao postar', description: 'Não foi possível publicar sua postagem.' });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  const handleDeletePost = async (postId: string) => {
+    if (!firestore) return;
+    try {
+      await deletePost(firestore, postId);
+      toast({ title: 'Sucesso', description: 'Postagem removida.' });
+    } catch (error) {
+      console.error("Error deleting post: ", error);
+      toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível remover a postagem.' });
+    }
   };
 
-  const getAvatar = (avatarId: string) => {
-    return PlaceHolderImages.find((p) => p.id === avatarId);
+  const getAvatar = (post: Post) => {
+    if (post.authorAvatar && post.authorAvatar.startsWith('http')) {
+        return { imageUrl: post.authorAvatar };
+    }
+    return PlaceHolderImages.find((p) => p.id === post.authorAvatar);
   }
 
   return (
@@ -71,7 +141,6 @@ export default function MuralPage() {
         </div>
       </div>
 
-      {/* Form to add new post - This is visible only to admins */}
       {canPost && (
         <Card>
           <CardHeader>
@@ -86,6 +155,7 @@ export default function MuralPage() {
                 placeholder="Título do aviso" 
                 value={newPostTitle}
                 onChange={(e) => setNewPostTitle(e.target.value)}
+                disabled={isSubmitting}
               />
             </div>
             <div className="space-y-2">
@@ -95,45 +165,92 @@ export default function MuralPage() {
                 placeholder="Escreva sua mensagem aqui..." 
                 value={newPostContent}
                 onChange={(e) => setNewPostContent(e.target.value)}
+                disabled={isSubmitting}
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="image">Imagem (Opcional)</Label>
+              <Input 
+                id="image" 
+                type="file"
+                accept="image/*"
+                ref={imageInputRef}
+                onChange={(e) => setNewPostImage(e.target.files ? e.target.files[0] : null)}
+                disabled={isSubmitting}
+              />
+              {newPostImage && <p className="text-sm text-muted-foreground">Arquivo selecionado: {newPostImage.name}</p>}
             </div>
           </CardContent>
           <CardFooter>
-            <Button onClick={handleAddPost}>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Publicar
+            <Button onClick={handleAddPost} disabled={isSubmitting}>
+              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4" />}
+              {isSubmitting ? 'Publicando...' : 'Publicar'}
             </Button>
           </CardFooter>
         </Card>
       )}
 
-
-      {/* List of posts */}
       <div className="space-y-4">
-        {posts.map((post) => {
-          const avatar = getAvatar(post.authorAvatar);
-          return (
-            <Card key={post.id}>
-              <CardHeader>
-                <div className="flex items-start gap-4">
-                  <Avatar className="h-10 w-10 border">
-                     {avatar && <AvatarImage src={avatar.imageUrl} alt={avatar.description} />}
-                    <AvatarFallback>{post.author.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <div className="grid gap-0.5">
-                    <CardTitle>{post.title}</CardTitle>
-                    <CardDescription>
-                      Por {post.author} em {new Date(post.date).toLocaleDateString('pt-BR')}
-                    </CardDescription>
+        {isLoadingPosts ? (
+           <div className="flex justify-center items-center py-10">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : posts && posts.length > 0 ? (
+          posts.map((post) => {
+            const avatar = getAvatar(post);
+            return (
+              <Card key={post.id}>
+                <CardHeader>
+                  <div className="flex items-start gap-4">
+                    <Avatar className="h-10 w-10 border">
+                       {avatar && <AvatarImage src={avatar.imageUrl} alt={post.authorName} />}
+                      <AvatarFallback>{post.authorName.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div className="grid gap-0.5 flex-1">
+                      <CardTitle>{post.title}</CardTitle>
+                      <CardDescription>
+                        Por {post.authorName} em {post.createdAt?.toDate().toLocaleDateString('pt-BR')}
+                      </CardDescription>
+                    </div>
+                    {canPost && (
+                       <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                             <Button variant="ghost" size="icon" className="text-destructive"><Trash2 className="h-4 w-4"/></Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Tem certeza que deseja excluir esta postagem? Esta ação não pode ser desfeita.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDeletePost(post.id)} className="bg-destructive hover:bg-destructive/90">Excluir</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                    )}
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{post.content}</p>
-              </CardContent>
-            </Card>
-          )
-        })}
+                </CardHeader>
+                <CardContent>
+                  {post.imageUrl && (
+                    <div className="mb-4 relative aspect-video w-full rounded-md overflow-hidden">
+                      <Image src={post.imageUrl} alt={post.title} layout="fill" objectFit="cover" />
+                    </div>
+                  )}
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{post.content}</p>
+                </CardContent>
+              </Card>
+            )
+          })
+        ) : (
+          <Card>
+            <CardContent className="p-8 text-center text-muted-foreground">
+              <p>Nenhuma postagem no mural ainda.</p>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

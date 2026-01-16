@@ -25,15 +25,14 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { useDoc, useFirestore, useMemoFirebase, useCollection, useUser } from "@/firebase";
-import { doc, collection, getDoc } from "firebase/firestore";
+import { doc, collection, getDoc, query, orderBy, Timestamp } from "firebase/firestore";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { posts as initialPosts, Post } from '@/data/posts';
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { updateMember, deleteMember } from "@/firebase/firestore/mutations";
+import { updateMember, deleteMember, addMessage } from "@/firebase/firestore/mutations";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Slider } from '@/components/ui/slider';
 import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
@@ -116,7 +115,18 @@ interface ChurchInfo {
   radioPageUrl?: string;
 }
 
-const formSchema = z.object({
+type Post = {
+  id: string;
+  title: string;
+  content: string;
+  authorId: string;
+  authorName: string;
+  authorAvatar?: string;
+  imageUrl?: string;
+  createdAt: Timestamp;
+};
+
+const memberFormSchema = z.object({
   nome: z.string().min(2, "Nome é obrigatório"),
   email: z.string().email("E-mail inválido").optional(),
   phone: z.string().optional(),
@@ -152,7 +162,15 @@ const formSchema = z.object({
   responsiblePastor: z.string().optional(),
 });
 
-type MemberFormData = z.infer<typeof formSchema>;
+const messageFormSchema = z.object({
+  destinatario: z.string({ required_error: 'Selecione um destinatário' }),
+  assunto: z.string().min(3, 'O assunto é muito curto.'),
+  mensagem: z.string().min(10, 'A mensagem é muito curta.'),
+});
+
+
+type MemberFormData = z.infer<typeof memberFormSchema>;
+type MessageFormData = z.infer<typeof messageFormSchema>;
 
 type Congregacao = {
     id: string;
@@ -237,10 +255,16 @@ export default function MemberProfilePage() {
   );
   const { data: congregacoes, isLoading: loadingCongregacoes } = useCollection<Congregacao>(congregacoesCollection);
 
+  const postsCollection = useMemoFirebase(
+    () => (firestore ? query(collection(firestore, 'posts'), orderBy('createdAt', 'desc')) : null),
+    [firestore]
+  );
+  const { data: posts, isLoading: isLoadingPosts } = useCollection<Post>(postsCollection);
+
   const [verse, setVerse] = useState<Verse | null>(null);
   const [isCardFlipped, setIsCardFlipped] = useState(false);
-  const [posts, setPosts] = useState<Post[]>(initialPosts);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
   
   const [permission, setPermission] = useState<{ canView: boolean, canEdit: boolean, canManage: boolean, hasChecked: boolean }>({
     canView: false,
@@ -260,8 +284,8 @@ export default function MemberProfilePage() {
     const previewCanvasRef = useRef<HTMLCanvasElement>(null);
     const [currentFile, setCurrentFile] = useState<File | null>(null);
 
-  const form = useForm<MemberFormData>({
-    resolver: zodResolver(formSchema),
+  const memberForm = useForm<MemberFormData>({
+    resolver: zodResolver(memberFormSchema),
     defaultValues: {
       nome: '', email: '', phone: '', whatsapp: '', cep: '',
       logradouro: '', numero: '', complemento: '', bairro: '', cidade: '', estado: '',
@@ -269,6 +293,15 @@ export default function MemberProfilePage() {
       maritalStatus: 'Solteiro(a)', naturalness: '', nationality: '',
       cargo: '', status: 'Pendente', congregacao: '', dataBatismo: '',
       dataMembro: '', recordNumber: '', responsiblePastor: ''
+    },
+  });
+
+   const messageForm = useForm<MessageFormData>({
+    resolver: zodResolver(messageFormSchema),
+    defaultValues: {
+      destinatario: '',
+      assunto: '',
+      mensagem: '',
     },
   });
 
@@ -302,7 +335,7 @@ export default function MemberProfilePage() {
   // Effect to reset form when member data is loaded
   useEffect(() => {
     if (member) {
-      form.reset({
+      memberForm.reset({
         nome: member.nome || '',
         email: member.email || '',
         phone: member.phone || '',
@@ -331,10 +364,10 @@ export default function MemberProfilePage() {
         responsiblePastor: member.responsiblePastor || '',
       });
     }
-  }, [member, form]);
+  }, [member, memberForm]);
 
 
-  const onSubmit: SubmitHandler<MemberFormData> = async (data) => {
+  const onMemberSubmit: SubmitHandler<MemberFormData> = async (data) => {
     if (!firestore || !memberId) return;
     setIsSubmitting(true);
     try {
@@ -345,6 +378,31 @@ export default function MemberProfilePage() {
         toast({ variant: "destructive", title: "Erro", description: "Não foi possível atualizar os dados do membro." });
     } finally {
         setIsSubmitting(false);
+    }
+  };
+  
+  const onMessageSubmit: SubmitHandler<MessageFormData> = async (data) => {
+    if (!firestore || !authUser || !currentUserData) {
+       toast({ variant: "destructive", title: "Erro", description: "Você precisa estar logado para enviar uma mensagem." });
+      return;
+    }
+    setIsSendingMessage(true);
+    try {
+      const messageData = {
+        senderId: authUser.uid,
+        senderName: currentUserData.nome,
+        recipient: data.destinatario,
+        subject: data.assunto,
+        body: data.mensagem,
+      };
+      await addMessage(firestore, messageData);
+      toast({ title: "Sucesso!", description: "Sua mensagem foi enviada." });
+      messageForm.reset();
+    } catch (error) {
+      console.error("Send message error: ", error);
+      toast({ variant: "destructive", title: "Erro", description: "Não foi possível enviar sua mensagem." });
+    } finally {
+      setIsSendingMessage(false);
     }
   };
 
@@ -379,6 +437,13 @@ export default function MemberProfilePage() {
         return { imageUrl: member.avatar };
     }
     return PlaceHolderImages.find((p) => p.id === avatarId);
+  }
+  
+  const getPostAvatar = (post: Post) => {
+    if (post.authorAvatar && post.authorAvatar.startsWith('http')) {
+        return { imageUrl: post.authorAvatar };
+    }
+    return PlaceHolderImages.find((p) => p.id === post.authorAvatar);
   }
 
   const onSelectFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -431,8 +496,8 @@ export default function MemberProfilePage() {
         try {
             const croppedFile = new File([blob], currentFile.name, { type: blob.type });
             const src = await uploadArquivo(croppedFile);
-            form.setValue('avatar', src);
-            await onSubmit(form.getValues());
+            memberForm.setValue('avatar', src);
+            await onMemberSubmit(memberForm.getValues());
             toast({ title: 'Sucesso', description: 'Foto de perfil atualizada!' });
             setIsCropping(false);
             setImageToCrop('');
@@ -774,8 +839,8 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
                         <CardDescription>Atualize suas informações pessoais e de contato.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                         <Form {...form}>
-                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                         <Form {...memberForm}>
+                            <form onSubmit={memberForm.handleSubmit(onMemberSubmit)} className="space-y-8">
                                 
                                 {/* --- Foto e Nome --- */}
                                 <div className="space-y-4">
@@ -796,7 +861,7 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
                                         </div>
                                     </div>
                                     <FormField
-                                        control={form.control}
+                                        control={memberForm.control}
                                         name="nome"
                                         render={({ field }) => (
                                             <FormItem>
@@ -812,7 +877,7 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
                                 <div className="space-y-4">
                                     <h3 className="font-medium text-lg border-b pb-2">Dados de Acesso</h3>
                                     <FormField
-                                        control={form.control}
+                                        control={memberForm.control}
                                         name="email"
                                         render={({ field }) => (
                                             <FormItem>
@@ -830,8 +895,8 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
                                     <div className="space-y-4">
                                         <h3 className="font-medium text-lg border-b pb-2">Dados Eclesiásticos</h3>
                                         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                             <FormField control={form.control} name="recordNumber" render={({ field }) => (<FormItem><FormLabel>Nº da Ficha</FormLabel><FormControl><Input {...field} disabled={!permission.canManage} /></FormControl><FormMessage /></FormItem>)} />
-                                            <FormField control={form.control} name="cargo" render={({ field }) => (
+                                             <FormField control={memberForm.control} name="recordNumber" render={({ field }) => (<FormItem><FormLabel>Nº da Ficha</FormLabel><FormControl><Input {...field} disabled={!permission.canManage} /></FormControl><FormMessage /></FormItem>)} />
+                                            <FormField control={memberForm.control} name="cargo" render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>Cargo Ministerial</FormLabel>
                                                     <Select onValueChange={field.onChange} value={field.value} disabled={!permission.canManage}>
@@ -851,7 +916,7 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
                                                     <FormMessage />
                                                 </FormItem>
                                             )} />
-                                            <FormField control={form.control} name="status" render={({ field }) => (
+                                            <FormField control={memberForm.control} name="status" render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>Status</FormLabel>
                                                     <Select onValueChange={field.onChange} value={field.value} disabled={!permission.canManage}>
@@ -865,7 +930,7 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
                                                     <FormMessage />
                                                 </FormItem>
                                             )} />
-                                            <FormField control={form.control} name="congregacao" render={({ field }) => (
+                                            <FormField control={memberForm.control} name="congregacao" render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>Congregação</FormLabel>
                                                     <Select onValueChange={field.onChange} value={field.value} disabled={loadingCongregacoes || !permission.canManage}>
@@ -877,10 +942,10 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
                                                     <FormMessage />
                                                 </FormItem>
                                             )} />
-                                             <FormField control={form.control} name="dataMembro" render={({ field }) => (<FormItem><FormLabel>Data de Membresia</FormLabel><FormControl><Input type="date" {...field} disabled={!permission.canManage} /></FormControl><FormMessage /></FormItem>)} />
-                                             <FormField control={form.control} name="dataBatismo" render={({ field }) => (<FormItem><FormLabel>Data de Batismo</FormLabel><FormControl><Input type="date" {...field} disabled={!permission.canManage} /></FormControl><FormMessage /></FormItem>)} />
+                                             <FormField control={memberForm.control} name="dataMembro" render={({ field }) => (<FormItem><FormLabel>Data de Membresia</FormLabel><FormControl><Input type="date" {...field} disabled={!permission.canManage} /></FormControl><FormMessage /></FormItem>)} />
+                                             <FormField control={memberForm.control} name="dataBatismo" render={({ field }) => (<FormItem><FormLabel>Data de Batismo</FormLabel><FormControl><Input type="date" {...field} disabled={!permission.canManage} /></FormControl><FormMessage /></FormItem>)} />
                                              <FormField
-                                                control={form.control}
+                                                control={memberForm.control}
                                                 name="responsiblePastor"
                                                 render={({ field }) => (
                                                     <FormItem>
@@ -898,10 +963,10 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
                                 <div className="space-y-4">
                                      <h3 className="font-medium text-lg border-b pb-2">Dados Pessoais</h3>
                                       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        <FormField control={form.control} name="dataNascimento" render={({ field }) => (<FormItem><FormLabel>Data de Nascimento</FormLabel><FormControl><Input type="date" {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
-                                        <FormField control={form.control} name="cpf" render={({ field }) => (<FormItem><FormLabel>CPF</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
-                                        <FormField control={form.control} name="rg" render={({ field }) => (<FormItem><FormLabel>RG</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
-                                        <FormField control={form.control} name="gender" render={({ field }) => (
+                                        <FormField control={memberForm.control} name="dataNascimento" render={({ field }) => (<FormItem><FormLabel>Data de Nascimento</FormLabel><FormControl><Input type="date" {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField control={memberForm.control} name="cpf" render={({ field }) => (<FormItem><FormLabel>CPF</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField control={memberForm.control} name="rg" render={({ field }) => (<FormItem><FormLabel>RG</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField control={memberForm.control} name="gender" render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Gênero</FormLabel>
                                                 <Select onValueChange={field.onChange} value={field.value} disabled={!permission.canEdit}>
@@ -914,7 +979,7 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
                                                 <FormMessage />
                                             </FormItem>
                                         )} />
-                                         <FormField control={form.control} name="maritalStatus" render={({ field }) => (
+                                         <FormField control={memberForm.control} name="maritalStatus" render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Estado Civil</FormLabel>
                                                 <Select onValueChange={field.onChange} value={field.value} disabled={!permission.canEdit}>
@@ -931,8 +996,8 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
                                         )} />
                                     </div>
                                     <div className="grid md:grid-cols-2 gap-4">
-                                         <FormField control={form.control} name="naturalness" render={({ field }) => (<FormItem><FormLabel>Naturalidade</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
-                                         <FormField control={form.control} name="nationality" render={({ field }) => (<FormItem><FormLabel>Nacionalidade</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                         <FormField control={memberForm.control} name="naturalness" render={({ field }) => (<FormItem><FormLabel>Naturalidade</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                         <FormField control={memberForm.control} name="nationality" render={({ field }) => (<FormItem><FormLabel>Nacionalidade</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
                                     </div>
                                 </div>
 
@@ -940,8 +1005,8 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
                                 <div className="space-y-4">
                                      <h3 className="font-medium text-lg border-b pb-2">Contato</h3>
                                      <div className="grid md:grid-cols-2 gap-4">
-                                         <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Telefone</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
-                                         <FormField control={form.control} name="whatsapp" render={({ field }) => (<FormItem><FormLabel>WhatsApp</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                         <FormField control={memberForm.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Telefone</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                         <FormField control={memberForm.control} name="whatsapp" render={({ field }) => (<FormItem><FormLabel>WhatsApp</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
                                     </div>
                                 </div>
 
@@ -949,15 +1014,15 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
                                 <div className="space-y-4">
                                     <h3 className="font-medium text-lg border-b pb-2">Endereço</h3>
                                     <div className="grid md:grid-cols-3 gap-4">
-                                        <FormField name="cep" control={form.control} render={({ field }) => (<FormItem><FormLabel>CEP</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
-                                        <FormField name="logradouro" control={form.control} render={({ field }) => (<FormItem className="md:col-span-2"><FormLabel>Logradouro</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField name="cep" control={memberForm.control} render={({ field }) => (<FormItem><FormLabel>CEP</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField name="logradouro" control={memberForm.control} render={({ field }) => (<FormItem className="md:col-span-2"><FormLabel>Logradouro</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
                                     </div>
                                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        <FormField name="numero" control={form.control} render={({ field }) => (<FormItem><FormLabel>Número</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
-                                        <FormField name="complemento" control={form.control} render={({ field }) => (<FormItem><FormLabel>Complemento</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
-                                        <FormField name="bairro" control={form.control} render={({ field }) => (<FormItem><FormLabel>Bairro</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
-                                        <FormField name="cidade" control={form.control} render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
-                                        <FormField name="estado" control={form.control} render={({ field }) => (<FormItem><FormLabel>Estado</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField name="numero" control={memberForm.control} render={({ field }) => (<FormItem><FormLabel>Número</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField name="complemento" control={memberForm.control} render={({ field }) => (<FormItem><FormLabel>Complemento</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField name="bairro" control={memberForm.control} render={({ field }) => (<FormItem><FormLabel>Bairro</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField name="cidade" control={memberForm.control} render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField name="estado" control={memberForm.control} render={({ field }) => (<FormItem><FormLabel>Estado</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
                                     </div>
                                 </div>
                                 
@@ -1027,30 +1092,47 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
 
         <div className="space-y-4">
             <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2"><LayoutGrid /> Mural de Avisos</h2>
-            {posts.map((post) => {
-            const avatarMural = getAvatar(post.authorAvatar);
-            return (
-                <Card key={post.id}>
-                <CardHeader>
-                    <div className="flex items-start gap-4">
-                    <Avatar className="h-10 w-10 border">
-                        {avatarMural && <AvatarImage src={avatarMural.imageUrl} alt={avatarMural.description} />}
-                        <AvatarFallback>{post.author.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div className="grid gap-0.5">
-                        <CardTitle>{post.title}</CardTitle>
-                        <CardDescription>
-                        Por {post.author} em {new Date(post.date).toLocaleDateString('pt-BR')}
-                        </CardDescription>
-                    </div>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{post.content}</p>
-                </CardContent>
+            {isLoadingPosts ? (
+                <div className="flex justify-center items-center py-10">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+            ) : posts && posts.length > 0 ? (
+                posts.map((post) => {
+                    const avatarMural = getPostAvatar(post);
+                    return (
+                        <Card key={post.id}>
+                        <CardHeader>
+                            <div className="flex items-start gap-4">
+                            <Avatar className="h-10 w-10 border">
+                                {avatarMural && <AvatarImage src={avatarMural.imageUrl} alt={post.authorName} />}
+                                <AvatarFallback>{post.authorName.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <div className="grid gap-0.5">
+                                <CardTitle>{post.title}</CardTitle>
+                                <CardDescription>
+                                Por {post.authorName} em {post.createdAt?.toDate().toLocaleDateString('pt-BR')}
+                                </CardDescription>
+                            </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                             {post.imageUrl && (
+                                <div className="mb-4 relative aspect-video w-full rounded-md overflow-hidden">
+                                  <Image src={post.imageUrl} alt={post.title} layout="fill" objectFit="cover" />
+                                </div>
+                              )}
+                            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{post.content}</p>
+                        </CardContent>
+                        </Card>
+                    )
+                })
+            ) : (
+                <Card>
+                    <CardContent className="p-8 text-center text-muted-foreground">
+                    <p>Nenhuma postagem no mural ainda.</p>
+                    </CardContent>
                 </Card>
-            )
-            })}
+            )}
         </div>
 
         <Card>
@@ -1062,29 +1144,61 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
             <CardDescription>Envie sua mensagem, dúvida, ou anexe um documento.</CardDescription>
         </CardHeader>
         <CardContent>
-            <form className="space-y-4">
-                 <div>
-                    <Label htmlFor="destinatario">Enviar para</Label>
-                    <Select>
-                        <SelectTrigger id="destinatario">
-                            <SelectValue placeholder="Selecione o destinatário" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="admin">Administração Geral</SelectItem>
-                            {congregacoes?.map(c => <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
-                </div>
-                <div>
-                    <Label htmlFor="assunto">Assunto</Label>
-                    <Input id="assunto" placeholder="Sobre o que você quer falar?" />
-                </div>
-                <div>
-                        <Label htmlFor="mensagem">Mensagem</Label>
-                        <Textarea id="mensagem" placeholder="Digite sua mensagem aqui..." />
-                </div>
-                <Button>Enviar Mensagem</Button>
-            </form>
+            <Form {...messageForm}>
+              <form onSubmit={messageForm.handleSubmit(onMessageSubmit)} className="space-y-4">
+                   <FormField
+                      control={messageForm.control}
+                      name="destinatario"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Enviar para</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value} disabled={loadingCongregacoes}>
+                              <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder={loadingCongregacoes ? "Carregando..." : "Selecione o destinatário"} />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                  <SelectItem value="Administração Geral">Administração Geral</SelectItem>
+                                  {congregacoes?.map(c => <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>)}
+                              </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  <FormField
+                      control={messageForm.control}
+                      name="assunto"
+                      render={({ field }) => (
+                          <FormItem>
+                              <FormLabel>Assunto</FormLabel>
+                              <FormControl>
+                                  <Input placeholder="Sobre o que você quer falar?" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                          </FormItem>
+                      )}
+                  />
+                  <FormField
+                      control={messageForm.control}
+                      name="mensagem"
+                      render={({ field }) => (
+                          <FormItem>
+                              <FormLabel>Mensagem</FormLabel>
+                              <FormControl>
+                                  <Textarea placeholder="Digite sua mensagem aqui..." {...field} />
+                              </FormControl>
+                              <FormMessage />
+                          </FormItem>
+                      )}
+                  />
+                  <Button type="submit" disabled={isSendingMessage}>
+                    {isSendingMessage ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
+                    {isSendingMessage ? 'Enviando...' : 'Enviar Mensagem'}
+                  </Button>
+              </form>
+            </Form>
         </CardContent>
         </Card>
       </div>

@@ -192,3 +192,41 @@ export const deleteLogo = async (firestore: Firestore, id: string) => {
             }));
         });
 };
+
+export const addPost = async (firestore: Firestore, postData: any) => {
+    if (!firestore) throw new Error('Firestore is not initialized');
+    const postsRef = collection(firestore, 'posts');
+    addDoc(postsRef, { ...postData, createdAt: serverTimestamp() })
+        .catch(error => {
+            errorEmitter.emit('permission-error', new FirestorePermissionError({
+                path: postsRef.path,
+                operation: 'create',
+                requestResourceData: postData,
+            }));
+        });
+};
+
+export const deletePost = async (firestore: Firestore, postId: string) => {
+    if (!firestore) throw new Error('Firestore is not initialized');
+    const postRef = doc(firestore, 'posts', postId);
+    deleteDoc(postRef)
+        .catch(error => {
+            errorEmitter.emit('permission-error', new FirestorePermissionError({
+                path: postRef.path,
+                operation: 'delete',
+            }));
+        });
+};
+
+export const addMessage = async (firestore: Firestore, messageData: any) => {
+    if (!firestore) throw new Error('Firestore is not initialized');
+    const messagesRef = collection(firestore, 'messages');
+    addDoc(messagesRef, { ...messageData, createdAt: serverTimestamp() })
+        .catch(error => {
+            errorEmitter.emit('permission-error', new FirestorePermissionError({
+                path: messagesRef.path,
+                operation: 'create',
+                requestResourceData: messageData,
+            }));
+        });
+};

@@ -82,10 +82,8 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
             )}
             <div className="absolute inset-0 flex flex-col items-center p-[15mm]">
 
-                {/* Top spacer to push content down */}
                 <div style={{ flexGrow: 1.5 }}></div>
 
-                {/* Main Content */}
                 <div className="w-[85%] text-center text-[#444]">
                    <p className="font-bold my-4 text-black uppercase" style={{ fontFamily: "serif", fontSize: '28pt', letterSpacing: '0.1em' }}>
                        {member?.nome || '________________'}
@@ -97,18 +95,27 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
                    </p>
                </div>
                 
-                {/* Bottom spacer */}
                 <div style={{ flexGrow: 1 }}></div>
 
-                {/* Footer */}
                 <footer className="w-full">
                     <div className="flex justify-around items-end">
                         <div className="text-center w-2/5">
+                             <div className="relative w-full mx-auto mb-1 flex items-center justify-center min-h-[15mm]">
+                                {churchInfo?.pastorSignatureUrl && (
+                                    <img 
+                                        src={churchInfo.pastorSignatureUrl} 
+                                        alt="Assinatura Pastor Presidente" 
+                                        className="object-contain max-h-[25mm] max-w-full"
+                                        crossOrigin="anonymous"
+                                    />
+                                )}
+                            </div>
                             <div className="border-b-2 border-black w-full" />
                             <p className="mt-1" style={{ fontSize: '10pt' }}>{presidentName}</p>
                             <p className="italic" style={{ fontSize: '8pt' }}>Pastor Presidente</p>
                         </div>
                          <div className="text-center w-2/5">
+                            <div className="relative w-full mx-auto mb-1 flex items-center justify-center min-h-[15mm]" />
                             <div className="border-b-2 border-black w-full" />
                             <p className="mt-1" style={{ fontSize: '10pt' }}>{localPastor}</p>
                             <p className="italic" style={{ fontSize: '8pt' }}>Pastor Local</p>
@@ -130,6 +137,7 @@ export default function BaptismCertificatePage() {
     const documentRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const logoFileInputRef = useRef<HTMLInputElement>(null);
+    const signatureFileInputRef = useRef<HTMLInputElement>(null);
     
     // States
     const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
@@ -138,6 +146,7 @@ export default function BaptismCertificatePage() {
     const [isSaving, setIsSaving] = useState(false);
     const [bgImage, setBgImage] = useState('');
     const [logoImage, setLogoImage] = useState('');
+    const [signatureImage, setSignatureImage] = useState('');
 
 
     // Data fetching
@@ -159,13 +168,15 @@ export default function BaptismCertificatePage() {
         if (churchInfo) {
             setLogoImage(churchInfo.baptismCertLogoUrl || churchInfo.conventionLogo1Url || PlaceHolderImages.find(p => p.id === 'church-logo')?.imageUrl || '');
             setBgImage(churchInfo.baptismCertBgUrl || PlaceHolderImages.find(p => p.id === 'baptism-certificate-bg')?.imageUrl || '');
+            setSignatureImage(churchInfo.pastorSignatureUrl || '');
         } else if (!isChurchInfoLoading) {
             setLogoImage(PlaceHolderImages.find(p => p.id === 'church-logo')?.imageUrl || '');
             setBgImage(PlaceHolderImages.find(p => p.id === 'baptism-certificate-bg')?.imageUrl || '');
+            setSignatureImage('');
         }
     }, [churchInfo, isChurchInfoLoading]);
 
-    const onSelectFile = async (e: React.ChangeEvent<HTMLInputElement>, target: 'background' | 'logo') => {
+    const onSelectFile = async (e: React.ChangeEvent<HTMLInputElement>, target: 'background' | 'logo' | 'signature') => {
         const file = e.target.files?.[0];
         if (!file) return;
 
@@ -175,9 +186,12 @@ export default function BaptismCertificatePage() {
             if (target === 'background') {
                 setBgImage(src);
                 toast({ title: 'Sucesso', description: 'Imagem de fundo atualizada. Clique em "Salvar Alterações" para persistir.' });
-            } else {
+            } else if (target === 'logo') {
                 setLogoImage(src);
                 toast({ title: 'Sucesso', description: 'Logo atualizado. Clique em "Salvar Alterações" para persistir.' });
+            } else if (target === 'signature') {
+                setSignatureImage(src);
+                toast({ title: 'Sucesso', description: 'Assinatura atualizada. Clique em "Salvar Alterações" para persistir.' });
             }
         } catch (error: any) {
             toast({ variant: 'destructive', title: 'Erro de Upload', description: error.message });
@@ -201,6 +215,7 @@ export default function BaptismCertificatePage() {
             await setDoc(churchInfoRef, {
                 baptismCertBgUrl: bgImage,
                 baptismCertLogoUrl: logoImage,
+                pastorSignatureUrl: signatureImage,
             }, { merge: true });
             toast({ title: 'Sucesso!', description: 'As alterações foram salvas.' });
         } catch (error: any) {
@@ -217,7 +232,6 @@ export default function BaptismCertificatePage() {
 
     const handleGeneratePdf = async () => {
         const source = documentRef.current;
-        // Ensure the source element and its parent exist before proceeding.
         if (!source || !source.parentElement) {
             toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível encontrar o elemento do documento para gerar o PDF.' });
             return;
@@ -226,20 +240,16 @@ export default function BaptismCertificatePage() {
         setIsGeneratingPdf(true);
         const scaledParent = source.parentElement;
         
-        // 1. Store the original Tailwind classes of the scaled container.
         const originalClasses = scaledParent.className;
 
-        // 2. Temporarily remove all classes and apply an inline style to force full-size rendering.
-        // This ensures html2canvas captures the document at its native A4 resolution.
         scaledParent.className = '';
         scaledParent.style.transform = 'scale(1)';
         
         try {
-            // A minimal delay to allow the browser to repaint the element at full scale.
             await new Promise(resolve => setTimeout(resolve, 50));
 
             const canvas = await html2canvas(source, {
-                scale: 2, // Use a scale of 2 for a good balance of quality and performance.
+                scale: 2,
                 useCORS: true,
                 backgroundColor: null,
             });
@@ -251,17 +261,15 @@ export default function BaptismCertificatePage() {
                 unit: 'mm',
                 format: 'a4'
             });
-            const pdfWidth = pdf.internal.pageSize.getWidth(); // 297mm
-            const pdfHeight = pdf.internal.pageSize.getHeight(); // 210mm
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = pdf.internal.pageSize.getHeight();
             
-            // Add the captured image to the PDF, stretching it to fit the A4 page.
             pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
             pdf.save(`certificado-batismo-${selectedMember?.nome.replace(/ /g, '_') || 'membro'}.pdf`);
         } catch (error) {
             console.error("Error generating PDF:", error);
              toast({ variant: 'destructive', title: 'Erro ao gerar PDF', description: 'Não foi possível gerar o arquivo.' });
         } finally {
-            // 3. Restore the original classes and remove the inline style, returning the display to normal.
             scaledParent.className = originalClasses;
             scaledParent.style.transform = '';
             setIsGeneratingPdf(false);
@@ -364,6 +372,22 @@ export default function BaptismCertificatePage() {
                                 {isUploading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                 <Upload className="mr-2 h-4 w-4" />
                                 Trocar Logo
+                            </Button>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                ref={signatureFileInputRef}
+                                onChange={(e) => onSelectFile(e, 'signature')}
+                                className="hidden"
+                            />
+                            <Button
+                                variant="outline"
+                                onClick={() => signatureFileInputRef.current?.click()}
+                                disabled={isUploading}
+                            >
+                                {isUploading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                <Upload className="mr-2 h-4 w-4" />
+                                Trocar Assinatura
                             </Button>
                         </div>
                     </div>

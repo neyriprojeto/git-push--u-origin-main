@@ -94,12 +94,15 @@ export default function LoginPage() {
         description = "E-mail ou senha incorretos. Por favor, verifique e tente novamente.";
       } else if (error.code === 'auth/configuration-not-found') {
         description = "A configuração de autenticação não foi encontrada. Por favor, contate o suporte.";
+      } else if (error.code === 'auth/operation-not-allowed') {
+        description = "O login por e-mail e senha não está ativado. Por favor, ative-o no seu painel do Firebase em Authentication > Sign-in method.";
       }
       
       toast({
         variant: "destructive",
         title: "Falha no Login",
         description: description,
+        duration: 9000,
       });
     } finally {
       setIsLoading(false);
@@ -173,10 +176,15 @@ export default function LoginPage() {
       }
     } catch (error: any) {
       console.error("Google Sign-In Error:", error);
+      let description = "Não foi possível autenticar com o Google. Tente novamente.";
+      if (error.code === 'auth/operation-not-allowed') {
+        description = "O login com Google não está ativado. Por favor, ative-o no seu painel do Firebase em Authentication > Sign-in method.";
+      }
       toast({
         variant: "destructive",
         title: "Falha no Login com Google",
-        description: "Não foi possível autenticar com o Google. Tente novamente.",
+        description: description,
+        duration: 9000,
       });
     } finally {
       setIsLoading(false);

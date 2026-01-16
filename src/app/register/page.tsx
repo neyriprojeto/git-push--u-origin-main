@@ -158,11 +158,14 @@ export default function RegisterPage() {
         let description = 'Não foi possível salvar o cadastro. Tente novamente.';
         if (error.code === 'auth/email-already-in-use') {
             description = 'Este e-mail já está em uso. Por favor, utilize outro e-mail.';
+        } else if (error.code === 'auth/operation-not-allowed') {
+            description = "O cadastro por e-mail e senha não está ativado. Por favor, ative-o no seu painel do Firebase em Authentication > Sign-in method.";
         }
         toast({
             variant: 'destructive',
             title: 'Erro ao cadastrar',
             description: description,
+            duration: 9000,
         });
     } finally {
         setIsSubmitting(false);
@@ -210,10 +213,15 @@ export default function RegisterPage() {
       }
     } catch (error: any) {
       console.error("Google Sign-Up Error:", error);
+      let description = "Não foi possível se cadastrar com o Google. Tente novamente.";
+      if (error.code === 'auth/operation-not-allowed') {
+        description = "O login com Google não está ativado. Por favor, ative-o no seu painel do Firebase em Authentication > Sign-in method.";
+      }
       toast({
         variant: "destructive",
         title: "Falha no Cadastro com Google",
-        description: "Não foi possível se cadastrar com o Google. Tente novamente.",
+        description: description,
+        duration: 9000,
       });
     } finally {
       setIsSubmitting(false);
@@ -324,7 +332,7 @@ export default function RegisterPage() {
                                      <FormItem>
                                         <FormLabel>Data de Nascimento</FormLabel>
                                         <FormControl>
-                                            <Input type="date" {...field} />
+                                            <Input type="date" {...field} value={field.value ?? ''} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -418,7 +426,7 @@ export default function RegisterPage() {
                                     <FormItem>
                                         <FormLabel>Data de Batismo</FormLabel>
                                         <FormControl>
-                                            <Input type="date" {...field} />
+                                            <Input type="date" {...field} value={field.value ?? ''} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>

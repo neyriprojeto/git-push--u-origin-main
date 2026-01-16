@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useRef } from 'react';
@@ -74,15 +73,22 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
                 <div className="absolute" style={{ top: '166mm', left: '115mm' }}>{format(date, 'yy')}</div>
                 
                 {/* Signatures */}
-                <div className="absolute text-center" style={{ bottom: '26mm', left: 0, right: 0 }}>
-                    {pastorSignatureUrl && (
-                        <div className="relative w-[60mm] h-[20mm] mx-auto -mb-2">
-                           <Image src={pastorSignatureUrl} alt="Assinatura Pastor" layout="fill" objectFit="contain" />
-                        </div>
-                    )}
-                    <div className="border-t border-black w-[70mm] mx-auto" />
-                    <p className="text-[10pt] mt-1">{presidentName}</p>
-                    <p className="text-[9pt] italic">Pastor Presidente</p>
+                <div className="absolute flex justify-around items-end" style={{ bottom: '22mm', left: '10mm', right: '10mm', gap: '10mm' }}>
+                    <div className="text-center w-[65mm]">
+                        <div className="border-t border-black w-full mx-auto" style={{ marginBottom: '1mm' }} />
+                        <p className="text-[10pt] mt-1">{directorName}</p>
+                        <p className="text-[9pt] italic">Pastor Dirigente</p>
+                    </div>
+                    <div className="text-center w-[65mm]">
+                        {pastorSignatureUrl && (
+                            <div className="relative w-[60mm] h-[15mm] mx-auto -mb-1">
+                               <Image src={pastorSignatureUrl} alt="Assinatura Pastor Presidente" layout="fill" objectFit="contain" />
+                            </div>
+                        )}
+                        <div className="border-t border-black w-full mx-auto" style={{ marginBottom: '1mm' }}/>
+                        <p className="text-[10pt] mt-1">{presidentName}</p>
+                        <p className="text-[9pt] italic">Pastor Presidente</p>
+                    </div>
                 </div>
 
             </div>

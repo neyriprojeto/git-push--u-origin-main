@@ -54,23 +54,23 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
             
             <div className="absolute inset-0 font-serif text-[11pt] text-black">
                 {/* Checkboxes */}
-                <div className="absolute font-bold" style={{ top: '88mm', left: '79mm' }}>
-                    {docType === 'recomendacao' && <span className='text-xl'>X</span>}
+                <div className="absolute font-bold" style={{ top: '86.5mm', left: '77mm' }}>
+                    {docType === 'recomendacao' && <span className='text-lg'>X</span>}
                 </div>
-                <div className="absolute font-bold" style={{ top: '96mm', left: '79mm' }}>
-                    {docType === 'mudanca' && <span className='text-xl'>X</span>}
+                <div className="absolute font-bold" style={{ top: '94.5mm', left: '77mm' }}>
+                    {docType === 'mudanca' && <span className='text-lg'>X</span>}
                 </div>
 
                 {/* Member data */}
-                <div className="absolute" style={{ top: '123.5mm', left: '48mm' }}>{member?.nome || ''}</div>
-                <div className="absolute" style={{ top: '129.5mm', left: '30mm' }}>{member?.cargo || ''}</div>
-                <div className="absolute" style={{ top: '135mm', left: '46mm' }}>{formatDate(member?.dataMembro)}</div>
+                <div className="absolute" style={{ top: '122mm', left: '42mm' }}>{member?.nome || ''}</div>
+                <div className="absolute" style={{ top: '128mm', left: '33mm' }}>{member?.cargo || ''}</div>
+                <div className="absolute" style={{ top: '134mm', left: '47mm' }}>{formatDate(member?.dataMembro)}</div>
 
                 {/* Date */}
-                <div className="absolute" style={{ top: '166mm', left: '32mm' }}>{city}</div>
-                <div className="absolute" style={{ top: '166mm', left: '60mm' }}>{format(date, 'd')}</div>
-                <div className="absolute" style={{ top: '166mm', left: '80mm' }}>{format(date, 'MMMM', { locale: ptBR })}</div>
-                <div className="absolute" style={{ top: '166mm', left: '115mm' }}>{format(date, 'yy')}</div>
+                <div className="absolute" style={{ top: '165mm', left: '31mm' }}>{city}</div>
+                <div className="absolute" style={{ top: '165mm', left: '56mm' }}>{format(date, 'd')}</div>
+                <div className="absolute" style={{ top: '165mm', left: '80mm' }}>{format(date, 'MMMM', { locale: ptBR })}</div>
+                <div className="absolute" style={{ top: '165mm', left: '118mm' }}>{format(date, 'yy')}</div>
                 
                 {/* Signatures */}
                 <div className="absolute flex justify-around items-end" style={{ bottom: '22mm', left: '10mm', right: '10mm', gap: '10mm' }}>

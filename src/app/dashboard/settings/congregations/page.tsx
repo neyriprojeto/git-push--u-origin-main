@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -382,7 +381,7 @@ export default function CongregationsPage() {
                                         <Upload className="mr-2 h-4 w-4"/> Foto do Pastor
                                     </Button>
                                     <Button variant="outline" onClick={() => triggerFileInput('pastorSignatureUrl', undefined)}>
-                                        <Upload className="mr-2 h-4 w-4"/> Assinatura do Pastor
+                                        <Upload className="mr-2 h-4 w-4"/> Assinatura Pr. Presidente
                                     </Button>
                                 </div>
                                 <div className='flex flex-wrap gap-4 mt-4'>

@@ -202,7 +202,7 @@ export default function MemberFilePage() {
             <div className="flex justify-between items-center pb-4 border-b border-black gap-4">
                 <div className="w-24 h-32 border border-gray-300 flex items-center justify-center shrink-0 bg-gray-100 overflow-hidden">
                     {avatar ? (
-                        &lt;img src={avatar.imageUrl} alt={member.nome} style={{ objectFit: 'cover', width: '100%', height: '100%' }} crossOrigin="anonymous" /&gt;
+                        <img src={avatar.imageUrl} alt={member.nome} style={{ objectFit: 'cover', width: '100%', height: '100%' }} crossOrigin="anonymous" />
                     ) : (
                         <span className="text-xs text-gray-400 text-center">Foto 3x4</span>
                     )}
@@ -213,7 +213,7 @@ export default function MemberFilePage() {
                 </div>
                 <div className="w-24 h-24 flex items-center justify-center shrink-0">
                     {fichaLogoUrl ? (
-                         &lt;img src={fichaLogoUrl} alt="Logo da Ficha" style={{ objectFit: 'contain', width: '100%', height: '100%' }} crossOrigin="anonymous" /&gt;
+                         <img src={fichaLogoUrl} alt="Logo da Ficha" style={{ objectFit: 'contain', width: '100%', height: '100%' }} crossOrigin="anonymous" />
                     ) : (
                         <span className="text-xs text-gray-500">Logo</span>
                     )}

@@ -104,19 +104,24 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
             
             {/* Signatures */}
             <footer className="pt-4 mt-auto">
-                <div className="w-full flex justify-center mb-1">
-                    <div className="relative w-[60mm] h-[15mm]">
-                        {pastorSignatureUrl && <img src={pastorSignatureUrl} alt="Assinatura Pastor Presidente" style={{ objectFit: 'contain', width: '100%', height: '100%' }} crossOrigin="anonymous" />}
-                    </div>
-                </div>
-                <div className="border-t border-black w-[130mm] mx-auto mb-1" />
                 <div className="flex justify-between items-start w-[130mm] mx-auto">
-                    <div className="text-center">
-                        <p className="text-sm font-sans">{presidentName}</p>
+                    {/* Left side: President */}
+                    <div className="text-center w-[60mm]">
+                        <div className="relative w-full h-[15mm] mb-1">
+                             {pastorSignatureUrl && <img src={pastorSignatureUrl} alt="Assinatura Pastor Presidente" style={{ objectFit: 'contain', width: '100%', height: '100%' }} crossOrigin="anonymous" />}
+                        </div>
+                        <div className="border-t border-black w-full" />
+                        <p className="text-sm font-sans mt-1">{presidentName}</p>
                         <p className="text-xs font-sans italic">Pastor Presidente</p>
                     </div>
-                    <div className="text-center">
-                        <p className="text-sm font-sans">{directorName || ' '}</p>
+
+                    {/* Right side: Director */}
+                     <div className="text-center w-[60mm]">
+                         <div className="relative w-full h-[15mm] mb-1">
+                            {/* Empty space for manual signature */}
+                        </div>
+                        <div className="border-t border-black w-full" />
+                        <p className="text-sm font-sans mt-1">{directorName || ' '}</p>
                         <p className="text-xs font-sans italic">Pastor Dirigente</p>
                     </div>
                 </div>

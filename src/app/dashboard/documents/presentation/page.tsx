@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -45,30 +46,30 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
                 backgroundPosition: 'center',
             }}
         >
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-[20mm] text-[#3a3a3a]">
+            <div className="absolute inset-0 flex flex-col items-center text-center text-[#333] pt-[25mm] pb-[15mm] px-[20mm]">
                 
-                <div className="flex-grow-[1.5]"></div>
+                <div style={{ height: '20mm' }}></div>
 
-                <p className="font-bold tracking-[0.2em]" style={{ fontSize: '18pt' }}>CERTIFICADO</p>
-                <p className="font-bold tracking-[0.2em] mb-4" style={{ fontSize: '18pt' }}>DE APRESENTAÇÃO</p>
+                <p className="font-bold tracking-[0.2em]" style={{ fontSize: '16pt' }}>CERTIFICADO</p>
+                <p className="font-bold tracking-[0.2em] mb-4" style={{ fontSize: '16pt' }}>DE APRESENTAÇÃO</p>
                 
-                <p style={{ fontSize: '14pt' }}>CERTIFICAMOS QUE</p>
+                <p className="mt-4" style={{ fontSize: '12pt' }}>CERTIFICAMOS QUE</p>
                 
-                <p className="font-script my-2 text-black" style={{ fontSize: '48pt', lineHeight: 1.2 }}>
+                <p className="font-script my-3 text-black" style={{ fontSize: '36pt', lineHeight: 1.2 }}>
                     {childName || '________________'}
                 </p>
                 
-                <div className="w-[80%] space-y-3" style={{ fontSize: '12pt' }}>
+                <div className="w-[85%] space-y-3 mt-3" style={{ fontSize: '11pt' }}>
                     <p>{childDetails || 'Nascida no dia ___ de ________ de _____, filha(o) de ______________ e ______________'}</p>
                     <p>foi apresentada oficialmente ao SENHOR JESUS CRISTO, na Igreja Evangélica Assembleia de Deus Ministério Kairós.</p>
                     <p>No dia {today}</p>
                 </div>
                 
-                <p className="italic mt-8 w-[70%]" style={{ fontSize: '10pt' }}>
+                <p className="italic mt-6 w-[75%]" style={{ fontSize: '9pt' }}>
                     “E, cumprindo-se os dias da purificação dela, segundo a lei de Moisés, o levaram a Jerusalém, para o apresentarem ao Senhor.” <span className="font-semibold not-italic">Lucas 2:22</span>
                 </p>
 
-                <div className="flex-grow-[2]"></div>
+                <div className="flex-grow"></div>
 
                 <footer className="w-full">
                     <div className="flex justify-around items-end">
@@ -84,14 +85,14 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
                                 )}
                             </div>
                             <div className="border-b-2 border-black w-full" />
-                            <p className="mt-1" style={{ fontSize: '10pt' }}>{presidentName}</p>
-                            <p className="italic" style={{ fontSize: '8pt' }}>Pastor Presidente</p>
+                            <p className="mt-1" style={{ fontSize: '9pt' }}>{presidentName}</p>
+                            <p className="italic" style={{ fontSize: '7pt' }}>Pastor Presidente</p>
                         </div>
                          <div className="text-center w-2/5">
                             <div className="relative w-full mx-auto mb-1 flex items-center justify-center min-h-[15mm]" />
                             <div className="border-b-2 border-black w-full" />
-                            <p className="mt-1" style={{ fontSize: '10pt' }}>{localPastor || '____________________'}</p>
-                            <p className="italic" style={{ fontSize: '8pt' }}>Pastor Dirigente</p>
+                            <p className="mt-1" style={{ fontSize: '9pt' }}>{localPastor || '____________________'}</p>
+                            <p className="italic" style={{ fontSize: '7pt' }}>Pastor Dirigente</p>
                         </div>
                     </div>
                 </footer>

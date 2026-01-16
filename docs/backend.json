@@ -64,7 +64,9 @@
         "pastorSignatureUrl": { "type": "string", "format": "uri" },
         "conventionLogo1Url": { "type": "string", "format": "uri" },
         "conventionLogo2Url": { "type": "string", "format": "uri" },
-        "fichaLogoUrl": { "type": "string", "format": "uri" }
+        "fichaLogoUrl": { "type": "string", "format": "uri" },
+        "baptismCertBgUrl": { "type": "string", "format": "uri", "description": "URL for the baptism certificate background image." },
+        "baptismCertLogoUrl": { "type": "string", "format": "uri", "description": "URL for the baptism certificate logo." }
       }
     },
     "Leader": {

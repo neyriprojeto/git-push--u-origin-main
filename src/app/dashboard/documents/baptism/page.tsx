@@ -8,8 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useUser, useFirestore, useMemoFirebase, useDoc, useCollection } from '@/firebase';
-import { doc, collection, query, where } from 'firebase/firestore';
-import { Loader2, Printer, ShieldAlert, Upload } from 'lucide-react';
+import { doc, collection, query, where, setDoc } from 'firebase/firestore';
+import { Loader2, Printer, ShieldAlert, Upload, Save } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import jsPDF from 'jspdf';
@@ -35,6 +35,8 @@ type ChurchInfo = {
     pastorSignatureUrl?: string; 
     conventionLogo1Url?: string;
     conventionLogo2Url?: string;
+    baptismCertBgUrl?: string;
+    baptismCertLogoUrl?: string;
 };
 
 // --- Document Renderer ---
@@ -124,7 +126,8 @@ export default function BaptismCertificatePage() {
     const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
     const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
-    const [bgImage, setBgImage] = useState(PlaceHolderImages.find(p => p.id === 'baptism-certificate-bg')?.imageUrl || '');
+    const [isSaving, setIsSaving] = useState(false);
+    const [bgImage, setBgImage] = useState('');
     const [logoImage, setLogoImage] = useState('');
 
 
@@ -144,13 +147,14 @@ export default function BaptismCertificatePage() {
     const { data: members, isLoading: isLoadingMembers } = useCollection<Member>(membersQuery);
 
     useEffect(() => {
-        if (churchInfo?.conventionLogo1Url) {
-            setLogoImage(churchInfo.conventionLogo1Url);
-        } else {
-            const defaultLogo = PlaceHolderImages.find(p => p.id === 'church-logo')?.imageUrl || '';
-            setLogoImage(defaultLogo);
+        if (churchInfo) {
+            setLogoImage(churchInfo.baptismCertLogoUrl || churchInfo.conventionLogo1Url || PlaceHolderImages.find(p => p.id === 'church-logo')?.imageUrl || '');
+            setBgImage(churchInfo.baptismCertBgUrl || PlaceHolderImages.find(p => p.id === 'baptism-certificate-bg')?.imageUrl || '');
+        } else if (!isChurchInfoLoading) {
+            setLogoImage(PlaceHolderImages.find(p => p.id === 'church-logo')?.imageUrl || '');
+            setBgImage(PlaceHolderImages.find(p => p.id === 'baptism-certificate-bg')?.imageUrl || '');
         }
-    }, [churchInfo]);
+    }, [churchInfo, isChurchInfoLoading]);
 
     const onSelectFile = async (e: React.ChangeEvent<HTMLInputElement>, target: 'background' | 'logo') => {
         const file = e.target.files?.[0];
@@ -161,15 +165,44 @@ export default function BaptismCertificatePage() {
             const src = await uploadArquivo(file);
             if (target === 'background') {
                 setBgImage(src);
-                toast({ title: 'Sucesso', description: 'Imagem de fundo atualizada.' });
+                toast({ title: 'Sucesso', description: 'Imagem de fundo atualizada. Clique em "Salvar Alterações" para persistir.' });
             } else {
                 setLogoImage(src);
-                toast({ title: 'Sucesso', description: 'Logo atualizado.' });
+                toast({ title: 'Sucesso', description: 'Logo atualizado. Clique em "Salvar Alterações" para persistir.' });
             }
         } catch (error: any) {
             toast({ variant: 'destructive', title: 'Erro de Upload', description: error.message });
         } finally {
             setIsUploading(false);
+        }
+    };
+
+    const handleSaveChanges = async () => {
+        if (!churchInfoRef) {
+            toast({
+                variant: 'destructive',
+                title: 'Erro de Conexão',
+                description: 'Não foi possível conectar ao banco de dados para salvar.',
+            });
+            return;
+        }
+
+        setIsSaving(true);
+        try {
+            await setDoc(churchInfoRef, {
+                baptismCertBgUrl: bgImage,
+                baptismCertLogoUrl: logoImage,
+            }, { merge: true });
+            toast({ title: 'Sucesso!', description: 'As alterações foram salvas.' });
+        } catch (error: any) {
+            console.error("Error saving certificate settings:", error);
+            toast({
+                variant: 'destructive',
+                title: 'Erro ao Salvar',
+                description: 'Não foi possível salvar as configurações do certificado.',
+            });
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -243,10 +276,16 @@ export default function BaptismCertificatePage() {
         <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
             <div className="flex flex-wrap items-center justify-between gap-4">
                 <h2 className="text-3xl font-bold tracking-tight">Gerar Certificado de Batismo</h2>
-                <Button onClick={handleGeneratePdf} disabled={isGeneratingPdf || !selectedMember}>
-                    {isGeneratingPdf ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Printer className="mr-2 h-4 w-4" />}
-                    {isGeneratingPdf ? 'Gerando...' : 'Gerar PDF'}
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                    <Button onClick={handleSaveChanges} disabled={isSaving || isUploading}>
+                        {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                        {isSaving ? 'Salvando...' : 'Salvar Alterações'}
+                    </Button>
+                    <Button onClick={handleGeneratePdf} disabled={isGeneratingPdf || !selectedMember}>
+                        {isGeneratingPdf ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Printer className="mr-2 h-4 w-4" />}
+                        {isGeneratingPdf ? 'Gerando...' : 'Gerar PDF'}
+                    </Button>
+                </div>
             </div>
             
             <Card>
@@ -281,7 +320,8 @@ export default function BaptismCertificatePage() {
                                 onClick={() => fileInputRef.current?.click()}
                                 disabled={isUploading}
                             >
-                                {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                                {isUploading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                <Upload className="mr-2 h-4 w-4" />
                                 Trocar Fundo
                             </Button>
                              <input
@@ -296,7 +336,8 @@ export default function BaptismCertificatePage() {
                                 onClick={() => logoFileInputRef.current?.click()}
                                 disabled={isUploading}
                             >
-                                {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                                {isUploading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                <Upload className="mr-2 h-4 w-4" />
                                 Trocar Logo
                             </Button>
                         </div>

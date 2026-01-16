@@ -203,13 +203,15 @@ service cloud.firestore {
     /**
      * @description
      *   Stores messages sent from users to administration or pastors.
-     *   Any authenticated user can create a message.
-     *   Only admins or the recipient pastor can read/list them.
+     *   - Any authenticated user can create a message.
+     *   - Admins can read/list all messages.
+     *   - Pastors can read/list messages sent to their congregation or to 'Administração Geral'.
+     *   - Only Admins can update or delete messages.
      * @path /messages/{messageId}
      */
     match /messages/{messageId} {
       allow create: if isSignedIn();
-      allow read, list: if isAdmin() || (isPastor() && resource.data.recipient == getRequestingUserData().congregacao);
+      allow read, list: if isAdmin() || (isPastor() && resource.data.recipient in [getRequestingUserData().congregacao, 'Administração Geral']);
       allow update, delete: if isAdmin();
     }
   }

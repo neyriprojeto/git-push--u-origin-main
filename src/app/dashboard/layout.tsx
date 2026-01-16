@@ -114,18 +114,16 @@ export default function DashboardLayout({
                     </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
+                 <SidebarMenuItem>
+                    <SidebarMenuButton asChild tooltip={{ children: "Caixa de Entrada" }}>
+                        <Link href="/dashboard/messages">
+                        <Mail />
+                        <span>Caixa de Entrada</span>
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
               </>
             )}
-
-             {/* Messages menu visible to all authenticated users */}
-             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip={{ children: "Mensagens" }}>
-                <Link href="#">
-                  <Mail />
-                  <span>Mensagens</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
             
             {/* Card Studio only for full admins */}
             {isFullAdmin && (

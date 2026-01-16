@@ -107,7 +107,7 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
             
             {/* Signatures */}
             <footer className="pt-4">
-                <div className="flex justify-around items-start mb-4">
+                <div className="flex justify-between items-start mb-4">
                     <div className="text-center w-[70mm]">
                         <div className="relative w-full h-[15mm] mb-1">
                            {pastorSignatureUrl && <Image src={pastorSignatureUrl} alt="Assinatura Pastor Presidente" layout="fill" objectFit="contain" priority />}

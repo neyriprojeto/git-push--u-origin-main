@@ -53,7 +53,9 @@
       "properties": {
         "bannerImageUrl": { "type": "string", "format": "uri" },
         "pastorImageUrl": { "type": "string", "format": "uri" },
-        "pastorName": { "type": "string" },
+        "pastorDisplayName": { "type": "string", "description": "The name to display on the home page (e.g., 'Pr. Carlos e Pra. Suelen')." },
+        "pastorDisplayRole": { "type": "string", "description": "The role to display on the home page (e.g., 'Pastores Presidentes')." },
+        "pastorSignatureName": { "type": "string", "description": "The official name of the lead pastor for document signatures." },
         "pastoralMessage": { "type": "string" },
         "aboutUs": { "type": "string" },
         "instagramUrl": { "type": "string", "format": "uri" },

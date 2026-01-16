@@ -19,7 +19,7 @@ import html2canvas from 'html2canvas';
 type Member = { id: string; nome: string; cargo: string; dataMembro?: any; congregacao?: string; responsiblePastor?: string; };
 type UserData = { nome: string; cargo?: string; congregacao?: string; };
 type ChurchInfo = { 
-    pastorName?: string; 
+    pastorSignatureName?: string; 
     pastorSignatureUrl?: string; 
     conventionLogo1Url?: string;
     conventionLogo2Url?: string;
@@ -47,7 +47,7 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
 
     const logo1Url = churchInfo?.conventionLogo1Url;
     const logo2Url = churchInfo?.conventionLogo2Url;
-    const presidentName = churchInfo?.pastorName || '';
+    const presidentName = churchInfo?.pastorSignatureName || '';
     const pastorSignatureUrl = churchInfo?.pastorSignatureUrl;
 
     return (

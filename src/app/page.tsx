@@ -34,7 +34,9 @@ type Congregacao = {
 };
 
 type ChurchInfo = {
-  pastorName?: string;
+  pastorDisplayName?: string;
+  pastorDisplayRole?: string;
+  pastorSignatureName?: string;
   pastoralMessage?: string;
   aboutUs?: string;
   bannerImageUrl?: string;
@@ -118,7 +120,8 @@ export default function Home() {
   // Dynamic values or fallbacks
   const bannerUrl = churchInfo?.bannerImageUrl || churchBannerPlaceholder?.imageUrl || '';
   const pastorPhotoUrl = churchInfo?.pastorImageUrl || pastorPhotoPlaceholder?.imageUrl || '';
-  const pastorName = churchInfo?.pastorName || 'Pastor Presidente';
+  const pastorName = churchInfo?.pastorDisplayName || churchInfo?.pastorSignatureName || 'Pastor Presidente';
+  const pastorRole = churchInfo?.pastorDisplayRole || (churchInfo?.pastorSignatureName ? 'Pastor Presidente' : '');
   const aboutUs = churchInfo?.aboutUs || 'A Igreja Evangélica AD Kairós é um lugar de adoração, comunhão e serviço. Nossa missão é levar a palavra de Deus a todos, transformando vidas e comunidades.';
   const pastoralMessage = churchInfo?.pastoralMessage || 'Aqui você encontrará uma mensagem de fé e esperança do nosso pastor. Brevemente, este espaço será preenchido com palavras que edificarão a sua vida.';
   const instagramUrl = churchInfo?.instagramUrl;
@@ -215,7 +218,7 @@ export default function Home() {
             <Card className="text-center pt-24">
               <CardHeader className='pt-8'>
                 <CardTitle className="text-primary text-2xl">{pastorName}</CardTitle>
-                <CardDescription>Pastor Presidente</CardDescription>
+                {pastorRole && <CardDescription>{pastorRole}</CardDescription>}
               </CardHeader>
               <CardContent>
                 <h2 className="text-2xl font-bold mt-4 mb-2 text-primary">

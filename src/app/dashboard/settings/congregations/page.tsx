@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -29,7 +30,9 @@ type Congregacao = {
 
 type ChurchInfo = {
     id?: string;
-    pastorName?: string;
+    pastorDisplayName?: string;
+    pastorDisplayRole?: string;
+    pastorSignatureName?: string;
     pastoralMessage?: string;
     aboutUs?: string;
     bannerImageUrl?: string;
@@ -532,11 +535,22 @@ export default function CongregationsPage() {
                         <>
                             <div className="grid md:grid-cols-2 gap-4 items-start">
                                 <div className="space-y-2">
-                                    <Label htmlFor="pastorName">Nome do Pastor Presidente</Label>
-                                    <Input id="pastorName" name="pastorName" value={churchInfo.pastorName || ''} onChange={handleChurchInfoChange} />
+                                    <Label htmlFor="pastorDisplayName">Nome Exibido na Página Inicial</Label>
+                                    <Input id="pastorDisplayName" name="pastorDisplayName" value={churchInfo.pastorDisplayName || ''} onChange={handleChurchInfoChange} placeholder="Ex: Pr. Carlos Alves e Pra. Suelen"/>
                                 </div>
                                 <div className="space-y-2">
-                                     <Label>Assinatura Digital</Label>
+                                    <Label htmlFor="pastorDisplayRole">Cargo Exibido na Página Inicial</Label>
+                                    <Input id="pastorDisplayRole" name="pastorDisplayRole" value={churchInfo.pastorDisplayRole || ''} onChange={handleChurchInfoChange} placeholder="Ex: Pastores Presidentes"/>
+                                </div>
+                            </div>
+                            <Separator />
+                            <div className="grid md:grid-cols-2 gap-4 items-start">
+                                <div className="space-y-2">
+                                    <Label htmlFor="pastorSignatureName">Nome do Pastor (para Documentos)</Label>
+                                    <Input id="pastorSignatureName" name="pastorSignatureName" value={churchInfo.pastorSignatureName || ''} onChange={handleChurchInfoChange} placeholder="Nome para assinaturas oficiais"/>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Assinatura Digital</Label>
                                     <div className='flex items-center gap-4'>
                                         <Button variant="outline" onClick={() => triggerFileInput('pastorSignatureUrl', undefined)}>
                                             <Upload className="mr-2 h-4 w-4"/> Assinatura Pr. Presidente

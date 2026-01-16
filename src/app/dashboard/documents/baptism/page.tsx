@@ -46,7 +46,7 @@ type ElementStyle = {
 type DocElements = { [key: string]: ElementStyle };
 
 type ChurchInfo = { 
-    pastorName?: string; 
+    pastorSignatureName?: string; 
     pastorSignatureUrl?: string; 
     conventionLogo1Url?: string;
     conventionLogo2Url?: string;
@@ -188,7 +188,7 @@ export default function BaptismCertificatePage() {
 Jesus Cristo, foi ${genderTerm} sob profissão de fé em nome do Pai, do Filho e do Espírito Santo,
 no dia ${baptismDate} na Assembleia de Deus Kairós congregação de ${selectedMember?.congregacao || '____________'}.`
             initialElements['AssinaturaPresidente'].src = churchInfo.pastorSignatureUrl || '';
-            initialElements['NomePresidente'].text = churchInfo.pastorName || '____________________';
+            initialElements['NomePresidente'].text = churchInfo.pastorSignatureName || '____________________';
             initialElements['NomePastorLocal'].text = localPastorName;
 
             setElements(initialElements);

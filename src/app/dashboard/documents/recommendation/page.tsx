@@ -16,7 +16,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
 // Tipos
-type Member = { id: string; nome: string; cargo: string; dataMembro?: any; congregacao?: string; };
+type Member = { id: string; nome: string; cargo: string; dataMembro?: any; congregacao?: string; responsiblePastor?: string; };
 type UserData = { nome: string; cargo?: string; congregacao?: string; };
 type ChurchInfo = { 
     pastorName?: string; 
@@ -107,8 +107,8 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
                 <div className="flex justify-between items-end w-[130mm] mx-auto">
                     {/* Left side: President */}
                     <div className="text-center w-[60mm]">
-                        <div className="relative min-h-[20mm] w-full mx-auto mb-1 flex items-center justify-center">
-                             {pastorSignatureUrl && <img src={pastorSignatureUrl} alt="Assinatura Pastor Presidente" style={{ objectFit: 'contain', maxHeight: '20mm', maxWidth: '50mm' }} crossOrigin="anonymous" />}
+                         <div className="relative w-full mx-auto mb-1 flex items-center justify-center" style={{ minHeight: '30mm' }}>
+                             {pastorSignatureUrl && <img src={pastorSignatureUrl} alt="Assinatura Pastor Presidente" style={{ objectFit: 'contain', maxHeight: '30mm', maxWidth: '50mm' }} crossOrigin="anonymous" />}
                         </div>
                         <div className="border-t border-black w-full" />
                         <p className="text-sm font-sans mt-1">{presidentName}</p>
@@ -117,7 +117,7 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
 
                     {/* Right side: Director */}
                      <div className="text-center w-[60mm]">
-                         <div className="relative min-h-[20mm] w-full mx-auto mb-1">
+                         <div className="relative w-full mx-auto mb-1" style={{ minHeight: '30mm' }}>
                             {/* Empty space for manual signature */}
                         </div>
                         <div className="border-t border-black w-full" />
@@ -178,7 +178,7 @@ export default function RecommendationLetterPage() {
     };
     
     const selectedMember = members?.find(m => m.id === selectedMemberId) || null;
-    const directorName = userData?.cargo === 'Pastor/dirigente' ? userData.nome : '';
+    const directorName = selectedMember?.responsiblePastor || (userData?.cargo === 'Pastor/dirigente' ? userData.nome : '');
 
     const isLoading = isAuthUserLoading || isUserDataLoading || isLoadingMembers || isChurchInfoLoading;
 

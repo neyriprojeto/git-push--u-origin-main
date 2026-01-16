@@ -130,7 +130,7 @@ export default function MemberFilePage() {
         setIsGeneratingPdf(true);
 
         try {
-            const pdf = new jsPDF('l', 'mm', 'a5'); // A5 landscape
+            const pdf = new jsPDF('l', 'mm', 'a4'); // A4 landscape
             const pdfWidth = pdf.internal.pageSize.getWidth();
             const pdfHeight = pdf.internal.pageSize.getHeight();
             
@@ -298,7 +298,7 @@ export default function MemberFilePage() {
             <div className="w-full max-w-4xl mb-4 flex justify-end">
                 <Button onClick={handleGeneratePdf} disabled={isGeneratingPdf}>
                     {isGeneratingPdf ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Printer className="mr-2 h-4 w-4" />}
-                    {isGeneratingPdf ? 'Gerando...' : 'Gerar PDF'}
+                    Gerar PDF
                 </Button>
             </div>
             
@@ -307,7 +307,7 @@ export default function MemberFilePage() {
                 className="w-full max-w-4xl cursor-pointer"
                 onClick={() => setIsFront(!isFront)}
             >
-                 <div className="origin-top transform scale-[0.35] sm:scale-[0.5] md:scale-[0.7] lg:scale-[0.8] xl:scale-100 transition-transform duration-300 aspect-[210/148]">
+                 <div className="origin-top transform scale-[0.35] sm:scale-[0.5] md:scale-[0.7] lg:scale-[0.8] xl:scale-100 transition-transform duration-300 aspect-[297/210]">
                     <div className={cn("flip-card w-full h-full transition-transform duration-700", { 'flipped': !isFront })} style={{ transformStyle: 'preserve-3d' }}>
                         <div className="flip-card-front">
                             <FichaFrente />
@@ -326,13 +326,15 @@ export default function MemberFilePage() {
 
             {/* Hidden container for PDF generation */}
             <div className="absolute -left-[9999px] top-auto">
-                <div ref={frontRef} className="w-[210mm] h-[148mm] bg-white">
+                <div ref={frontRef} className="w-[297mm] h-[210mm] bg-white">
                    <FichaFrente />
                 </div>
-                <div ref={backRef} className="w-[210mm] h-[148mm] bg-white">
+                <div ref={backRef} className="w-[297mm] h-[210mm] bg-white">
                    <FichaVerso />
                 </div>
             </div>
         </div>
     );
 }
+
+    

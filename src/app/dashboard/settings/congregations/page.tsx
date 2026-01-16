@@ -350,9 +350,20 @@ export default function CongregationsPage() {
                          <div className="flex justify-center p-8"> <Loader2 className="h-8 w-8 animate-spin" /></div>
                     ) : (
                         <>
-                            <div className="space-y-2">
-                                <Label htmlFor="pastorName">Nome do Pastor Presidente</Label>
-                                <Input id="pastorName" name="pastorName" value={churchInfo.pastorName || ''} onChange={handleChurchInfoChange} />
+                            <div className="grid md:grid-cols-2 gap-4 items-start">
+                                <div className="space-y-2">
+                                    <Label htmlFor="pastorName">Nome do Pastor Presidente</Label>
+                                    <Input id="pastorName" name="pastorName" value={churchInfo.pastorName || ''} onChange={handleChurchInfoChange} />
+                                </div>
+                                <div className="space-y-2">
+                                     <Label>Assinatura Digital</Label>
+                                    <div className='flex items-center gap-4'>
+                                        <Button variant="outline" onClick={() => triggerFileInput('pastorSignatureUrl', 1 / 1)}>
+                                            <Upload className="mr-2 h-4 w-4"/> Assinatura Pr. Presidente
+                                        </Button>
+                                        {churchInfo.pastorSignatureUrl && <div className="h-[60px] w-[60px] rounded-md border p-1 bg-slate-100"><Image src={churchInfo.pastorSignatureUrl} alt="Assinatura" width={60} height={60} className="object-contain"/></div>}
+                                    </div>
+                                </div>
                             </div>
                             <Separator className="my-4" />
                             <div className="space-y-2">
@@ -363,8 +374,9 @@ export default function CongregationsPage() {
                                 <Label htmlFor="pastoralMessage">Palavra Pastoral</Label>
                                 <Textarea id="pastoralMessage" name="pastoralMessage" value={churchInfo.pastoralMessage || ''} onChange={handleChurchInfoChange} placeholder="Deixe uma mensagem de fé e esperança..." />
                             </div>
+                             <Separator className="my-4" />
                             <div className="space-y-2">
-                                <Label>Imagens Principais</Label>
+                                <Label>Imagens da Igreja e Convenções</Label>
                                 <div className='flex flex-wrap gap-2'>
                                     <input type="file" ref={fileInputRef} onChange={onSelectFile} className="hidden" accept="image/*"/>
                                     <Button variant="outline" onClick={() => triggerFileInput('bannerImageUrl', 16/9)}>
@@ -373,6 +385,7 @@ export default function CongregationsPage() {
                                     <Button variant="outline" onClick={() => triggerFileInput('pastorImageUrl', 1/1)}>
                                         <Upload className="mr-2 h-4 w-4"/> Foto do Pastor
                                     </Button>
+                                    
                                 </div>
                                 <div className='flex flex-wrap gap-4 mt-4'>
                                     {churchInfo.bannerImageUrl && <div><Label className='text-xs'>Banner Atual</Label><Image src={churchInfo.bannerImageUrl} alt="Banner" width={200} height={112} className="rounded-md border object-cover"/></div>}
@@ -437,26 +450,15 @@ export default function CongregationsPage() {
                          <div className="flex justify-center p-8"> <Loader2 className="h-8 w-8 animate-spin" /></div>
                     ) : (
                         <>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div className="space-y-2">
-                                    <Label>Assinatura Digital do Presidente</Label>
-                                    <div className='flex items-center gap-4'>
-                                        <Button variant="outline" onClick={() => triggerFileInput('pastorSignatureUrl', 1 / 1)}>
-                                            <Upload className="mr-2 h-4 w-4"/> Enviar Assinatura
-                                        </Button>
-                                        {churchInfo.pastorSignatureUrl && <div className="h-[60px] w-[60px] rounded-md border p-1 bg-slate-100"><Image src={churchInfo.pastorSignatureUrl} alt="Assinatura" width={60} height={60} className="object-contain"/></div>}
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>Imagens do Documento</Label>
-                                    <div className='flex flex-wrap gap-2'>
-                                        <Button variant="outline" onClick={() => triggerFileInput('conventionLogo1Url', 3 / 4)}>
-                                            <Upload className="mr-2 h-4 w-4"/> Logo Esquerda (Cabeçalho)
-                                        </Button>
-                                        <Button variant="outline" onClick={() => triggerFileInput('conventionLogo2Url', 1 / 1)}>
-                                            <Upload className="mr-2 h-4 w-4"/> Logo Direita (Cabeçalho)
-                                        </Button>
-                                    </div>
+                            <div className="space-y-2">
+                                <Label>Imagens do Documento</Label>
+                                <div className='flex flex-wrap gap-2'>
+                                    <Button variant="outline" onClick={() => triggerFileInput('conventionLogo1Url', 1 / 1)}>
+                                        <Upload className="mr-2 h-4 w-4"/> Logo Esquerda (Cabeçalho)
+                                    </Button>
+                                    <Button variant="outline" onClick={() => triggerFileInput('conventionLogo2Url', 1 / 1)}>
+                                        <Upload className="mr-2 h-4 w-4"/> Logo Direita (Cabeçalho)
+                                    </Button>
                                 </div>
                             </div>
                              <div className='flex flex-wrap gap-4 mt-4'>

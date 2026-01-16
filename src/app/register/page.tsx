@@ -19,7 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import { addMember } from '@/firebase/firestore/mutations';
 import { useAuth, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { useState, useEffect } from 'react';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { AppLogo } from '@/components/icons';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -61,6 +61,7 @@ export default function RegisterPage() {
   const auth = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const [congregacoes, setCongregacoes] = useState<Congregacao[]>([]);
   const [loadingCongregacoes, setLoadingCongregacoes] = useState(true);
@@ -225,7 +226,19 @@ export default function RegisterPage() {
                                     <FormItem>
                                     <FormLabel>Senha</FormLabel>
                                     <FormControl>
-                                        <Input type="password" placeholder="******" {...field} />
+                                        <div className="relative">
+                                            <Input type={showPassword ? "text" : "password"} placeholder="******" {...field} />
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground"
+                                                onClick={() => setShowPassword((prev) => !prev)}
+                                                tabIndex={-1}
+                                            >
+                                                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                            </Button>
+                                        </div>
                                     </FormControl>
                                     <FormMessage />
                                     </FormItem>

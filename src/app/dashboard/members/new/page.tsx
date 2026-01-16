@@ -23,6 +23,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { collection } from 'firebase/firestore';
+import { Eye, EyeOff } from 'lucide-react';
 
 const formSchema = z.object({
   // Dados Pessoais
@@ -58,6 +59,7 @@ export default function NewMemberPage() {
   const firestore = useFirestore();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const congregacoesCollection = useMemoFirebase(
     () => (firestore ? collection(firestore, 'congregacoes') : null),
@@ -173,7 +175,19 @@ export default function NewMemberPage() {
                                     <FormItem>
                                     <FormLabel>Senha (temporária)</FormLabel>
                                     <FormControl>
-                                        <Input type="password" {...field} />
+                                        <div className="relative">
+                                            <Input type={showPassword ? "text" : "password"} {...field} />
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground"
+                                                onClick={() => setShowPassword((prev) => !prev)}
+                                                tabIndex={-1}
+                                            >
+                                                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                            </Button>
+                                        </div>
                                     </FormControl>
                                     <FormDescription>Informe uma senha inicial para o membro.</FormDescription>
                                     <FormMessage />

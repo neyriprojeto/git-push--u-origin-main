@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useRef } from 'react';
@@ -42,7 +43,7 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
     };
 
     return (
-        <div ref={ref} className="relative w-[210mm] h-[297mm] bg-white mx-auto scale-[0.3] sm:scale-50 md:scale-75 origin-top">
+        <div ref={ref} className="relative w-[148mm] h-[210mm] bg-white mx-auto scale-50 sm:scale-75 md:scale-100 origin-top">
             {templateUrl ? (
                 <Image src={templateUrl} alt="Fundo da carta" layout="fill" objectFit="contain" priority />
             ) : (
@@ -120,7 +121,7 @@ export default function RecommendationLetterPage() {
         try {
             const canvas = await html2canvas(documentRef.current, { scale: 3, useCORS: true });
             const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pdf = new jsPDF('p', 'mm', 'a5');
             pdf.addImage(imgData, 'PNG', 0, 0, pdf.internal.pageSize.getWidth(), pdf.internal.pageSize.getHeight());
             pdf.save(`carta-recomendacao-${selectedMember?.nome.replace(/ /g, '_') || 'membro'}.pdf`);
         } catch (error) {

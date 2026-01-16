@@ -107,13 +107,11 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
             
             {/* Signatures */}
             <footer className="pt-4">
-                <div className="flex justify-around items-end mb-4">
+                <div className="flex justify-around items-start mb-4">
                     <div className="text-center w-[70mm]">
-                        {pastorSignatureUrl && (
-                            <div className="relative w-full h-[15mm] mb-1">
-                               <Image src={pastorSignatureUrl} alt="Assinatura Pastor Presidente" layout="fill" objectFit="contain" />
-                            </div>
-                        )}
+                        <div className="relative w-full h-[15mm] mb-1">
+                           {pastorSignatureUrl && <Image src={pastorSignatureUrl} alt="Assinatura Pastor Presidente" layout="fill" objectFit="contain" priority />}
+                        </div>
                         <div className="border-t border-black w-full mx-auto" />
                         <p className="text-sm mt-1 font-sans">{presidentName}</p>
                         <p className="text-xs font-sans italic">Pastor Presidente</p>
@@ -165,7 +163,7 @@ export default function RecommendationLetterPage() {
         if (!documentRef.current) return;
         setIsGeneratingPdf(true);
         try {
-            const canvas = await html2canvas(documentRef.current, { scale: 3, useCORS: true });
+            const canvas = await html2canvas(documentRef.current, { scale: 4, useCORS: true });
             const imgData = canvas.toDataURL('image/png');
             const pdf = new jsPDF('p', 'mm', 'a5');
             pdf.addImage(imgData, 'PNG', 0, 0, pdf.internal.pageSize.getWidth(), pdf.internal.pageSize.getHeight());

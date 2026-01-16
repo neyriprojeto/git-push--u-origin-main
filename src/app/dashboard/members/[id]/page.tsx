@@ -623,14 +623,24 @@ export default function MemberProfilePage() {
   const avatar = getAvatar(member.avatar);
 
   const getMemberDataForField = (fieldId: string) => {
+    // Note: 'member' is from the parent scope and is reactive via useDoc
     switch (fieldId) {
-        case 'Valor Nome': return `Nome: ${member.nome || ''}`;
-        case 'Valor Nº Reg.': return `Nº Reg.: ${member.recordNumber || ''}`;
-        case 'Valor CPF': return `CPF: ${member.cpf || ''}`;
-        case 'Valor Data de Batismo': return `Data de Batismo: ${formatDate(member.dataBatismo, 'dd/MM/yyyy') || ''}`;
-        case 'Valor Cargo': return `Cargo: ${member.cargo || ''}`;
-        case 'Membro Desde': return `Membro desde: ${formatDate(member.dataMembro, 'dd/MM/yyyy') || ''}`;
-        default: return null;
+      case 'Valor Nome':
+        return `Nome: ${member.nome || ''}`;
+      case 'Valor Nº Reg.':
+        return `Nº Reg.: ${member.recordNumber || ''}`;
+      case 'Valor CPF':
+        return `CPF: ${member.cpf || ''}`;
+      case 'Valor Data de Batismo':
+        return `Data de Batismo: ${formatDate(member.dataBatismo, 'dd/MM/yyyy') || ''}`;
+      case 'Valor Cargo':
+        return `Cargo: ${member.cargo || ''}`;
+      case 'Membro Desde':
+        return `Membro desde: ${formatDate(member.dataMembro, 'dd/MM/yyyy') || ''}`;
+      case 'Congregação':
+        return member.congregacao; // Return the value directly or undefined
+      default:
+        return null; // Indicates no dynamic text for this field
     }
   };
 
@@ -696,20 +706,13 @@ export default function MemberProfilePage() {
         style.textAlign = el.textAlign;
         style.whiteSpace = 'pre-wrap';
 
-        let dynamicText = el.text;
-        if (id.startsWith('Valor')) {
-            dynamicText = getMemberDataForField(id) ?? el.text;
-        } else if (id === 'Congregação') {
-            dynamicText = member.congregacao || el.text;
-        } else if (id === 'Membro Desde') {
-            dynamicText = `Membro desde: ${formatDate(member.dataMembro, 'dd/MM/yyyy') || ''}`;
-        }
+        const dynamicText = getMemberDataForField(id);
         
         if (id.includes('Título') || id.includes('Valor') || id.includes('Assinatura Pastor') || id.includes('Validade') || id.includes('Membro Desde')) {
             style.whiteSpace = 'nowrap';
         }
         
-        elementContent = <p style={style}>{dynamicText}</p>;
+        elementContent = <p style={style}>{dynamicText ?? el.text}</p>;
     }
 
     return <div key={id}>{elementContent}</div>;

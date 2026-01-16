@@ -96,7 +96,7 @@ export default function CongregationsPage() {
   const recommendationLetterRef = useMemoFirebase(() => (firestore ? doc(firestore, 'documentTemplates', 'recommendation-letter') : null), [firestore]);
   const { data: recommendationLetterData, isLoading: loadingRecommendationLetter } = useDoc<{ backgroundUrl?: string }>(recommendationLetterRef);
   const [recommendationLetterBg, setRecommendationLetterBg] = useState('');
-  const [isSavingTemplate, setIsSavingTemplate] = useState(false);
+  const [isSavingLetterConfig, setIsSavingLetterConfig] = useState(false);
 
   // Image Cropping State
   const [crop, setCrop] = useState<Crop>();
@@ -244,18 +244,24 @@ export default function CongregationsPage() {
     }
   }
 
-  const handleSaveRecommendationLetter = async () => {
-    if (!recommendationLetterRef) return;
-    setIsSavingTemplate(true);
+  const handleSaveLetterConfig = async () => {
+    if (!churchInfoRef || !recommendationLetterRef) return;
+    setIsSavingLetterConfig(true);
     try {
+        // Save logos and signature to churchInfo
+        await setDoc(churchInfoRef, churchInfo, { merge: true });
+        
+        // Save background to document template
         await setDoc(recommendationLetterRef, { backgroundUrl: recommendationLetterBg }, { merge: true });
-        toast({ title: 'Sucesso!', description: 'Template da carta de recomendação salvo.' });
+
+        toast({ title: 'Sucesso!', description: 'Configurações da carta atualizadas.' });
     } catch (error) {
-        toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível salvar o template.' });
+        console.error("Error saving letter config:", error);
+        toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível salvar as configurações.' });
     } finally {
-        setIsSavingTemplate(false);
+        setIsSavingLetterConfig(false);
     }
-  }
+};
 
 
   const triggerFileInput = (id: string, cropAspect: number | undefined) => {
@@ -322,10 +328,10 @@ export default function CongregationsPage() {
                 toast({ title: 'Sucesso!', description: 'Foto do líder atualizada.' });
             } else if (croppingId === 'recommendation-letter-bg') {
                 setRecommendationLetterBg(src);
-                toast({ title: 'Sucesso', description: 'Imagem enviada! Clique em "Salvar Template" para aplicar.' });
+                toast({ title: 'Sucesso', description: 'Imagem enviada! Clique em "Salvar Configurações da Carta" para aplicar.' });
             } else {
                  setChurchInfo(prev => ({...prev, [croppingId]: src }));
-                 toast({ title: 'Sucesso', description: 'Imagem enviada! Clique em "Salvar Informações" para aplicar.' });
+                 toast({ title: 'Sucesso', description: 'Imagem enviada! Clique no botão de salvar correspondente para aplicar.' });
             }
 
             setIsCropping(false);
@@ -362,20 +368,9 @@ export default function CongregationsPage() {
                          <div className="flex justify-center p-8"> <Loader2 className="h-8 w-8 animate-spin" /></div>
                     ) : (
                         <>
-                            <div className="grid md:grid-cols-2 gap-x-8 gap-y-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="pastorName">Nome do Pastor Presidente</Label>
-                                    <Input id="pastorName" name="pastorName" value={churchInfo.pastorName || ''} onChange={handleChurchInfoChange} />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>Assinatura Digital do Presidente</Label>
-                                    <div className='flex items-center gap-4'>
-                                        <Button variant="outline" onClick={() => triggerFileInput('pastorSignatureUrl', 4 / 1)}>
-                                            <Upload className="mr-2 h-4 w-4"/> Enviar Assinatura
-                                        </Button>
-                                        {churchInfo.pastorSignatureUrl && <div className="h-[40px] w-[120px] rounded-md border p-1 bg-slate-100"><Image src={churchInfo.pastorSignatureUrl} alt="Assinatura" width={120} height={40} className="object-contain"/></div>}
-                                    </div>
-                                </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="pastorName">Nome do Pastor Presidente</Label>
+                                <Input id="pastorName" name="pastorName" value={churchInfo.pastorName || ''} onChange={handleChurchInfoChange} />
                             </div>
                             <Separator className="my-4" />
                             <div className="space-y-2">
@@ -387,7 +382,7 @@ export default function CongregationsPage() {
                                 <Textarea id="pastoralMessage" name="pastoralMessage" value={churchInfo.pastoralMessage || ''} onChange={handleChurchInfoChange} placeholder="Deixe uma mensagem de fé e esperança..." />
                             </div>
                             <div className="space-y-2">
-                                <Label>Imagens da Igreja e Convenções</Label>
+                                <Label>Imagens Principais</Label>
                                 <div className='flex flex-wrap gap-2'>
                                     <input type="file" ref={fileInputRef} onChange={onSelectFile} className="hidden" accept="image/*"/>
                                     <Button variant="outline" onClick={() => triggerFileInput('bannerImageUrl', 16/9)}>
@@ -396,23 +391,15 @@ export default function CongregationsPage() {
                                     <Button variant="outline" onClick={() => triggerFileInput('pastorImageUrl', 1/1)}>
                                         <Upload className="mr-2 h-4 w-4"/> Foto do Pastor
                                     </Button>
-                                    <Button variant="outline" onClick={() => triggerFileInput('conventionLogo1Url', 1 / 1)}>
-                                        <Upload className="mr-2 h-4 w-4"/> Logo Convenção 1
-                                    </Button>
-                                    <Button variant="outline" onClick={() => triggerFileInput('conventionLogo2Url', 1 / 1)}>
-                                        <Upload className="mr-2 h-4 w-4"/> Logo Convenção 2
-                                    </Button>
                                 </div>
                                 <div className='flex flex-wrap gap-4 mt-4'>
                                     {churchInfo.bannerImageUrl && <div><Label className='text-xs'>Banner Atual</Label><Image src={churchInfo.bannerImageUrl} alt="Banner" width={200} height={112} className="rounded-md border object-cover"/></div>}
                                     {churchInfo.pastorImageUrl && <div><Label className='text-xs'>Foto Atual</Label><Image src={churchInfo.pastorImageUrl} alt="Pastor" width={100} height={100} className="rounded-full border object-cover"/></div>}
-                                    {churchInfo.conventionLogo1Url && <div><Label className='text-xs'>Logo Convenção 1</Label><Image src={churchInfo.conventionLogo1Url} alt="Logo Convenção 1" width={100} height={100} className="rounded-md border object-contain p-2"/></div>}
-                                    {churchInfo.conventionLogo2Url && <div><Label className='text-xs'>Logo Convenção 2</Label><Image src={churchInfo.conventionLogo2Url} alt="Logo Convenção 2" width={100} height={100} className="rounded-md border object-contain p-2"/></div>}
                                 </div>
                             </div>
                             <Button onClick={handleSaveChurchInfo} disabled={isSavingChurchInfo}>
                                 {isSavingChurchInfo ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-                                {isSavingChurchInfo ? 'Salvando...' : 'Salvar Informações'}
+                                {isSavingChurchInfo ? 'Salvando...' : 'Salvar Informações da Página'}
                             </Button>
                         </>
                     )}
@@ -454,6 +441,54 @@ export default function CongregationsPage() {
                                 {isSavingChurchInfo ? 'Salvando...' : 'Salvar Links'}
                             </Button>
                         </div>
+                    )}
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Configurações da Carta de Recomendação</CardTitle>
+                    <CardDescription>Configure os logos, assinatura e imagem de fundo para a carta de recomendação.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {loadingChurchInfo || loadingRecommendationLetter ? (
+                         <div className="flex justify-center p-8"> <Loader2 className="h-8 w-8 animate-spin" /></div>
+                    ) : (
+                        <>
+                             <div className="space-y-2">
+                                <Label>Assinatura Digital do Presidente</Label>
+                                <div className='flex items-center gap-4'>
+                                    <Button variant="outline" onClick={() => triggerFileInput('pastorSignatureUrl', 4 / 1)}>
+                                        <Upload className="mr-2 h-4 w-4"/> Enviar Assinatura
+                                    </Button>
+                                    {churchInfo.pastorSignatureUrl && <div className="h-[40px] w-[120px] rounded-md border p-1 bg-slate-100"><Image src={churchInfo.pastorSignatureUrl} alt="Assinatura" width={120} height={40} className="object-contain"/></div>}
+                                </div>
+                            </div>
+                            <Separator />
+                            <div className="space-y-2">
+                                <Label>Imagens do Documento</Label>
+                                <div className='flex flex-wrap gap-2'>
+                                    <Button variant="outline" onClick={() => triggerFileInput('conventionLogo1Url', 3 / 4)}>
+                                        <Upload className="mr-2 h-4 w-4"/> Logo Esquerda (Cabeçalho)
+                                    </Button>
+                                    <Button variant="outline" onClick={() => triggerFileInput('conventionLogo2Url', 1 / 1)}>
+                                        <Upload className="mr-2 h-4 w-4"/> Logo Direita (Cabeçalho)
+                                    </Button>
+                                    <Button variant="outline" onClick={() => triggerFileInput('recommendation-letter-bg', 210/297)}>
+                                        <Upload className="mr-2 h-4 w-4"/> Fundo da Carta
+                                    </Button>
+                                </div>
+                                <div className='flex flex-wrap gap-4 mt-4'>
+                                    {churchInfo.conventionLogo1Url && <div><Label className='text-xs'>Logo Esquerda</Label><Image src={churchInfo.conventionLogo1Url} alt="Logo Convenção 1" width={100} height={100} className="rounded-md border object-contain p-2"/></div>}
+                                    {churchInfo.conventionLogo2Url && <div><Label className='text-xs'>Logo Direita</Label><Image src={churchInfo.conventionLogo2Url} alt="Logo Convenção 2" width={100} height={100} className="rounded-md border object-contain p-2"/></div>}
+                                    {recommendationLetterBg && <div><Label className="text-xs">Fundo Atual</Label><Image src={recommendationLetterBg} alt="Fundo da Carta" width={150} height={212} className="rounded-md border object-contain"/></div>}
+                                </div>
+                            </div>
+                             <Button onClick={handleSaveLetterConfig} disabled={isSavingLetterConfig}>
+                                {isSavingLetterConfig ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                                {isSavingLetterConfig ? 'Salvando...' : 'Salvar Configurações da Carta'}
+                            </Button>
+                        </>
                     )}
                 </CardContent>
             </Card>
@@ -535,37 +570,6 @@ export default function CongregationsPage() {
                         </ul>
                     ) : (
                         <p className="text-muted-foreground text-center p-4">Nenhum líder cadastrado.</p>
-                    )}
-                </CardContent>
-            </Card>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle>Templates de Documentos</CardTitle>
-                    <CardDescription>Faça o upload do fundo para os documentos oficiais.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    {loadingRecommendationLetter ? (
-                        <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>
-                    ) : (
-                        <div className="space-y-2">
-                            <Label>Carta de Recomendação</Label>
-                            <div className="flex flex-wrap items-center gap-2">
-                                <Button variant="outline" onClick={() => triggerFileInput('recommendation-letter-bg', 210/297)}>
-                                    <Upload className="mr-2 h-4 w-4"/> Fundo da Carta
-                                </Button>
-                                <Button onClick={handleSaveRecommendationLetter} disabled={isSavingTemplate}>
-                                     {isSavingTemplate ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-                                    Salvar Template
-                                </Button>
-                            </div>
-                            {recommendationLetterBg && (
-                                <div className="mt-4">
-                                    <Label className="text-xs">Fundo Atual</Label>
-                                    <Image src={recommendationLetterBg} alt="Fundo da Carta" width={150} height={212} className="rounded-md border object-contain"/>
-                                </div>
-                            )}
-                        </div>
                     )}
                 </CardContent>
             </Card>
@@ -682,3 +686,5 @@ export default function CongregationsPage() {
     </>
   );
 }
+
+    

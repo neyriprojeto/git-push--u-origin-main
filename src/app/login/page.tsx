@@ -8,11 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AppLogo } from "@/components/icons";
 import { useState } from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { useAuth } from "@/firebase";
+import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { useAuth, useFirestore } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
+import { doc, getDoc } from "firebase/firestore";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -20,11 +21,12 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const auth = useAuth();
+  const firestore = useFirestore();
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!auth) {
+    if (!auth || !firestore) {
       toast({
         variant: "destructive",
         title: "Erro de autenticação",
@@ -34,8 +36,55 @@ export default function LoginPage() {
     }
     setIsLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      router.push("/dashboard");
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // After successful authentication, check the user's status in Firestore.
+      const userDocRef = doc(firestore, "users", user.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        if (userData.status === 'Pendente') {
+          // If status is pending, sign the user out and show a specific message.
+          await signOut(auth);
+          toast({
+            variant: "default",
+            title: "Cadastro em Análise",
+            description: "Seu cadastro está em análise. Você receberá um e-mail quando for aprovado.",
+            duration: 9000,
+          });
+        } else if (userData.status === 'Inativo') {
+          // If status is inactive, sign out and inform the user.
+          await signOut(auth);
+          toast({
+            variant: "destructive",
+            title: "Conta Inativa",
+            description: "Sua conta está inativa. Entre em contato com a administração da igreja.",
+            duration: 9000,
+          });
+        } else if (userData.status === 'Ativo') {
+          // If status is active, proceed to dashboard.
+          router.push("/dashboard");
+        } else {
+            // Fallback for unknown status
+            await signOut(auth);
+            toast({
+                variant: "destructive",
+                title: "Status Desconhecido",
+                description: "O status da sua conta é desconhecido. Entre em contato com a administração.",
+                duration: 9000,
+            });
+        }
+      } else {
+        // This case is unlikely if registration always creates a user doc, but it's good practice to handle it.
+        await signOut(auth);
+        toast({
+          variant: "destructive",
+          title: "Erro de Cadastro",
+          description: "Não foi possível encontrar seus dados de membro. Por favor, entre em contato com a administração.",
+        });
+      }
     } catch (error: any) {
       console.error("Firebase Auth Error:", error.code, error.message);
       let description = "Verifique suas credenciais e tente novamente.";

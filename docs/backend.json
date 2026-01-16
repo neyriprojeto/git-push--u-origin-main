@@ -69,7 +69,8 @@
         "baptismCertLogoUrl": { "type": "string", "format": "uri", "description": "URL for the baptism certificate logo." },
         "baptismCertElements": { "type": "object", "description": "Stores position and style for baptism certificate elements." },
         "presentationCertBgUrl": { "type": "string", "format": "uri", "description": "URL for the presentation certificate background image." },
-        "presentationCertElements": { "type": "object", "description": "Stores position and style for presentation certificate elements." }
+        "presentationCertElements": { "type": "object", "description": "Stores position and style for presentation certificate elements." },
+        "presentationCertLogoUrl": { "type": "string", "format": "uri", "description": "URL for the presentation certificate logo." }
       }
     },
     "Leader": {

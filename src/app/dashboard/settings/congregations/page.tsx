@@ -16,7 +16,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogT
 import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import Image from 'next/image';
 import 'react-image-crop/dist/ReactCrop.css';
-import { uploadArquivo } from '@/lib/cloudinary';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Separator } from '@/components/ui/separator';
@@ -45,6 +44,7 @@ type ChurchInfo = {
     baptismCertBgUrl?: string;
     baptismCertLogoUrl?: string;
     presentationCertBgUrl?: string;
+    presentationCertLogoUrl?: string;
 }
 
 type Leader = {
@@ -445,7 +445,7 @@ export default function CongregationsPage() {
             <Card>
                 <CardHeader>
                     <CardTitle>Configurações da Carta de Recomendação</CardTitle>
-                    <CardDescription>Configure os logos e a assinatura para a carta de recomendação.</CardDescription>
+                    <CardDescription>Configure os logos para a carta de recomendação.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     {loadingChurchInfo ? (
@@ -467,9 +467,9 @@ export default function CongregationsPage() {
                                 {churchInfo.conventionLogo1Url && <div><Label className='text-xs'>Logo Esquerda</Label><Image src={churchInfo.conventionLogo1Url} alt="Logo Convenção 1" width={100} height={100} className="rounded-md border object-contain p-2"/></div>}
                                 {churchInfo.conventionLogo2Url && <div><Label className='text-xs'>Logo Direita</Label><Image src={churchInfo.conventionLogo2Url} alt="Logo Convenção 2" width={100} height={100} className="rounded-md border object-contain p-2"/></div>}
                             </div>
-                             <Button onClick={handleSaveLetterConfig} disabled={isSavingLetterConfig}>
-                                {isSavingLetterConfig ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-                                {isSavingLetterConfig ? 'Salvando...' : 'Salvar Configurações da Carta'}
+                             <Button onClick={handleSaveChurchInfo} disabled={isSavingChurchInfo}>
+                                {isSavingChurchInfo ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                                {isSavingChurchInfo ? 'Salvando...' : 'Salvar Configurações da Carta'}
                             </Button>
                         </>
                     )}
@@ -490,24 +490,20 @@ export default function CongregationsPage() {
                                 <Label>Imagens do Certificado</Label>
                                 <div className='flex flex-wrap gap-2'>
                                     <Button variant="outline" onClick={() => triggerFileInput('baptismCertBgUrl', 297/210)}>
-                                        <Upload className="mr-2 h-4 w-4"/> Fundo do Certificado
+                                        <Upload className="mr-2 h-4 w-4"/> Trocar Fundo
                                     </Button>
                                     <Button variant="outline" onClick={() => triggerFileInput('baptismCertLogoUrl', undefined)}>
-                                        <Upload className="mr-2 h-4 w-4"/> Logo do Certificado
-                                    </Button>
-                                     <Button variant="outline" onClick={() => triggerFileInput('pastorSignatureUrl', undefined)}>
-                                        <Upload className="mr-2 h-4 w-4" /> Assinatura do Pastor
+                                        <Upload className="mr-2 h-4 w-4"/> Trocar Logo
                                     </Button>
                                 </div>
                             </div>
                                 <div className='flex flex-wrap gap-4 mt-4'>
                                 {churchInfo.baptismCertBgUrl && <div><Label className='text-xs'>Fundo Atual</Label><Image src={churchInfo.baptismCertBgUrl} alt="Fundo do Certificado" width={297/2} height={210/2} className="rounded-md border object-cover p-2"/></div>}
                                 {churchInfo.baptismCertLogoUrl && <div><Label className='text-xs'>Logo Atual</Label><Image src={churchInfo.baptismCertLogoUrl} alt="Logo do Certificado" width={100} height={100} className="rounded-md border object-contain p-2"/></div>}
-                                {churchInfo.pastorSignatureUrl && <div><Label className='text-xs'>Assinatura Atual</Label><Image src={churchInfo.pastorSignatureUrl} alt="Assinatura" width={120} height={60} className="rounded-md border object-contain p-1"/></div>}
                             </div>
                                 <Button onClick={handleSaveChurchInfo} disabled={isSavingChurchInfo}>
                                 {isSavingChurchInfo ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-                                {isSavingChurchInfo ? 'Salvando...' : 'Salvar Configurações do Certificado'}
+                                {isSavingChurchInfo ? 'Salvando...' : 'Salvar Alterações'}
                             </Button>
                         </>
                     )}
@@ -517,7 +513,7 @@ export default function CongregationsPage() {
             <Card>
                 <CardHeader>
                     <CardTitle>Configurações do Certificado de Apresentação</CardTitle>
-                    <CardDescription>Configure o fundo para o certificado de apresentação.</CardDescription>
+                    <CardDescription>Configure o fundo e o logo para o certificado de apresentação.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     {loadingChurchInfo ? (
@@ -525,19 +521,23 @@ export default function CongregationsPage() {
                     ) : (
                         <>
                             <div className="space-y-2">
-                                <Label>Imagem de Fundo</Label>
+                                <Label>Imagens do Certificado</Label>
                                 <div className='flex flex-wrap gap-2'>
                                     <Button variant="outline" onClick={() => triggerFileInput('presentationCertBgUrl', 297/210)}>
                                         <Upload className="mr-2 h-4 w-4"/> Fundo do Certificado
+                                    </Button>
+                                    <Button variant="outline" onClick={() => triggerFileInput('presentationCertLogoUrl', undefined)}>
+                                        <Upload className="mr-2 h-4 w-4"/> Logo do Certificado
                                     </Button>
                                 </div>
                             </div>
                             <div className='flex flex-wrap gap-4 mt-4'>
                                 {churchInfo.presentationCertBgUrl && <div><Label className='text-xs'>Fundo Atual</Label><Image src={churchInfo.presentationCertBgUrl} alt="Fundo do Certificado de Apresentação" width={297/2} height={210/2} className="rounded-md border object-cover p-2"/></div>}
+                                {churchInfo.presentationCertLogoUrl && <div><Label className='text-xs'>Logo Atual</Label><Image src={churchInfo.presentationCertLogoUrl} alt="Logo do Certificado de Apresentação" width={100} height={100} className="rounded-md border object-contain p-2"/></div>}
                             </div>
                             <Button onClick={handleSaveChurchInfo} disabled={isSavingChurchInfo}>
                                 {isSavingChurchInfo ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-                                {isSavingChurchInfo ? 'Salvando...' : 'Salvar Configurações do Certificado'}
+                                {isSavingChurchInfo ? 'Salvando...' : 'Salvar Alterações'}
                             </Button>
                         </>
                     )}

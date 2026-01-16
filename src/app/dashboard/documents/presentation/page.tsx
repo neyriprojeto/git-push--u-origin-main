@@ -26,6 +26,7 @@ type ElementStyle = {
     position: { top: number; left: number };
     size: { fontSize: number; width?: number; height?: number; };
     text?: string;
+    src?: string;
     fontWeight?: 'normal' | 'bold';
     fontFamily?: string;
     textAlign?: 'left' | 'center' | 'right';
@@ -41,13 +42,16 @@ type ChurchInfo = {
     pastorSignatureUrl?: string; 
     presentationCertBgUrl?: string;
     presentationCertElements?: DocElements;
+    presentationCertLogoUrl?: string;
+    conventionLogo1Url?: string;
 };
 
 const defaultElements: DocElements = {
+    'Logo': { position: { top: 7, left: 10 }, size: { width: 120, height: 120, fontSize: 12 }, src: '' },
     'Titulo1': { position: { top: 15, left: 50 }, size: { fontSize: 16 }, text: 'CERTIFICADO', letterSpacing: '0.2em', fontWeight: 'bold', textAlign: 'center', color: '#333' },
     'Titulo2': { position: { top: 20, left: 50 }, size: { fontSize: 16 }, text: 'DE APRESENTAÇÃO', letterSpacing: '0.2em', fontWeight: 'bold', textAlign: 'center', color: '#333' },
     'Certificamos': { position: { top: 30, left: 50 }, size: { fontSize: 12 }, text: 'CERTIFICAMOS QUE', textAlign: 'center', color: '#333' },
-    'NomeCrianca': { position: { top: 40, left: 50 }, size: { fontSize: 36 }, text: 'Nome da Criança', fontFamily: 'Great Vibes, cursive', textAlign: 'center', color: 'black' },
+    'NomeCrianca': { position: { top: 40, left: 50 }, size: { fontSize: 36 }, text: 'Nome da Criança', fontFamily: "'Great Vibes', cursive", textAlign: 'center', color: 'black' },
     'Detalhes': { position: { top: 55, left: 50 }, size: { fontSize: 11 }, text: 'Detalhes da criança...', textAlign: 'center', color: '#333', lineHeight: 1.5, width: 600 },
     'Versiculo': { position: { top: 70, left: 50 }, size: { fontSize: 9 }, text: '“E, cumprindo-se os dias da purificação dela, segundo a lei de Moisés, o levaram a Jerusalém, para o apresentarem ao Senhor.” (Lucas 2:22)', textAlign: 'center', color: '#333', fontStyle: 'italic', width: 500 },
     'AssinaturaPresidente': { position: { top: 82, left: 25 }, size: { width: 180, height: 50, fontSize: 12 }, src: '' },
@@ -130,6 +134,7 @@ export default function PresentationCertificatePage() {
     const [childName, setChildName] = useState('');
     const [childDetails, setChildDetails] = useState('');
     const [localPastor, setLocalPastor] = useState('');
+    const [presentationDate, setPresentationDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
     
     const [elements, setElements] = useState<DocElements>(defaultElements);
@@ -150,19 +155,23 @@ export default function PresentationCertificatePage() {
     }, [userData]);
 
     useEffect(() => {
-        const today = format(new Date(), "d 'de' MMMM 'de' yyyy", { locale: ptBR });
+        const formattedDate = presentationDate 
+            ? format(new Date(presentationDate.replace(/-/g, '/')), "d 'de' MMMM 'de' yyyy", { locale: ptBR }) 
+            : format(new Date(), "d 'de' MMMM 'de' yyyy", { locale: ptBR });
+        
         const initialElements = churchInfo?.presentationCertElements ? { ...defaultElements, ...churchInfo.presentationCertElements } : defaultElements;
         
+        initialElements['Logo'].src = churchInfo?.presentationCertLogoUrl || churchInfo?.conventionLogo1Url || PlaceHolderImages.find(p => p.id === 'church-logo')?.imageUrl || '';
         initialElements['NomeCrianca'].text = childName || '________________';
-        initialElements['Detalhes'].text = `${childDetails || 'Nascida no dia ___ de ________ de _____, filha(o) de ______________ e ______________'}\nfoi apresentada oficialmente ao SENHOR JESUS CRISTO,\nna Igreja Evangélica Assembleia de Deus Ministério Kairós.\nNo dia ${today}`;
-        initialElements['Versiculo'].text = "“E, cumprindo-se os dias da purificação dela, segundo a lei de Moisés, o levaram a Jerusalém, para o apresentarem ao Senhor.” (Lucas 2:22)";
+        initialElements['Detalhes'].text = `${childDetails || 'Nascida no dia ___ de ________ de _____, filha(o) de ______________ e ______________'}\nfoi apresentada oficialmente ao SENHOR JESUS CRISTO,\nna Igreja Evangélica Assembleia de Deus Ministério Kairós.\nNo dia ${formattedDate}`;
+        initialElements['Versiculo'].text = "“E, cumprindo-se os dias da purificação dela, segundo a lei de Moisés, o levaram a Jerusalém,\npara o apresentarem ao Senhor.” (Lucas 2:22)";
         initialElements['AssinaturaPresidente'].src = churchInfo?.pastorSignatureUrl || '';
         initialElements['NomePresidente'].text = churchInfo?.pastorName || '____________________';
         initialElements['NomePastorDirigente'].text = localPastor || '____________________';
 
         setElements(initialElements);
 
-    }, [churchInfo, childName, childDetails, localPastor]);
+    }, [churchInfo, childName, childDetails, localPastor, presentationDate]);
 
      const handlePositionChange = useCallback((property: 'position', step: number, direction: 'up' | 'down' | 'left' | 'right') => {
         if (!selectedElement) return;
@@ -262,6 +271,7 @@ export default function PresentationCertificatePage() {
                 <CardContent className="grid md:grid-cols-2 gap-6">
                     <div className="space-y-2"><Label htmlFor="child-name">Nome da Criança</Label><Input id="child-name" value={childName} onChange={(e) => setChildName(e.target.value)} placeholder="Ex: Helena Victoria" /></div>
                     <div className="space-y-2"><Label htmlFor="local-pastor">Pastor Dirigente</Label><Input id="local-pastor" value={localPastor} onChange={(e) => setLocalPastor(e.target.value)} placeholder="Nome do pastor local" /></div>
+                    <div className="space-y-2"><Label htmlFor="presentation-date">Data da Apresentação</Label><Input id="presentation-date" type="date" value={presentationDate} onChange={(e) => setPresentationDate(e.target.value)} /></div>
                     <div className="space-y-2 md:col-span-2"><Label htmlFor="child-details">Detalhes (Nascimento e Filiação)</Label><Textarea id="child-details" value={childDetails} onChange={(e) => setChildDetails(e.target.value)} placeholder="Ex: Nascida no dia 22 de Dezembro 2023, filha de Diego Preste e Natasha Soares da Rosa" /></div>
                 </CardContent>
             </Card>

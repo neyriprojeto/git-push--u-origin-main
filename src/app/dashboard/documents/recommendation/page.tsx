@@ -107,7 +107,7 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
                 <div className="flex justify-between items-start w-[130mm] mx-auto">
                     {/* Left side: President */}
                     <div className="text-center w-[60mm]">
-                        <div className="relative w-full h-[15mm] mb-1">
+                        <div className="relative w-[30mm] h-[30mm] mx-auto mb-1">
                              {pastorSignatureUrl && <img src={pastorSignatureUrl} alt="Assinatura Pastor Presidente" style={{ objectFit: 'contain', width: '100%', height: '100%' }} crossOrigin="anonymous" />}
                         </div>
                         <div className="border-t border-black w-full" />
@@ -117,7 +117,7 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
 
                     {/* Right side: Director */}
                      <div className="text-center w-[60mm]">
-                         <div className="relative w-full h-[15mm] mb-1">
+                         <div className="relative w-[30mm] h-[30mm] mx-auto mb-1">
                             {/* Empty space for manual signature */}
                         </div>
                         <div className="border-t border-black w-full" />

@@ -12,6 +12,7 @@
  * - /congregacoes/{congregacaoId}: A public list of church congregations.
  * - /cardTemplates/{templateId}: Stores the customizable template for member ID cards.
  * - /leaders/{leaderId}: Stores the manually curated list of executive committee leaders for the homepage.
+ * - /logos/{logoId}: Stores official church logos for download by authorized users.
  *
  * Key Security Decisions:
  * - Centralized User Data: All member-specific data is stored in `/users/{userId}`, where `{userId}`
@@ -172,6 +173,17 @@ service cloud.firestore {
     match /documentTemplates/{templateId} {
       allow read: if isSignedIn();
       allow write: if isAdmin();
+    }
+
+    /**
+     * @description
+     *   Manages church logos for download.
+     *   Readable by signed-in leaders, but only writable by an Admin.
+     * @path /logos/{logoId}
+     */
+    match /logos/{logoId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
     }
   }
 }

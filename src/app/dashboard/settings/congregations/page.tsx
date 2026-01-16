@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
-import { addCongregacao, deleteCongregacao, updateCongregacao, addLeader, updateLeader, deleteLeader } from '@/firebase/firestore/mutations';
+import { addCongregacao, deleteCongregacao, updateCongregacao, addLeader, updateLeader, deleteLeader, addLogo, deleteLogo } from '@/firebase/firestore/mutations';
 import { Trash2, Save, Loader2, Upload, Plus } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { collection, doc, setDoc } from 'firebase/firestore';
@@ -58,6 +58,12 @@ type Leader = {
   order?: number;
 };
 
+type Logo = {
+  id: string;
+  name: string;
+  imageUrl: string;
+};
+
 
 function centerAspectCrop(
   mediaWidth: number,
@@ -95,6 +101,15 @@ export default function CongregationsPage() {
   const [newLeader, setNewLeader] = useState({ name: '', role: '', email: '' });
   const [isAddLeaderOpen, setIsAddLeaderOpen] = useState(false);
   const [savingLeaderId, setSavingLeaderId] = useState<string | null>(null);
+
+  // Logo State
+  const logosCollection = useMemoFirebase(() => (firestore ? collection(firestore, 'logos') : null), [firestore]);
+  const { data: logosData, isLoading: loadingLogos } = useCollection<Logo>(logosCollection);
+  const [newLogoName, setNewLogoName] = useState('');
+  const [newLogoFile, setNewLogoFile] = useState<File | null>(null);
+  const [isAddLogoOpen, setIsAddLogoOpen] = useState(false);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const logoFileInputRef = useRef<HTMLInputElement>(null);
 
   // Image Cropping State
   const [crop, setCrop] = useState<Crop>();
@@ -365,6 +380,46 @@ export default function CongregationsPage() {
         }
     };
 
+    const handleLogoFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setNewLogoFile(file);
+        }
+    };
+
+    const handleAddLogo = async () => {
+        if (!firestore || !newLogoFile || !newLogoName) {
+            toast({ variant: 'destructive', title: 'Erro', description: 'Nome e arquivo do logo são obrigatórios.' });
+            return;
+        }
+        setIsUploadingLogo(true);
+        try {
+            const imageUrl = await uploadArquivo(newLogoFile);
+            await addLogo(firestore, { name: newLogoName, imageUrl });
+            setNewLogoName('');
+            setNewLogoFile(null);
+            if (logoFileInputRef.current) {
+                logoFileInputRef.current.value = '';
+            }
+            setIsAddLogoOpen(false);
+            toast({ title: 'Sucesso!', description: 'Novo logo adicionado.' });
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: 'Erro ao adicionar logo', description: error.message || 'Tente novamente.' });
+        } finally {
+            setIsUploadingLogo(false);
+        }
+    };
+
+    const handleDeleteLogo = async (id: string) => {
+        if (!firestore) return;
+        try {
+            await deleteLogo(firestore, id);
+            toast({ title: 'Sucesso!', description: 'Logo removido.' });
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: 'Erro ao remover', description: error.message || 'Tente novamente.' });
+        }
+    };
+
   return (
     <>
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -397,6 +452,71 @@ export default function CongregationsPage() {
                         {isSavingStatute ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                         {isSavingStatute ? 'Salvando...' : 'Salvar Estatuto'}
                     </Button>
+                </CardContent>
+            </Card>
+            
+            <Card>
+                <CardHeader>
+                    <CardTitle>Gerenciar Logos da Igreja</CardTitle>
+                    <CardDescription>Adicione ou remova os logos oficiais (em PNG) para download.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <Dialog open={isAddLogoOpen} onOpenChange={setIsAddLogoOpen}>
+                        <DialogTrigger asChild>
+                            <Button><Plus className="mr-2 h-4 w-4" /> Adicionar Logo</Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader><DialogTitle>Adicionar Novo Logo</DialogTitle></DialogHeader>
+                            <div className="space-y-4 py-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="new-logo-name">Nome do Logo</Label>
+                                    <Input id="new-logo-name" placeholder="Ex: Logo Principal Colorido" value={newLogoName} onChange={(e) => setNewLogoName(e.target.value)} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="new-logo-file">Arquivo do Logo (PNG)</Label>
+                                    <Input id="new-logo-file" type="file" accept="image/png" ref={logoFileInputRef} onChange={handleLogoFileSelect} />
+                                </div>
+                            </div>
+                            <DialogFooter>
+                                <Button variant="outline" onClick={() => setIsAddLogoOpen(false)}>Cancelar</Button>
+                                <Button onClick={handleAddLogo} disabled={isUploadingLogo}>
+                                    {isUploadingLogo ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                                    {isUploadingLogo ? 'Enviando...' : 'Salvar Logo'}
+                                </Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                    {loadingLogos ? (
+                        <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>
+                    ) : logosData && logosData.length > 0 ? (
+                        <ul className="space-y-2 pt-4">
+                            {logosData.map(logo => (
+                                <li key={logo.id} className="flex items-center justify-between p-2 border rounded-md">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 relative bg-slate-100 p-1 rounded-md">
+                                            <Image src={logo.imageUrl} alt={logo.name} layout="fill" objectFit="contain" />
+                                        </div>
+                                        <span className="font-medium">{logo.name}</span>
+                                    </div>
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button size="icon" variant="ghost" className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4"/></Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader><AlertDialogTitle>Remover Logo?</AlertDialogTitle><AlertDialogDescription>Deseja remover o logo "{logo.name}"?</AlertDialogDescription></AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                                <AlertDialogAction onClick={() => handleDeleteLogo(logo.id)}>Remover</AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <p className="text-muted-foreground text-center p-4">Nenhum logo cadastrado.</p>
+                    )}
                 </CardContent>
             </Card>
 

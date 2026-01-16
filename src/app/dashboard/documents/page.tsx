@@ -25,6 +25,11 @@ const documents = [
         description: "Visualize ou baixe o estatuto oficial da igreja.",
         href: "/dashboard/documents/statute",
     },
+    {
+        title: "Logos da Igreja",
+        description: "Baixe os logos oficiais da igreja em formato PNG.",
+        href: "/dashboard/documents/logos",
+    },
 ];
 
 export default function DocumentsPage() {

@@ -119,6 +119,17 @@
             "cardStyles": { "type": "object" },
             "textColors": { "type": "object" }
         }
+    },
+    "ChurchLogo": {
+        "title": "ChurchLogo",
+        "type": "object",
+        "description": "Represents a church logo asset available for download.",
+        "properties": {
+            "id": { "type": "string" },
+            "name": { "type": "string", "description": "Name or description of the logo." },
+            "imageUrl": { "type": "string", "format": "uri", "description": "URL of the logo image (PNG)." }
+        },
+        "required": ["name", "imageUrl"]
     }
   },
   "auth": {
@@ -152,6 +163,10 @@
     "/cardTemplates/{templateId}": {
         "schema": { "$ref": "#/entities/CardTemplate" },
         "description": "Stores the template for member ID cards. Should only contain one document (e.g., with ID 'default')."
+    },
+    "/logos/{logoId}": {
+        "schema": { "$ref": "#/entities/ChurchLogo" },
+        "description": "Stores church logos for download."
     }
   }
 }

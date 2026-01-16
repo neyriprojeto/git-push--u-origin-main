@@ -167,3 +167,28 @@ export const deleteLeader = async (firestore: Firestore, id: string) => {
             }));
         });
 };
+
+export const addLogo = async (firestore: Firestore, logoData: { name: string; imageUrl: string }) => {
+    if (!firestore) throw new Error('Firestore is not initialized');
+    const logosRef = collection(firestore, 'logos');
+    addDoc(logosRef, { ...logoData, criadoEm: serverTimestamp() })
+        .catch(error => {
+            errorEmitter.emit('permission-error', new FirestorePermissionError({
+                path: logosRef.path,
+                operation: 'create',
+                requestResourceData: logoData,
+            }));
+        });
+};
+
+export const deleteLogo = async (firestore: Firestore, id: string) => {
+    if (!firestore) throw new Error('Firestore is not initialized');
+    const logoRef = doc(firestore, 'logos', id);
+    deleteDoc(logoRef)
+        .catch(error => {
+            errorEmitter.emit('permission-error', new FirestorePermissionError({
+                path: logoRef.path,
+                operation: 'delete',
+            }));
+        });
+};

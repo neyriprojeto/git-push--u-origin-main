@@ -26,6 +26,13 @@ interface UserData {
   congregacao?: string;
 }
 
+interface ChurchInfo {
+  instagramUrl?: string;
+  youtubeUrl?: string;
+  websiteUrl?: string;
+  radioPageUrl?: string;
+}
+
 export default function DashboardLayout({
   children,
 }: {
@@ -39,6 +46,10 @@ export default function DashboardLayout({
     [firestore, user]
   );
   const { data: userData, isLoading: isUserDataLoading } = useDoc<UserData>(userRef);
+
+  const churchInfoRef = useMemoFirebase(() => (firestore ? doc(firestore, 'churchInfo', 'main') : null), [firestore]);
+  const { data: churchInfo, isLoading: isChurchInfoLoading } = useDoc<ChurchInfo>(churchInfoRef);
+
 
   const isLoading = isUserLoading || isUserDataLoading;
   const userRole = userData?.cargo;
@@ -166,30 +177,57 @@ export default function DashboardLayout({
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-               <SidebarMenuItem>
-                <SidebarMenuButton tooltip={{ children: "Instagram" }}>
-                    <Instagram />
-                    <span>Instagram</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton tooltip={{ children: "YouTube" }}>
-                    <Youtube />
-                    <span>YouTube</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-               <SidebarMenuItem>
-                <SidebarMenuButton tooltip={{ children: "Site" }}>
-                    <Globe />
-                    <span>Site</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-               <SidebarMenuItem>
-                <SidebarMenuButton tooltip={{ children: "Rádio" }}>
-                    <Radio />
-                    <span>Rádio</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              {isChurchInfoLoading ? (
+                <>
+                  <SidebarMenuItem><SidebarMenuButton disabled><Instagram /><span>Instagram</span></SidebarMenuButton></SidebarMenuItem>
+                  <SidebarMenuItem><SidebarMenuButton disabled><Youtube /><span>YouTube</span></SidebarMenuButton></SidebarMenuItem>
+                  <SidebarMenuItem><SidebarMenuButton disabled><Globe /><span>Site</span></SidebarMenuButton></SidebarMenuItem>
+                  <SidebarMenuItem><SidebarMenuButton disabled><Radio /><span>Rádio</span></SidebarMenuButton></SidebarMenuItem>
+                </>
+              ) : (
+                <>
+                  {churchInfo?.instagramUrl && (
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip={{ children: "Instagram" }}>
+                        <Link href={churchInfo.instagramUrl} target="_blank">
+                          <Instagram />
+                          <span>Instagram</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )}
+                  {churchInfo?.youtubeUrl && (
+                     <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip={{ children: "YouTube" }}>
+                          <Link href={churchInfo.youtubeUrl} target="_blank">
+                              <Youtube />
+                              <span>YouTube</span>
+                          </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )}
+                  {churchInfo?.websiteUrl && (
+                    <SidebarMenuItem>
+                        <SidebarMenuButton asChild tooltip={{ children: "Site" }}>
+                          <Link href={churchInfo.websiteUrl} target="_blank">
+                              <Globe />
+                              <span>Site</span>
+                          </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )}
+                  {churchInfo?.radioPageUrl && (
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip={{ children: "Rádio" }}>
+                        <Link href={churchInfo.radioPageUrl} target="_blank">
+                            <Radio />
+                            <span>Rádio</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )}
+                </>
+              )}
             </SidebarMenu>
           </SidebarGroup>
 

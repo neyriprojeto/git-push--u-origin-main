@@ -19,7 +19,7 @@ import { Label } from "@/components/ui/label";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { AppLogo } from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
-import { User, CreditCard, FileText, MessageSquare, BookOpen, RefreshCw, Loader2, LayoutGrid, Save, Upload, ShieldAlert, Trash2 } from "lucide-react";
+import { User, CreditCard, FileText, MessageSquare, BookOpen, RefreshCw, Loader2, LayoutGrid, Save, Upload, ShieldAlert, Trash2, Instagram, Youtube, Globe, Radio } from "lucide-react";
 import { bibleVerses } from "@/data/bible-verses";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
@@ -106,6 +106,13 @@ interface Member {
     estado?: string;
     complemento?: string;
     congregacao?: string;
+}
+
+interface ChurchInfo {
+  instagramUrl?: string;
+  youtubeUrl?: string;
+  websiteUrl?: string;
+  radioPageUrl?: string;
 }
 
 const formSchema = z.object({
@@ -218,6 +225,9 @@ export default function MemberProfilePage() {
   
   const templateRef = useMemoFirebase(() => firestore ? doc(firestore, 'cardTemplates', 'default') : null, [firestore]);
   const { data: templateData, isLoading: isTemplateLoading } = useDoc<CardTemplateData>(templateRef);
+
+  const churchInfoRef = useMemoFirebase(() => (firestore ? doc(firestore, 'churchInfo', 'main') : null), [firestore]);
+  const { data: churchInfo, isLoading: isChurchInfoLoading } = useDoc<ChurchInfo>(churchInfoRef);
 
   const congregacoesCollection = useMemoFirebase(
     () => (firestore ? collection(firestore, 'congregacoes') : null),
@@ -434,7 +444,7 @@ export default function MemberProfilePage() {
   }
 
 
-  const isLoading = isUserLoading || isCurrentUserLoading || memberLoading || isTemplateLoading || !permission.hasChecked;
+  const isLoading = isUserLoading || isCurrentUserLoading || memberLoading || isTemplateLoading || !permission.hasChecked || isChurchInfoLoading;
 
   if (isLoading) {
       return (
@@ -685,10 +695,24 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
       <div className="container mx-auto space-y-6 pb-8">
         <Card>
             <CardHeader>
-            <CardTitle>Bem-vindo(a), {member.nome.split(' ')[0]}!</CardTitle>
-            <CardDescription>
-                Este é o seu espaço central para interagir com as funcionalidades da igreja. Use o menu de navegação para explorar.
-            </CardDescription>
+              <div className="flex justify-between items-start">
+                  <div>
+                      <CardTitle>Bem-vindo(a), {member.nome.split(' ')[0]}!</CardTitle>
+                      <CardDescription>
+                          Este é o seu espaço central para interagir com as funcionalidades da igreja. Use o menu de navegação para explorar.
+                      </CardDescription>
+                  </div>
+                  <div className="flex items-center gap-1">
+                      {isChurchInfoLoading ? <Loader2 className="h-4 w-4 animate-spin"/> :
+                      <>
+                        {churchInfo?.instagramUrl && <Button asChild variant="ghost" size="icon"><Link href={churchInfo.instagramUrl} target="_blank"><Instagram className="h-4 w-4"/></Link></Button>}
+                        {churchInfo?.youtubeUrl && <Button asChild variant="ghost" size="icon"><Link href={churchInfo.youtubeUrl} target="_blank"><Youtube className="h-4 w-4"/></Link></Button>}
+                        {churchInfo?.websiteUrl && <Button asChild variant="ghost" size="icon"><Link href={churchInfo.websiteUrl} target="_blank"><Globe className="h-4 w-4"/></Link></Button>}
+                        {churchInfo?.radioPageUrl && <Button asChild variant="ghost" size="icon"><Link href={churchInfo.radioPageUrl} target="_blank"><Radio className="h-4 w-4"/></Link></Button>}
+                      </>
+                      }
+                  </div>
+              </div>
             </CardHeader>
             <CardContent>
                 <div className="flex gap-2 mt-1">

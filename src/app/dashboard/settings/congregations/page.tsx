@@ -34,6 +34,11 @@ type ChurchInfo = {
     aboutUs?: string;
     bannerImageUrl?: string;
     pastorImageUrl?: string;
+    instagramUrl?: string;
+    youtubeUrl?: string;
+    websiteUrl?: string;
+    radioUrl?: string;
+    radioPageUrl?: string;
 }
 
 type Leader = {
@@ -358,6 +363,45 @@ export default function CongregationsPage() {
                                 {isSavingChurchInfo ? 'Salvando...' : 'Salvar Informações'}
                             </Button>
                         </>
+                    )}
+                </CardContent>
+            </Card>
+
+             <Card>
+                <CardHeader>
+                    <CardTitle>Links e Mídia</CardTitle>
+                    <CardDescription>Configure os links para redes sociais e rádio que aparecem no site.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {loadingChurchInfo ? (
+                        <div className="flex justify-center p-8"> <Loader2 className="h-8 w-8 animate-spin" /></div>
+                    ) : (
+                        <div className='space-y-4'>
+                            <div className="space-y-2">
+                                <Label htmlFor="instagramUrl">Link do Instagram</Label>
+                                <Input id="instagramUrl" name="instagramUrl" value={churchInfo.instagramUrl || ''} onChange={handleChurchInfoChange} placeholder="https://instagram.com/seu_perfil" />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="youtubeUrl">Link do YouTube</Label>
+                                <Input id="youtubeUrl" name="youtubeUrl" value={churchInfo.youtubeUrl || ''} onChange={handleChurchInfoChange} placeholder="https://youtube.com/seu_canal" />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="websiteUrl">Link do Site</Label>
+                                <Input id="websiteUrl" name="websiteUrl" value={churchInfo.websiteUrl || ''} onChange={handleChurchInfoChange} placeholder="https://seu_site.com" />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="radioUrl">Link do Player da Rádio (embutido)</Label>
+                                <Input id="radioUrl" name="radioUrl" value={churchInfo.radioUrl || ''} onChange={handleChurchInfoChange} placeholder="https://link_do_player_embutido" />
+                            </div>
+                             <div className="space-y-2">
+                                <Label htmlFor="radioPageUrl">Link da Página da Rádio (nova aba)</Label>
+                                <Input id="radioPageUrl" name="radioPageUrl" value={churchInfo.radioPageUrl || ''} onChange={handleChurchInfoChange} placeholder="https://link_da_pagina_da_radio" />
+                            </div>
+                            <Button onClick={handleSaveChurchInfo} disabled={isSavingChurchInfo}>
+                                {isSavingChurchInfo ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                                {isSavingChurchInfo ? 'Salvando...' : 'Salvar Links'}
+                            </Button>
+                        </div>
                     )}
                 </CardContent>
             </Card>

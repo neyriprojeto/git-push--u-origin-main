@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from "next/image";
@@ -38,6 +39,11 @@ type ChurchInfo = {
   aboutUs?: string;
   bannerImageUrl?: string;
   pastorImageUrl?: string;
+  instagramUrl?: string;
+  youtubeUrl?: string;
+  websiteUrl?: string;
+  radioUrl?: string;
+  radioPageUrl?: string;
 }
 
 type Leader = {
@@ -115,6 +121,11 @@ export default function Home() {
   const pastorName = churchInfo?.pastorName || 'Pastor Presidente';
   const aboutUs = churchInfo?.aboutUs || 'A Igreja Evangélica AD Kairós é um lugar de adoração, comunhão e serviço. Nossa missão é levar a palavra de Deus a todos, transformando vidas e comunidades.';
   const pastoralMessage = churchInfo?.pastoralMessage || 'Aqui você encontrará uma mensagem de fé e esperança do nosso pastor. Brevemente, este espaço será preenchido com palavras que edificarão a sua vida.';
+  const instagramUrl = churchInfo?.instagramUrl;
+  const youtubeUrl = churchInfo?.youtubeUrl;
+  const websiteUrl = churchInfo?.websiteUrl;
+  const radioUrl = churchInfo?.radioUrl;
+  const radioPageUrl = churchInfo?.radioPageUrl;
 
 
   return (
@@ -139,22 +150,10 @@ export default function Home() {
                     </SheetTitle>
                   </SheetHeader>
                   <div className="flex flex-col space-y-2 py-4">
-                    <Button variant="ghost" className="justify-start">
-                        <Instagram className="mr-2 h-4 w-4"/>
-                        Instagram
-                    </Button>
-                     <Button variant="ghost" className="justify-start">
-                        <Youtube className="mr-2 h-4 w-4"/>
-                        YouTube
-                    </Button>
-                     <Button variant="ghost" className="justify-start">
-                        <Globe className="mr-2 h-4 w-4"/>
-                        Site
-                    </Button>
-                    <Button variant="ghost" className="justify-start">
-                        <Radio className="mr-2 h-4 w-4"/>
-                        Rádio
-                    </Button>
+                    {instagramUrl && <Button variant="ghost" className="justify-start" asChild><Link href={instagramUrl} target="_blank"><Instagram className="mr-2 h-4 w-4"/>Instagram</Link></Button>}
+                    {youtubeUrl && <Button variant="ghost" className="justify-start" asChild><Link href={youtubeUrl} target="_blank"><Youtube className="mr-2 h-4 w-4"/>YouTube</Link></Button>}
+                    {websiteUrl && <Button variant="ghost" className="justify-start" asChild><Link href={websiteUrl} target="_blank"><Globe className="mr-2 h-4 w-4"/>Site</Link></Button>}
+                    {radioPageUrl && <Button variant="ghost" className="justify-start" asChild><Link href={radioPageUrl} target="_blank"><Radio className="mr-2 h-4 w-4"/>Rádio</Link></Button>}
                   </div>
                 </SheetContent>
               </Sheet>
@@ -164,22 +163,17 @@ export default function Home() {
               </Link>
           </div>
          
-          <nav className="hidden md:flex items-center space-x-4">
-            <Button variant="ghost" asChild>
-              <Link href="#">Redes Sociais</Link>
-            </Button>
-            <Button variant="ghost" asChild>
-              <Link href="#">Rádio</Link>
-            </Button>
+          <div className="flex items-center gap-1">
+            <nav className="hidden md:flex items-center">
+              {instagramUrl && <Button variant="ghost" size="icon" asChild><Link href={instagramUrl} target="_blank"><Instagram/><span className="sr-only">Instagram</span></Link></Button>}
+              {youtubeUrl && <Button variant="ghost" size="icon" asChild><Link href={youtubeUrl} target="_blank"><Youtube/><span className="sr-only">YouTube</span></Link></Button>}
+              {websiteUrl && <Button variant="ghost" size="icon" asChild><Link href={websiteUrl} target="_blank"><Globe/><span className="sr-only">Site</span></Link></Button>}
+              {radioPageUrl && <Button variant="ghost" size="icon" asChild><Link href={radioPageUrl} target="_blank"><Radio/><span className="sr-only">Rádio</span></Link></Button>}
+            </nav>
             <Button asChild>
               <Link href="/login">Login</Link>
             </Button>
-          </nav>
-           <div className="md:hidden">
-             <Button asChild>
-              <Link href="/login">Login</Link>
-            </Button>
-           </div>
+          </div>
         </div>
       </header>
 
@@ -219,7 +213,7 @@ export default function Home() {
           <div className="max-w-4xl mx-auto grid gap-8 -mt-24">
             {/* Sobre */}
             <Card className="text-center pt-24">
-              <CardHeader>
+              <CardHeader className='pt-8'>
                 <CardTitle className="text-primary text-2xl">{pastorName}</CardTitle>
                 <CardDescription>Pastor Presidente</CardDescription>
               </CardHeader>
@@ -247,6 +241,28 @@ export default function Home() {
                 </Button>
               </CardContent>
             </Card>
+
+            {radioUrl && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-center text-primary">Nossa Rádio</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="aspect-video w-full rounded-lg overflow-hidden">
+                      <iframe
+                          src={radioUrl}
+                          className="w-full h-full border-0"
+                          allow="autoplay"
+                      />
+                  </div>
+                  {radioPageUrl && (
+                      <Button asChild className="w-full">
+                          <Link href={radioPageUrl} target="_blank">Ouvir em nova aba</Link>
+                      </Button>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
             {/* Palavra Pastoral */}
             <Card>

@@ -129,6 +129,31 @@
         "aboutUs": {
           "type": "string",
           "description": "The 'about us' section for the mini site."
+        },
+        "instagramUrl": {
+          "type": "string",
+          "description": "URL for the church's Instagram profile.",
+          "format": "uri"
+        },
+        "youtubeUrl": {
+          "type": "string",
+          "description": "URL for the church's YouTube channel.",
+          "format": "uri"
+        },
+        "websiteUrl": {
+          "type": "string",
+          "description": "URL for the church's external website.",
+          "format": "uri"
+        },
+        "radioUrl": {
+          "type": "string",
+          "description": "URL for the embedded radio player.",
+          "format": "uri"
+        },
+        "radioPageUrl": {
+          "type": "string",
+          "description": "URL for the radio page to be opened in a new tab.",
+          "format": "uri"
         }
       },
       "required": [

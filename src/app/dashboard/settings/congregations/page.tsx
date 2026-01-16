@@ -19,6 +19,7 @@ import 'react-image-crop/dist/ReactCrop.css';
 import { uploadArquivo } from '@/lib/cloudinary';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { Separator } from '@/components/ui/separator';
 
 type Congregacao = {
   id: string;
@@ -360,11 +361,23 @@ export default function CongregationsPage() {
                          <div className="flex justify-center p-8"> <Loader2 className="h-8 w-8 animate-spin" /></div>
                     ) : (
                         <>
-                            <div className="space-y-2">
-                                <Label htmlFor="pastorName">Nome do Pastor Presidente</Label>
-                                <Input id="pastorName" name="pastorName" value={churchInfo.pastorName || ''} onChange={handleChurchInfoChange} />
+                            <div className="grid md:grid-cols-2 gap-x-8 gap-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="pastorName">Nome do Pastor Presidente</Label>
+                                    <Input id="pastorName" name="pastorName" value={churchInfo.pastorName || ''} onChange={handleChurchInfoChange} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Assinatura Digital do Presidente</Label>
+                                    <div className='flex items-center gap-4'>
+                                        <Button variant="outline" onClick={() => triggerFileInput('pastorSignatureUrl', undefined)}>
+                                            <Upload className="mr-2 h-4 w-4"/> Enviar Assinatura
+                                        </Button>
+                                        {churchInfo.pastorSignatureUrl && <div className="h-[40px] w-[120px] rounded-md border p-1 bg-slate-100"><Image src={churchInfo.pastorSignatureUrl} alt="Assinatura" width={120} height={40} className="object-contain"/></div>}
+                                    </div>
+                                </div>
                             </div>
-                             <div className="space-y-2">
+                            <Separator className="my-4" />
+                            <div className="space-y-2">
                                 <Label htmlFor="aboutUs">Sobre a Nossa Igreja</Label>
                                 <Textarea id="aboutUs" name="aboutUs" value={churchInfo.aboutUs || ''} onChange={handleChurchInfoChange} placeholder="Fale um pouco sobre a missão e visão da igreja..." />
                             </div>
@@ -372,8 +385,8 @@ export default function CongregationsPage() {
                                 <Label htmlFor="pastoralMessage">Palavra Pastoral</Label>
                                 <Textarea id="pastoralMessage" name="pastoralMessage" value={churchInfo.pastoralMessage || ''} onChange={handleChurchInfoChange} placeholder="Deixe uma mensagem de fé e esperança..." />
                             </div>
-                             <div className="space-y-2">
-                                <Label>Imagens Principais</Label>
+                            <div className="space-y-2">
+                                <Label>Imagens da Igreja e Convenções</Label>
                                 <div className='flex flex-wrap gap-2'>
                                     <input type="file" ref={fileInputRef} onChange={onSelectFile} className="hidden" accept="image/*"/>
                                     <Button variant="outline" onClick={() => triggerFileInput('bannerImageUrl', 16/9)}>
@@ -381,9 +394,6 @@ export default function CongregationsPage() {
                                     </Button>
                                     <Button variant="outline" onClick={() => triggerFileInput('pastorImageUrl', 1/1)}>
                                         <Upload className="mr-2 h-4 w-4"/> Foto do Pastor
-                                    </Button>
-                                    <Button variant="outline" onClick={() => triggerFileInput('pastorSignatureUrl', undefined)}>
-                                        <Upload className="mr-2 h-4 w-4"/> Assinatura Pr. Presidente
                                     </Button>
                                     <Button variant="outline" onClick={() => triggerFileInput('conventionLogo1Url', undefined)}>
                                         <Upload className="mr-2 h-4 w-4"/> Logo Convenção 1
@@ -395,7 +405,6 @@ export default function CongregationsPage() {
                                 <div className='flex flex-wrap gap-4 mt-4'>
                                     {churchInfo.bannerImageUrl && <div><Label className='text-xs'>Banner Atual</Label><Image src={churchInfo.bannerImageUrl} alt="Banner" width={200} height={112} className="rounded-md border object-cover"/></div>}
                                     {churchInfo.pastorImageUrl && <div><Label className='text-xs'>Foto Atual</Label><Image src={churchInfo.pastorImageUrl} alt="Pastor" width={100} height={100} className="rounded-full border object-cover"/></div>}
-                                    {churchInfo.pastorSignatureUrl && <div><Label className='text-xs'>Assinatura Atual</Label><div className="h-[50px] w-[150px] rounded-md border p-2 bg-slate-100"><Image src={churchInfo.pastorSignatureUrl} alt="Assinatura" width={150} height={50} className="object-contain"/></div></div>}
                                     {churchInfo.conventionLogo1Url && <div><Label className='text-xs'>Logo Convenção 1</Label><Image src={churchInfo.conventionLogo1Url} alt="Logo Convenção 1" width={100} height={100} className="rounded-md border object-contain p-2"/></div>}
                                     {churchInfo.conventionLogo2Url && <div><Label className='text-xs'>Logo Convenção 2</Label><Image src={churchInfo.conventionLogo2Url} alt="Logo Convenção 2" width={100} height={100} className="rounded-md border object-contain p-2"/></div>}
                                 </div>

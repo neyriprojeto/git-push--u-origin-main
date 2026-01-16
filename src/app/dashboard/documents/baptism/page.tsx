@@ -1,19 +1,22 @@
 
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useUser, useFirestore, useMemoFirebase, useDoc, useCollection } from '@/firebase';
-import { doc, collection, query, where } from 'firebase/firestore';
-import { Loader2, Printer, ShieldAlert } from 'lucide-react';
+import { doc, collection, query, where, setDoc } from 'firebase/firestore';
+import { Loader2, Printer, ShieldAlert, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Save } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
+import { Separator } from '@/components/ui/separator';
 
 // --- Types ---
 type Member = { 
@@ -27,6 +30,21 @@ type Member = {
     gender?: 'Masculino' | 'Feminino';
 };
 type UserData = { nome: string; cargo?: string; congregacao?: string; };
+
+type ElementStyle = {
+    position: { top: number; left: number };
+    size: { fontSize: number; width?: number; height?: number; };
+    text?: string;
+    src?: string;
+    fontWeight?: 'normal' | 'bold';
+    fontFamily?: string;
+    textAlign?: 'left' | 'center' | 'right';
+    color?: string;
+    letterSpacing?: string;
+    lineHeight?: number;
+};
+type DocElements = { [key: string]: ElementStyle };
+
 type ChurchInfo = { 
     pastorName?: string; 
     pastorSignatureUrl?: string; 
@@ -34,30 +52,76 @@ type ChurchInfo = {
     conventionLogo2Url?: string;
     baptismCertBgUrl?: string;
     baptismCertLogoUrl?: string;
+    baptismCertElements?: DocElements;
 };
+
+const defaultElements: DocElements = {
+    'Logo': { position: { top: 7, left: 10 }, size: { width: 150, height: 150, fontSize: 12 }, src: '' },
+    'NomeMembro': { position: { top: 45, left: 50 }, size: { fontSize: 42 }, text: 'Nome do Membro', fontFamily: "'Times New Roman', Times, serif", fontWeight: 'bold', textAlign: 'center', letterSpacing: '0.1em' },
+    'TextoPrincipal': { position: { top: 60, left: 50 }, size: { fontSize: 12 }, text: 'Crendo e obedecendo...', textAlign: 'center', lineHeight: 1.6 },
+    'AssinaturaPresidente': { position: { top: 78, left: 25 }, size: { width: 180, height: 50, fontSize: 12 }, src: '' },
+    'LinhaPresidente': { position: { top: 90, left: 25}, size: { fontSize: 12, width: 250, height: 2 } },
+    'NomePresidente': { position: { top: 92, left: 25 }, size: { fontSize: 10 }, text: 'Pastor Presidente', textAlign: 'center' },
+    'CargoPresidente': { position: { top: 95, left: 25 }, size: { fontSize: 8 }, text: 'Pastor Presidente', textAlign: 'center', fontStyle: 'italic' },
+    'LinhaPastorLocal': { position: { top: 90, left: 75}, size: { fontSize: 12, width: 250, height: 2 } },
+    'NomePastorLocal': { position: { top: 92, left: 75 }, size: { fontSize: 10 }, text: 'Pastor Local', textAlign: 'center' },
+    'CargoPastorLocal': { position: { top: 95, left: 75 }, size: { fontSize: 8 }, text: 'Pastor Local', textAlign: 'center', fontStyle: 'italic' },
+};
+
 
 // --- Document Renderer ---
 const DocumentRenderer = React.forwardRef<HTMLDivElement, {
-    churchInfo: ChurchInfo | null,
-    member: Member | null,
-    localPastor: string,
+    elements: DocElements;
+    onElementClick: (id: string) => void;
+    selectedElementId: string | null;
     bgImage?: string;
-    logoImage?: string;
-}>(({ churchInfo, member, localPastor, bgImage, logoImage }, ref) => {
-    
-    const formatDate = (d: any, isLong = false): string => {
-        if (!d) return '___/___/______';
-        try {
-            const dateObj = d.toDate ? d.toDate() : new Date(d);
-            const timeZoneOffset = dateObj.getTimezoneOffset() * 60000;
-            const adjustedDate = new Date(dateObj.getTime() + timeZoneOffset);
-            return isLong ? format(adjustedDate, "d 'de' MMMM 'de' yyyy", { locale: ptBR }) : format(adjustedDate, 'dd/MM/yyyy');
-        } catch { return '___/___/______'; }
+}>(({ elements, onElementClick, selectedElementId, bgImage }, ref) => {
+
+    const renderElement = (id: string) => {
+        const el = elements[id];
+        if (!el) return null;
+
+        const style: React.CSSProperties = {
+            position: 'absolute',
+            top: `${el.position.top}%`,
+            left: `${el.position.left}%`,
+            transform: 'translateX(-50%)',
+            width: el.size.width ? `${el.size.width}px` : 'auto',
+            height: el.size.height ? `${el.size.height}px` : 'auto',
+            fontFamily: el.fontFamily,
+            fontSize: `${el.size.fontSize}pt`,
+            fontWeight: el.fontWeight,
+            textAlign: el.textAlign,
+            color: el.color,
+            letterSpacing: el.letterSpacing,
+            lineHeight: el.lineHeight,
+        };
+        
+        if (id.includes('Linha')) {
+            return (
+                <div key={id} style={style} onClick={(e) => {e.stopPropagation(); onElementClick(id); }}
+                    className={cn('border-b-2 border-black', { 'ring-2 ring-blue-500': selectedElementId === id })}>
+                </div>
+            )
+        }
+
+        if (el.src) {
+            return (
+                <div key={id} style={style} onClick={(e) => {e.stopPropagation(); onElementClick(id); }} 
+                    className={cn({ 'ring-2 ring-blue-500': selectedElementId === id })}>
+                    <img src={el.src} alt={id} crossOrigin="anonymous" style={{ width: '100%', height: '100%', objectFit: 'contain' }}/>
+                </div>
+            );
+        }
+
+        return (
+            <p key={id} style={style} onClick={(e) => {e.stopPropagation(); onElementClick(id); }}
+                className={cn('whitespace-pre-wrap', { 'ring-2 ring-blue-500 p-1': selectedElementId === id })}>
+                {el.text}
+            </p>
+        );
     };
-    
-    const genderTerm = member?.gender === 'Feminino' ? 'batizada' : 'batizado';
-    const presidentName = churchInfo?.pastorName || '_________________________';
-    
+
     return (
         <div 
             ref={ref} 
@@ -68,58 +132,9 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
                 backgroundRepeat: 'no-repeat',
                 backgroundPosition: 'center',
             }}
+             onClick={() => onElementClick('')}
         >
-            {logoImage && (
-                <img 
-                    src={logoImage} 
-                    alt="Logo" 
-                    className="absolute top-[20mm] left-[25mm] w-[40mm] h-[40mm] object-contain" 
-                    crossOrigin="anonymous"
-                />
-            )}
-            <div className="absolute inset-0 flex flex-col items-center p-[15mm]">
-
-                <div style={{ flexGrow: 2.5 }}></div>
-
-                <div className="w-[85%] text-center text-[#444]">
-                   <p className="font-bold my-4 uppercase" style={{ fontFamily: "'Times New Roman', Times, serif", fontSize: '28pt', letterSpacing: '0.1em' }}>
-                       {member?.nome || '________________'}
-                   </p>
-                   <p className="leading-relaxed mt-4" style={{ fontSize: '12pt' }}>
-                       Crendo e obedecendo nas sagradas Escrituras e as doutrinas ensinadas por 
-                       Jesus Cristo, foi {genderTerm} sob profissão de fé em nome do Pai, do Filho e do Espírito Santo,
-                       no dia <span className="font-semibold">{formatDate(member?.dataBatismo, true)}</span> na Assembleia de Deus Kairós congregação de {member?.congregacao || '____________'}.
-                   </p>
-               </div>
-                
-                <div style={{ flexGrow: 1 }}></div>
-
-                <footer className="w-full">
-                    <div className="flex justify-around items-end">
-                        <div className="text-center w-2/5">
-                             <div className="relative w-full mx-auto mb-1 flex items-center justify-center min-h-[15mm]">
-                                {churchInfo?.pastorSignatureUrl && (
-                                    <img 
-                                        src={churchInfo.pastorSignatureUrl} 
-                                        alt="Assinatura Pastor Presidente" 
-                                        className="object-contain max-h-[25mm] max-w-full"
-                                        crossOrigin="anonymous"
-                                    />
-                                )}
-                            </div>
-                            <div className="border-b-2 border-black w-full" />
-                            <p className="mt-1" style={{ fontSize: '10pt' }}>{presidentName}</p>
-                            <p className="italic" style={{ fontSize: '8pt' }}>Pastor Presidente</p>
-                        </div>
-                         <div className="text-center w-2/5">
-                            <div className="relative w-full mx-auto mb-1 flex items-center justify-center min-h-[15mm]" />
-                            <div className="border-b-2 border-black w-full" />
-                            <p className="mt-1" style={{ fontSize: '10pt' }}>{localPastor}</p>
-                            <p className="italic" style={{ fontSize: '8pt' }}>Pastor Local</p>
-                        </div>
-                    </div>
-                </footer>
-            </div>
+            {Object.keys(elements).map(id => renderElement(id))}
         </div>
     );
 });
@@ -131,13 +146,16 @@ export default function BaptismCertificatePage() {
     const firestore = useFirestore();
     const { user: authUser, isUserLoading: isAuthUserLoading } = useUser();
     const documentRef = useRef<HTMLDivElement>(null);
+    const { toast } = useToast();
+    const intervalRef = useRef<NodeJS.Timeout | null>(null);
     
     // States
     const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
     const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
-    const [bgImage, setBgImage] = useState('');
-    const [logoImage, setLogoImage] = useState('');
-
+    
+    const [elements, setElements] = useState<DocElements>(defaultElements);
+    const [selectedElement, setSelectedElement] = useState<string | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
 
     // Data fetching
     const userRef = useMemoFirebase(() => (firestore && authUser ? doc(firestore, 'users', authUser.uid) : null), [firestore, authUser]);
@@ -154,15 +172,87 @@ export default function BaptismCertificatePage() {
     }, [firestore, userData]);
     const { data: members, isLoading: isLoadingMembers } = useCollection<Member>(membersQuery);
 
+    const selectedMember = members?.find(m => m.id === selectedMemberId) || null;
+    const localPastorName = selectedMember?.responsiblePastor || (userData?.cargo === 'Pastor/dirigente' ? userData.nome : '________________');
+
     useEffect(() => {
         if (churchInfo) {
-            setLogoImage(churchInfo.baptismCertLogoUrl || churchInfo.conventionLogo1Url || PlaceHolderImages.find(p => p.id === 'church-logo')?.imageUrl || '');
-            setBgImage(churchInfo.baptismCertBgUrl || PlaceHolderImages.find(p => p.id === 'baptism-certificate-bg')?.imageUrl || '');
+            const initialElements = churchInfo.baptismCertElements ? { ...defaultElements, ...churchInfo.baptismCertElements } : defaultElements;
+            
+            const genderTerm = selectedMember?.gender === 'Feminino' ? 'batizada' : 'batizado';
+            const baptismDate = selectedMember?.dataBatismo ? format(selectedMember.dataBatismo.toDate ? selectedMember.dataBatismo.toDate() : new Date(selectedMember.dataBatismo), "d 'de' MMMM 'de' yyyy", { locale: ptBR }) : '___/___/______';
+
+            initialElements['Logo'].src = churchInfo.baptismCertLogoUrl || churchInfo.conventionLogo1Url || PlaceHolderImages.find(p => p.id === 'church-logo')?.imageUrl || '';
+            initialElements['NomeMembro'].text = selectedMember?.nome.toUpperCase() || 'NOME DO MEMBRO';
+            initialElements['TextoPrincipal'].text = `Crendo e obedecendo nas sagradas Escrituras e as doutrinas ensinadas por 
+Jesus Cristo, foi ${genderTerm} sob profissão de fé em nome do Pai, do Filho e do Espírito Santo,
+no dia ${baptismDate} na Assembleia de Deus Kairós congregação de ${selectedMember?.congregacao || '____________'}.`
+            initialElements['AssinaturaPresidente'].src = churchInfo.pastorSignatureUrl || '';
+            initialElements['NomePresidente'].text = churchInfo.pastorName || '____________________';
+            initialElements['NomePastorLocal'].text = localPastorName;
+
+            setElements(initialElements);
+
         } else if (!isChurchInfoLoading) {
-            setLogoImage(PlaceHolderImages.find(p => p.id === 'church-logo')?.imageUrl || '');
-            setBgImage(PlaceHolderImages.find(p => p.id === 'baptism-certificate-bg')?.imageUrl || '');
+            // Handle case where churchInfo is not loaded or doesn't exist
+            setElements(defaultElements);
         }
-    }, [churchInfo, isChurchInfoLoading]);
+    }, [churchInfo, isChurchInfoLoading, selectedMember, localPastorName]);
+
+    const handlePositionChange = useCallback((property: 'position', step: number, direction: 'up' | 'down' | 'left' | 'right') => {
+        if (!selectedElement) return;
+
+        setElements(prev => {
+            const currentElement = prev[selectedElement];
+            if (!currentElement) return prev;
+
+            const newElements = { ...prev };
+            const newElementStyle = { ...currentElement };
+            const newPosition = { ...newElementStyle.position };
+
+            if (direction === 'up') newPosition.top -= step;
+            if (direction === 'down') newPosition.top += step;
+            if (direction === 'left') newPosition.left -= step;
+            if (direction === 'right') newPosition.left += step;
+            newElementStyle.position = newPosition;
+            
+            newElements[selectedElement] = newElementStyle;
+            return newElements;
+        });
+    }, [selectedElement]);
+
+    const startMoving = (property: 'position', step: number, direction: 'up' | 'down' | 'left' | 'right') => {
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        handlePositionChange(property, step, direction); // Move once immediately
+        intervalRef.current = setInterval(() => {
+            handlePositionChange(property, step, direction);
+        }, 100);
+    };
+
+    const stopMoving = () => {
+        if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+        }
+    };
+    
+    const handleSaveChanges = async () => {
+        if (!churchInfoRef) {
+            toast({ variant: 'destructive', title: 'Erro', description: 'Referência de ChurchInfo não encontrada.' });
+            return;
+        };
+        setIsSaving(true);
+        try {
+            await setDoc(churchInfoRef, { baptismCertElements: elements }, { merge: true });
+            toast({ title: 'Sucesso!', description: 'Layout do certificado salvo com sucesso.' });
+        } catch (error) {
+            console.error("Error saving layout:", error);
+            toast({ variant: 'destructive', title: 'Erro ao Salvar', description: 'Não foi possível salvar o layout.' });
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
 
     const handleGeneratePdf = async () => {
         const source = documentRef.current;
@@ -175,30 +265,15 @@ export default function BaptismCertificatePage() {
         const scaledParent = source.parentElement;
         
         const originalClasses = scaledParent.className;
-
         scaledParent.className = '';
         scaledParent.style.transform = 'scale(1)';
         
         try {
             await new Promise(resolve => setTimeout(resolve, 50));
-
-            const canvas = await html2canvas(source, {
-                scale: 4,
-                useCORS: true,
-                backgroundColor: null,
-            });
-
+            const canvas = await html2canvas(source, { scale: 4, useCORS: true, backgroundColor: null });
             const imgData = canvas.toDataURL('image/png');
-            
-            const pdf = new jsPDF({
-                orientation: 'landscape',
-                unit: 'mm',
-                format: 'a4'
-            });
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = pdf.internal.pageSize.getHeight();
-            
-            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+            pdf.addImage(imgData, 'PNG', 0, 0, pdf.internal.pageSize.getWidth(), pdf.internal.pageSize.getHeight());
             pdf.save(`certificado-batismo-${selectedMember?.nome.replace(/ /g, '_') || 'membro'}.pdf`);
         } catch (error) {
             console.error("Error generating PDF:", error);
@@ -210,31 +285,16 @@ export default function BaptismCertificatePage() {
         }
     };
     
-    const selectedMember = members?.find(m => m.id === selectedMemberId) || null;
-    const localPastorName = selectedMember?.responsiblePastor || (userData?.cargo === 'Pastor/dirigente' ? userData.nome : '________________');
-
     const isLoading = isAuthUserLoading || isUserDataLoading || isLoadingMembers || isChurchInfoLoading;
 
     if (isLoading) {
-        return (
-            <div className="flex-1 h-screen flex items-center justify-center">
-                <Loader2 className="h-16 w-16 animate-spin" />
-            </div>
-        );
+        return <div className="flex-1 h-screen flex items-center justify-center"><Loader2 className="h-16 w-16 animate-spin" /></div>;
     }
 
     if (!userData?.cargo || !['Administrador', 'Pastor/dirigente'].includes(userData.cargo)) {
          return (
            <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-               <Card className="border-destructive">
-                   <CardHeader className="items-center text-center">
-                       <ShieldAlert className="h-12 w-12 text-destructive mb-4" />
-                       <CardTitle className="text-destructive">Acesso Negado</CardTitle>
-                   </CardHeader>
-                   <CardContent className='pt-4 text-center'>
-                       <p>Você não tem permissão para acessar esta página.</p>
-                   </CardContent>
-               </Card>
+               <Card className="border-destructive"><CardHeader className="items-center text-center"><ShieldAlert className="h-12 w-12 text-destructive mb-4" /><CardTitle className="text-destructive">Acesso Negado</CardTitle></CardHeader><CardContent className='pt-4 text-center'><p>Você não tem permissão para acessar esta página.</p></CardContent></Card>
            </div>
        );
     }
@@ -243,12 +303,10 @@ export default function BaptismCertificatePage() {
         <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
             <div className="flex flex-wrap items-center justify-between gap-4">
                 <h2 className="text-3xl font-bold tracking-tight">Gerar Certificado de Batismo</h2>
-                <div className="flex flex-wrap gap-2">
-                    <Button onClick={handleGeneratePdf} disabled={isGeneratingPdf || !selectedMember}>
-                        {isGeneratingPdf ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Printer className="mr-2 h-4 w-4" />}
-                        {isGeneratingPdf ? 'Gerando...' : 'Gerar PDF'}
-                    </Button>
-                </div>
+                <Button onClick={handleGeneratePdf} disabled={isGeneratingPdf || !selectedMember}>
+                    {isGeneratingPdf ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Printer className="mr-2 h-4 w-4" />}
+                    {isGeneratingPdf ? 'Gerando...' : 'Gerar PDF'}
+                </Button>
             </div>
             
             <Card>
@@ -259,27 +317,49 @@ export default function BaptismCertificatePage() {
                 <CardContent>
                     <div className="space-y-2 max-w-sm">
                         <Label>Selecione o Membro</Label>
-                        <Select onValueChange={setSelectedMemberId} disabled={!members}>
-                            <SelectTrigger>
-                                <SelectValue placeholder={isLoadingMembers ? "Carregando..." : "Escolha um membro"} />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {members?.map(m => <SelectItem key={m.id} value={m.id}>{m.nome}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
+                        <Select onValueChange={setSelectedMemberId} disabled={!members}><SelectTrigger><SelectValue placeholder={isLoadingMembers ? "Carregando..." : "Escolha um membro"} /></SelectTrigger><SelectContent>{members?.map(m => <SelectItem key={m.id} value={m.id}>{m.nome}</SelectItem>)}</SelectContent></Select>
                     </div>
                 </CardContent>
             </Card>
+
+            {userData?.cargo === 'Administrador' && (
+                <Card>
+                    <CardHeader><CardTitle>Ajustar Layout</CardTitle><CardDescription>Selecione um elemento e use os botões para ajustar sua posição.</CardDescription></CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="grid sm:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>Selecione o Elemento</Label>
+                                <Select onValueChange={setSelectedElement}>
+                                    <SelectTrigger><SelectValue placeholder="Escolha um elemento para ajustar"/></SelectTrigger>
+                                    <SelectContent>{Object.keys(elements).map(id => <SelectItem key={id} value={id}>{id}</SelectItem>)}</SelectContent>
+                                </Select>
+                            </div>
+                             <div className='flex flex-col items-center gap-2'>
+                                <p className="text-sm font-medium">Posição do Elemento: <span className='font-bold text-primary'>{selectedElement || 'Nenhum'}</span></p>
+                                <div className='flex items-center gap-2'>
+                                    <Button variant="outline" size="icon" onMouseDown={() => startMoving('position', 1, 'up')} onMouseUp={stopMoving} onMouseLeave={stopMoving} disabled={!selectedElement}><ArrowUp className="w-4 h-4" /></Button>
+                                    <Button variant="outline" size="icon" onMouseDown={() => startMoving('position', 1, 'down')} onMouseUp={stopMoving} onMouseLeave={stopMoving} disabled={!selectedElement}><ArrowDown className="w-4 h-4" /></Button>
+                                    <Button variant="outline" size="icon" onMouseDown={() => startMoving('position', 1, 'left')} onMouseUp={stopMoving} onMouseLeave={stopMoving} disabled={!selectedElement}><ArrowLeft className="w-4 h-4" /></Button>
+                                    <Button variant="outline" size="icon" onMouseDown={() => startMoving('position', 1, 'right')} onMouseUp={stopMoving} onMouseLeave={stopMoving} disabled={!selectedElement}><ArrowRight className="w-4 h-4" /></Button>
+                                </div>
+                            </div>
+                        </div>
+                         <Button onClick={handleSaveChanges} disabled={isSaving}>
+                            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />}
+                            Salvar Layout
+                        </Button>
+                    </CardContent>
+                </Card>
+            )}
 
             <div className="p-4 bg-muted/50 rounded-lg w-full flex justify-center items-start overflow-x-auto">
                 <div className="origin-top transform scale-[0.3] sm:scale-[0.5] md:scale-[0.7] lg:scale-[0.8] transition-transform duration-300">
                     <DocumentRenderer 
                         ref={documentRef}
-                        churchInfo={churchInfo}
-                        member={selectedMember}
-                        localPastor={localPastorName}
-                        bgImage={bgImage}
-                        logoImage={logoImage}
+                        elements={elements}
+                        bgImage={churchInfo?.baptismCertBgUrl}
+                        onElementClick={setSelectedElement}
+                        selectedElementId={selectedElement}
                     />
                 </div>
             </div>

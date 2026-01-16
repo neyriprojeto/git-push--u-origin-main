@@ -107,7 +107,7 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
                 <div className="flex justify-around items-end w-full mx-auto">
                     {/* Left side: President */}
                     <div className="text-center w-[48%]">
-                         <div className="relative w-full mx-auto mb-1 flex items-center justify-center min-h-[8vw] md:min-h-[20mm]">
+                         <div className="relative w-full mx-auto mb-1 flex items-center justify-center min-h-[4vw] md:min-h-[15mm]">
                              {pastorSignatureUrl && <img src={pastorSignatureUrl} alt="Assinatura Pastor Presidente" className="object-contain max-h-[12vw] md:max-h-[30mm] max-w-full" crossOrigin="anonymous" />}
                         </div>
                         <div className="border-t border-black w-full" />
@@ -117,11 +117,11 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
 
                     {/* Right side: Director */}
                      <div className="text-center w-[48%]">
-                         <div className="relative w-full mx-auto mb-1 min-h-[8vw] md:min-h-[20mm]">
+                         <div className="relative w-full mx-auto mb-1 min-h-[4vw] md:min-h-[15mm]">
                             {/* Empty space for manual signature */}
                         </div>
                         <div className="border-t border-black w-full" />
-                        <p className="text-[2.2vw] md:text-sm font-sans mt-1">&nbsp;</p>
+                        <p className="text-[2.2vw] md:text-sm font-sans mt-1">{directorName || ''}</p>
                         <p className="text-[1.8vw] md:text-xs font-sans italic">Pastor Dirigente</p>
                     </div>
                 </div>

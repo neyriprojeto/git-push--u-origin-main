@@ -130,7 +130,7 @@ export default function MemberFilePage() {
         setIsGeneratingPdf(true);
 
         try {
-            const pdf = new jsPDF('l', 'mm', 'a4'); // A4 landscape
+            const pdf = new jsPDF('l', 'mm', 'a5'); // A5 landscape
             const pdfWidth = pdf.internal.pageSize.getWidth();
             const pdfHeight = pdf.internal.pageSize.getHeight();
             
@@ -203,7 +203,7 @@ export default function MemberFilePage() {
             <div className="flex justify-between items-start pb-4 border-b border-black gap-4">
                 <div className="w-24 h-32 border border-gray-300 flex items-center justify-center shrink-0 bg-gray-100">
                     {avatar ? (
-                        <Image src={avatar.imageUrl} alt={member.nome} width={96} height={128} className="object-cover w-full h-full" />
+                        <Image src={avatar.imageUrl} alt={member.nome} width={96} height={128} className="object-cover w-full h-full" crossOrigin="anonymous" />
                     ) : (
                         <span className="text-xs text-gray-400 text-center">Foto 3x4</span>
                     )}
@@ -214,7 +214,7 @@ export default function MemberFilePage() {
                 </div>
                 <div className="w-24 h-24 flex items-center justify-center shrink-0">
                     {fichaLogoUrl ? (
-                        <Image src={fichaLogoUrl} alt="Logo da Ficha" width={96} height={96} className="object-contain p-1" />
+                        <Image src={fichaLogoUrl} alt="Logo da Ficha" width={96} height={96} className="object-contain" crossOrigin="anonymous" />
                     ) : (
                         <span className="text-xs text-gray-500">Logo</span>
                     )}
@@ -309,7 +309,7 @@ export default function MemberFilePage() {
                     {/* Fixed Size Container with perspective for 3D flip */}
                     <div
                         className="flip-card-container cursor-pointer"
-                        style={{ width: '297mm', height: '210mm', perspective: '1000px' }}
+                        style={{ width: '210mm', height: '148mm', perspective: '1000px' }}
                         onClick={() => setIsFront(!isFront)}
                     >
                         <div className={cn("flip-card w-full h-full", { 'flipped': !isFront })}>
@@ -331,14 +331,13 @@ export default function MemberFilePage() {
 
             {/* Hidden container for PDF generation */}
             <div className="absolute -left-[9999px] top-auto">
-                <div ref={frontRef} className="w-[297mm] h-[210mm] bg-white">
+                <div ref={frontRef} className="w-[210mm] h-[148mm] bg-white">
                    <FichaFrente />
                 </div>
-                <div ref={backRef} className="w-[297mm] h-[210mm] bg-white">
+                <div ref={backRef} className="w-[210mm] h-[148mm] bg-white">
                    <FichaVerso />
                 </div>
             </div>
         </div>
     );
 }
-

@@ -80,8 +80,12 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
                     crossOrigin="anonymous"
                 />
             )}
-            <div className="absolute inset-0 flex flex-col items-center justify-between p-[15mm]">
-                <div />
+            <div className="absolute inset-0 flex flex-col items-center p-[15mm]">
+
+                {/* Top spacer to push content down */}
+                <div style={{ flexGrow: 1.5 }}></div>
+
+                {/* Main Content */}
                 <div className="w-[85%] text-center text-[#444]">
                    <p className="font-bold my-4 text-black uppercase" style={{ fontFamily: "serif", fontSize: '28pt', letterSpacing: '0.1em' }}>
                        {member?.nome || '________________'}
@@ -92,6 +96,11 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
                        no dia <span className="font-semibold">{formatDate(member?.dataBatismo, true)}</span> na Assembleia de Deus Kairós congregação de {member?.congregacao || '____________'}.
                    </p>
                </div>
+                
+                {/* Bottom spacer */}
+                <div style={{ flexGrow: 1 }}></div>
+
+                {/* Footer */}
                 <footer className="w-full">
                     <div className="flex justify-around items-end">
                         <div className="text-center w-2/5">

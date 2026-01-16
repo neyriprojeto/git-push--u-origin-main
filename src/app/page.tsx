@@ -1,4 +1,3 @@
-
 'use client';
 
 import Image from "next/image";
@@ -24,7 +23,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Users, Share2, Radio, Menu, Instagram, Youtube, Globe, Loader2, MapPin } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { useFirestore, useDoc, useMemoFirebase } from "@/firebase";
-import { doc, collection, getDocs, QuerySnapshot, DocumentData, query, where, orderBy } from "firebase/firestore";
+import { doc, collection, getDocs, QuerySnapshot, DocumentData, query, orderBy } from "firebase/firestore";
 
 
 type Congregacao = {
@@ -197,7 +196,7 @@ export default function Home() {
               className="object-cover"
             />
           )}
-          <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-center p-4 pb-12">
+          <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-center p-4 pb-20">
             <AppLogo className="h-12 w-12" />
             <h1 className="text-xl md:text-2xl font-bold">Bem-vindo a AD Kairós</h1>
           </div>
@@ -217,9 +216,9 @@ export default function Home() {
               </Avatar>
           </div>
 
-          <div className="max-w-4xl mx-auto grid gap-8 -mt-16">
+          <div className="max-w-4xl mx-auto grid gap-8 -mt-24">
             {/* Sobre */}
-            <Card className="text-center pt-16">
+            <Card className="text-center pt-24">
               <CardHeader>
                 <CardTitle className="text-primary text-2xl">{pastorName}</CardTitle>
                 <CardDescription>Pastor Presidente</CardDescription>
@@ -239,7 +238,7 @@ export default function Home() {
             {/* Login */}
             <Card>
               <CardContent className="p-6 text-center">
-                <h2 className="text-2xl font-bold mb-2">Acessar o Sistema</h2>
+                <h2 className="text-2xl font-bold mb-2 text-primary">Acessar o Sistema</h2>
                 <p className="text-muted-foreground mb-4">
                   Membros podem acessar o painel para informações e gerenciamento.
                 </p>

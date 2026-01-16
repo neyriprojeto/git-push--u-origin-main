@@ -50,6 +50,13 @@ type ChurchInfo = {
     presentationCertBgUrl?: string;
     presentationCertLogoUrl?: string;
     statuteUrl?: string;
+    bankName?: string;
+    bankAgency?: string;
+    bankAccount?: string;
+    bankPixKey?: string;
+    contactPhone?: string;
+    contactEmail?: string;
+    churchAddress?: string;
 }
 
 type Leader = {
@@ -594,6 +601,60 @@ export default function CongregationsPage() {
                     )}
                 </CardContent>
             </Card>
+            
+            <Card>
+                <CardHeader>
+                    <CardTitle>Dados Bancários e Contato</CardTitle>
+                    <CardDescription>Informações para doações e contato geral da igreja.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {loadingChurchInfo ? (
+                        <div className="flex justify-center p-8"> <Loader2 className="h-8 w-8 animate-spin" /></div>
+                    ) : (
+                        <div className='space-y-4'>
+                            <div className="grid md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="bankName">Nome do Banco</Label>
+                                    <Input id="bankName" name="bankName" value={churchInfo.bankName || ''} onChange={handleChurchInfoChange} placeholder="Ex: Banco do Brasil"/>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="bankPixKey">Chave PIX</Label>
+                                    <Input id="bankPixKey" name="bankPixKey" value={churchInfo.bankPixKey || ''} onChange={handleChurchInfoChange} placeholder="CNPJ, e-mail, telefone..."/>
+                                </div>
+                            </div>
+                            <div className="grid md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="bankAgency">Agência</Label>
+                                    <Input id="bankAgency" name="bankAgency" value={churchInfo.bankAgency || ''} onChange={handleChurchInfoChange} placeholder="Ex: 0001-9"/>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="bankAccount">Conta Corrente</Label>
+                                    <Input id="bankAccount" name="bankAccount" value={churchInfo.bankAccount || ''} onChange={handleChurchInfoChange} placeholder="Ex: 12345-6"/>
+                                </div>
+                            </div>
+                            <Separator/>
+                            <div className="grid md:grid-cols-2 gap-4">
+                                  <div className="space-y-2">
+                                      <Label htmlFor="contactPhone">Telefone de Contato</Label>
+                                      <Input id="contactPhone" name="contactPhone" value={churchInfo.contactPhone || ''} onChange={handleChurchInfoChange} placeholder="(XX) XXXXX-XXXX"/>
+                                  </div>
+                                  <div className="space-y-2">
+                                      <Label htmlFor="contactEmail">Email de Contato</Label>
+                                      <Input id="contactEmail" name="contactEmail" type="email" value={churchInfo.contactEmail || ''} onChange={handleChurchInfoChange} placeholder="contato@igreja.com"/>
+                                  </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="churchAddress">Endereço Principal da Igreja</Label>
+                                <Input id="churchAddress" name="churchAddress" value={churchInfo.churchAddress || ''} onChange={handleChurchInfoChange} placeholder="Rua, Número, Bairro, Cidade - UF"/>
+                            </div>
+                            <Button onClick={handleSaveChurchInfo} disabled={isSavingChurchInfo}>
+                                {isSavingChurchInfo ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                                {isSavingChurchInfo ? 'Salvando...' : 'Salvar Dados Bancários e Contato'}
+                            </Button>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
 
              <Card>
                 <CardHeader>
@@ -929,3 +990,5 @@ export default function CongregationsPage() {
     </>
   );
 }
+
+    

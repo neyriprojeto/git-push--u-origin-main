@@ -73,7 +73,14 @@
         "presentationCertBgUrl": { "type": "string", "format": "uri", "description": "URL for the presentation certificate background image." },
         "presentationCertElements": { "type": "object", "description": "Stores position and style for presentation certificate elements." },
         "presentationCertLogoUrl": { "type": "string", "format": "uri", "description": "URL for the presentation certificate logo." },
-        "statuteUrl": { "type": "string", "format": "uri", "description": "URL for the church statute PDF document." }
+        "statuteUrl": { "type": "string", "format": "uri", "description": "URL for the church statute PDF document." },
+        "bankName": { "type": "string", "description": "Bank name for donations." },
+        "bankAgency": { "type": "string", "description": "Bank agency number." },
+        "bankAccount": { "type": "string", "description": "Bank account number." },
+        "bankPixKey": { "type": "string", "description": "PIX key for donations." },
+        "contactPhone": { "type": "string", "description": "General contact phone number." },
+        "contactEmail": { "type": "string", "format": "email", "description": "General contact email address." },
+        "churchAddress": { "type": "string", "description": "Main church address for display." }
       }
     },
     "Leader": {
@@ -211,3 +218,5 @@
     }
   }
 }
+
+    

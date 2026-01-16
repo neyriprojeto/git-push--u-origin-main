@@ -21,10 +21,11 @@ import {
 import { AppLogo } from "@/components/icons";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Users, Share2, Radio, Menu, Instagram, Youtube, Globe, Loader2, MapPin } from "lucide-react";
+import { Users, Share2, Radio, Menu, Instagram, Youtube, Globe, Loader2, MapPin, Banknote, Mail, Phone } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { doc, collection, getDocs, QuerySnapshot, DocumentData, query, orderBy } from "firebase/firestore";
+import { Separator } from "@/components/ui/separator";
 
 
 type Congregacao = {
@@ -46,6 +47,13 @@ type ChurchInfo = {
   websiteUrl?: string;
   radioUrl?: string;
   radioPageUrl?: string;
+  bankName?: string;
+  bankAgency?: string;
+  bankAccount?: string;
+  bankPixKey?: string;
+  contactPhone?: string;
+  contactEmail?: string;
+  churchAddress?: string;
 }
 
 type Leader = {
@@ -120,8 +128,8 @@ export default function Home() {
   // Dynamic values or fallbacks
   const bannerUrl = churchInfo?.bannerImageUrl || churchBannerPlaceholder?.imageUrl || '';
   const pastorPhotoUrl = churchInfo?.pastorImageUrl || pastorPhotoPlaceholder?.imageUrl || '';
-  const pastorName = churchInfo?.pastorDisplayName || churchInfo?.pastorSignatureName || 'Pastor Presidente';
-  const pastorRole = churchInfo?.pastorDisplayRole || (churchInfo?.pastorSignatureName ? 'Pastor Presidente' : '');
+  const pastorName = churchInfo?.pastorDisplayName || 'Pastor Presidente';
+  const pastorRole = churchInfo?.pastorDisplayRole || '';
   const aboutUs = churchInfo?.aboutUs || 'A Igreja Evangélica AD Kairós é um lugar de adoração, comunhão e serviço. Nossa missão é levar a palavra de Deus a todos, transformando vidas e comunidades.';
   const pastoralMessage = churchInfo?.pastoralMessage || 'Aqui você encontrará uma mensagem de fé e esperança do nosso pastor. Brevemente, este espaço será preenchido com palavras que edificarão a sua vida.';
   const instagramUrl = churchInfo?.instagramUrl;
@@ -143,7 +151,7 @@ export default function Home() {
                     <span className="sr-only">Abrir Menu</span>
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="left">
+                <SheetContent side="left" className="bg-card text-card-foreground">
                   <SheetHeader>
                     <SheetTitle>
                         <Link href="/" className="flex items-center space-x-2">
@@ -158,6 +166,31 @@ export default function Home() {
                     {websiteUrl && <Button variant="ghost" className="justify-start" asChild><Link href={websiteUrl} target="_blank"><Globe className="mr-2 h-4 w-4"/>Site</Link></Button>}
                     {radioPageUrl && <Button variant="ghost" className="justify-start" asChild><Link href={radioPageUrl} target="_blank"><Radio className="mr-2 h-4 w-4"/>Rádio</Link></Button>}
                   </div>
+                    {(churchInfo?.bankPixKey || churchInfo?.contactPhone) && (
+                        <>
+                            <Separator className="my-2 bg-border" />
+                            <div className="flex flex-col space-y-3 px-2 py-2">
+                                { (churchInfo.bankName || churchInfo.bankPixKey) && (
+                                    <div>
+                                        <h3 className="font-semibold mb-2 text-sm text-muted-foreground px-2">Dízimos e Ofertas</h3>
+                                        <div className="text-sm text-foreground space-y-1 pl-2">
+                                            {churchInfo.bankName && <p className="flex items-center gap-2 font-medium"><Banknote className="h-4 w-4 shrink-0 text-muted-foreground"/> {churchInfo.bankName}</p>}
+                                            {churchInfo.bankAgency && <p className="text-xs text-muted-foreground pl-6">Ag: {churchInfo.bankAgency}</p>}
+                                            {churchInfo.bankAccount && <p className="text-xs text-muted-foreground pl-6">CC: {churchInfo.bankAccount}</p>}
+                                            {churchInfo.bankPixKey && <p className="font-semibold text-xs pl-6">PIX: {churchInfo.bankPixKey}</p>}
+                                        </div>
+                                    </div>
+                                )}
+                                {(churchInfo.contactPhone || churchInfo.contactEmail) && (
+                                    <div className="pt-2">
+                                        <h3 className="font-semibold mb-2 text-sm text-muted-foreground px-2">Contato</h3>
+                                        {churchInfo.contactPhone && <Button variant="ghost" className="w-full justify-start h-auto py-1.5" asChild><Link href={`tel:${churchInfo.contactPhone}`}><Phone className="mr-2 h-4 w-4 shrink-0"/>{churchInfo.contactPhone}</Link></Button>}
+                                        {churchInfo.contactEmail && <Button variant="ghost" className="w-full justify-start h-auto py-1.5" asChild><Link href={`mailto:${churchInfo.contactEmail}`}><Mail className="mr-2 h-4 w-4 shrink-0"/>{churchInfo.contactEmail}</Link></Button>}
+                                    </div>
+                                )}
+                            </div>
+                        </>
+                    )}
                 </SheetContent>
               </Sheet>
                <Link href="/" className="mr-6 flex items-center space-x-2">
@@ -348,6 +381,36 @@ export default function Home() {
                 </CardContent>
               </Card>
             </div>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-center text-primary">Dízimos, Ofertas e Contato</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center">
+                  {loadingChurchInfo ? (
+                      <div className="flex justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>
+                  ) : (
+                      <div className="grid md:grid-cols-2 gap-8">
+                          <div className="space-y-2">
+                              <h3 className="font-bold text-lg">Dados Bancários</h3>
+                              <p className="text-muted-foreground">Sua contribuição ajuda a manter a obra.</p>
+                              {churchInfo?.bankName && <p className="font-semibold">{churchInfo.bankName}</p>}
+                              {churchInfo?.bankAgency && <p>Agência: {churchInfo.bankAgency}</p>}
+                              {churchInfo?.bankAccount && <p>Conta Corrente: {churchInfo.bankAccount}</p>}
+                              {churchInfo?.bankPixKey && <p className="font-bold pt-2">PIX: {churchInfo.bankPixKey}</p>}
+                          </div>
+                          <div className="space-y-2">
+                              <h3 className="font-bold text-lg">Fale Conosco</h3>
+                              <p className="text-muted-foreground">Estamos aqui para ouvir você.</p>
+                              {churchInfo?.contactPhone && <p className="flex items-center justify-center gap-2"><Phone className="h-4 w-4"/> {churchInfo.contactPhone}</p>}
+                              {churchInfo?.contactEmail && <p className="flex items-center justify-center gap-2"><Mail className="h-4 w-4"/> {churchInfo.contactEmail}</p>}
+                              {churchInfo?.churchAddress && <p className="flex items-center justify-center gap-2 mt-2"><MapPin className="h-4 w-4"/> {churchInfo.churchAddress}</p>}
+                          </div>
+                      </div>
+                  )}
+              </CardContent>
+            </Card>
+
           </div>
         </div>
       </main>
@@ -361,3 +424,5 @@ export default function Home() {
     </div>
   );
 }
+
+    

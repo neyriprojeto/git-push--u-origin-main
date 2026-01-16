@@ -8,12 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AppLogo } from "@/components/icons";
 import { useState } from "react";
-import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { useAuth, useFirestore } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
@@ -105,6 +105,83 @@ export default function LoginPage() {
       setIsLoading(false);
     }
   };
+  
+  const handleGoogleSignIn = async () => {
+    if (!auth || !firestore) {
+      toast({
+        variant: "destructive",
+        title: "Erro de autenticação",
+        description: "Serviço de autenticação não disponível.",
+      });
+      return;
+    }
+    setIsLoading(true);
+    const provider = new GoogleAuthProvider();
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      const userDocRef = doc(firestore, "users", user.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        if (userData.status === 'Pendente') {
+          await signOut(auth);
+          toast({
+            variant: "default",
+            title: "Cadastro em Análise",
+            description: "Seu cadastro com o Google está em análise. Você receberá um e-mail quando for aprovado.",
+            duration: 9000,
+          });
+        } else if (userData.status === 'Inativo') {
+          await signOut(auth);
+          toast({
+            variant: "destructive",
+            title: "Conta Inativa",
+            description: "Sua conta está inativa. Entre em contato com a administração da igreja.",
+            duration: 9000,
+          });
+        } else if (userData.status === 'Ativo') {
+          router.push("/dashboard");
+        } else {
+            await signOut(auth);
+            toast({
+                variant: "destructive",
+                title: "Status Desconhecido",
+                description: "O status da sua conta é desconhecido. Entre em contato com a administração.",
+                duration: 9000,
+            });
+        }
+      } else {
+        // New user signing up with Google
+        const newMemberData = {
+          nome: user.displayName || 'Nome não informado',
+          email: user.email,
+          avatar: user.photoURL || '',
+          status: 'Pendente',
+          cargo: 'Membro', // default role
+          criadoEm: serverTimestamp(),
+        };
+        await setDoc(userDocRef, newMemberData);
+        await signOut(auth);
+        toast({
+          title: "Cadastro Enviado para Análise!",
+          description: "Seus dados foram enviados para aprovação. Você será notificado por e-mail.",
+          duration: 9000,
+        });
+      }
+    } catch (error: any) {
+      console.error("Google Sign-In Error:", error);
+      toast({
+        variant: "destructive",
+        title: "Falha no Login com Google",
+        description: "Não foi possível autenticar com o Google. Tente novamente.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-secondary p-4">
@@ -167,7 +244,10 @@ export default function LoginPage() {
                 </Button>
             </form>
              <Separator className="my-6" />
-              <div className="text-center">
+             <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isLoading}>
+              {isLoading ? 'Aguarde...' : 'Entrar com Google'}
+            </Button>
+              <div className="mt-4 text-center">
                 <p className="text-sm">
                   Ainda não é membro?{" "}
                   <Link href="/register" className="underline">

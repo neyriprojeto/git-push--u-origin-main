@@ -17,14 +17,16 @@ import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { addMember } from '@/firebase/firestore/mutations';
-import { useAuth, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useAuth, useFirestore, useMemoFirebase } from '@/firebase';
 import { useState, useEffect } from 'react';
 import { CheckCircle, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { AppLogo } from '@/components/icons';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { collection, getDocs } from 'firebase/firestore';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { collection, getDocs, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
+import { useRouter } from 'next/navigation';
+import { Separator } from '@/components/ui/separator';
 
 const formSchema = z.object({
   // Dados Pessoais
@@ -59,6 +61,7 @@ export default function RegisterPage() {
   const { toast } = useToast();
   const firestore = useFirestore();
   const auth = useAuth();
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -165,6 +168,57 @@ export default function RegisterPage() {
         setIsSubmitting(false);
     }
   }
+
+  const handleGoogleSignUp = async () => {
+    if (!auth || !firestore) {
+      toast({
+        variant: "destructive",
+        title: "Erro de autenticação",
+        description: "Serviço de autenticação não disponível.",
+      });
+      return;
+    }
+    setIsSubmitting(true);
+    const provider = new GoogleAuthProvider();
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      const userDocRef = doc(firestore, "users", user.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      if (userDoc.exists()) {
+        await signOut(auth); 
+        toast({
+          title: "Conta já existente",
+          description: "Já existe uma conta com este e-mail do Google. Por favor, faça login.",
+          duration: 9000,
+        });
+        router.push('/login');
+      } else {
+        // This is a new user, create their document.
+        const newMemberData = {
+          nome: user.displayName || 'Nome não informado',
+          email: user.email,
+          avatar: user.photoURL || '',
+          status: 'Pendente',
+          cargo: 'Membro',
+          criadoEm: serverTimestamp(),
+        };
+        await setDoc(userDocRef, newMemberData);
+        setIsSubmitted(true);
+      }
+    } catch (error: any) {
+      console.error("Google Sign-Up Error:", error);
+      toast({
+        variant: "destructive",
+        title: "Falha no Cadastro com Google",
+        description: "Não foi possível se cadastrar com o Google. Tente novamente.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
   
   if (isSubmitted) {
       return (
@@ -477,6 +531,16 @@ export default function RegisterPage() {
                         {isSubmitting ? 'Enviando Cadastro...' : 'Enviar Cadastro'}
                     </Button>
                     </form>
+                     <Separator className="my-6" />
+                      <Button variant="outline" className="w-full" onClick={handleGoogleSignUp} disabled={isSubmitting}>
+                        {isSubmitting ? 'Aguarde...' : 'Cadastrar com Google'}
+                      </Button>
+                      <div className="mt-4 text-center text-sm">
+                          Já tem uma conta?{" "}
+                          <Link href="/login" className="underline">
+                              Fazer Login
+                          </Link>
+                      </div>
                 </Form>
                 </CardContent>
             </Card>

@@ -385,7 +385,7 @@ export default function CongregationsPage() {
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="new-leader-email">Email (Opcional)</Label>
-                                    <Input id="new-leader-email" type="email" value={newLeader.email} onChange={(e) => setNewLeader(p => ({ ...p, email: e.target.value }))} />
+                                    <Input id="new-leader-email" type="email" value={newLeader.email || ''} onChange={(e) => setNewLeader(p => ({ ...p, email: e.target.value }))} />
                                 </div>
                             </div>
                             <DialogFooter>
@@ -517,7 +517,7 @@ export default function CongregationsPage() {
       </div>
 
        <Dialog open={isCropping} onOpenChange={setIsCropping}>
-          <DialogContent className="max-w-4xl">
+          <DialogContent className="w-full max-w-sm sm:max-w-lg md:max-w-xl max-h-[90dvh] overflow-y-auto">
               <DialogHeader>
                   <DialogTitle>Editar Imagem</DialogTitle>
               </DialogHeader>

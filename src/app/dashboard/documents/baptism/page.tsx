@@ -217,38 +217,54 @@ export default function BaptismCertificatePage() {
 
     const handleGeneratePdf = async () => {
         const source = documentRef.current;
-        if (!source) return;
+        // Ensure the source element and its parent exist before proceeding.
+        if (!source || !source.parentElement) {
+            toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível encontrar o elemento do documento para gerar o PDF.' });
+            return;
+        };
+
         setIsGeneratingPdf(true);
+        const scaledParent = source.parentElement;
+        
+        // 1. Store the original Tailwind classes of the scaled container.
+        const originalClasses = scaledParent.className;
+
+        // 2. Temporarily remove all classes and apply an inline style to force full-size rendering.
+        // This ensures html2canvas captures the document at its native A4 resolution.
+        scaledParent.className = '';
+        scaledParent.style.transform = 'scale(1)';
         
         try {
-            // Temporarily set scale to 1 for high-quality capture
-            source.style.transform = 'scale(1)';
-            
+            // A minimal delay to allow the browser to repaint the element at full scale.
+            await new Promise(resolve => setTimeout(resolve, 50));
+
             const canvas = await html2canvas(source, {
-                scale: 3, // High scale for better resolution
+                scale: 2, // Use a scale of 2 for a good balance of quality and performance.
                 useCORS: true,
                 backgroundColor: null,
-                width: source.offsetWidth,
-                height: source.offsetHeight
             });
-
-            // Restore original scale for display
-            source.style.transform = '';
 
             const imgData = canvas.toDataURL('image/png');
             
-            const pdf = new jsPDF('landscape', 'mm', 'a4');
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = pdf.internal.pageSize.getHeight();
+            const pdf = new jsPDF({
+                orientation: 'landscape',
+                unit: 'mm',
+                format: 'a4'
+            });
+            const pdfWidth = pdf.internal.pageSize.getWidth(); // 297mm
+            const pdfHeight = pdf.internal.pageSize.getHeight(); // 210mm
             
+            // Add the captured image to the PDF, stretching it to fit the A4 page.
             pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
             pdf.save(`certificado-batismo-${selectedMember?.nome.replace(/ /g, '_') || 'membro'}.pdf`);
         } catch (error) {
             console.error("Error generating PDF:", error);
              toast({ variant: 'destructive', title: 'Erro ao gerar PDF', description: 'Não foi possível gerar o arquivo.' });
         } finally {
+            // 3. Restore the original classes and remove the inline style, returning the display to normal.
+            scaledParent.className = originalClasses;
+            scaledParent.style.transform = '';
             setIsGeneratingPdf(false);
-            if(source) source.style.transform = ''; // Ensure scale is restored on error too
         }
     };
     

@@ -62,7 +62,7 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
     return (
         <div 
             ref={ref} 
-            className="w-full max-w-[297mm] aspect-[297/210] bg-white mx-auto shadow-lg font-serif text-black relative print:shadow-none print:border-0 print:w-[297mm] print:h-[210mm]"
+            className="w-[297mm] h-[210mm] bg-white font-serif text-black relative"
             style={{
                 backgroundImage: bgImage ? `url(${bgImage})` : 'none',
                 backgroundSize: '100% 100%',
@@ -71,17 +71,17 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
             }}
         >
             {/* This container will hold all the content and manage spacing */}
-            <div className="absolute inset-0 flex flex-col items-center justify-between p-16">
+            <div className="absolute inset-0 flex flex-col items-center justify-between p-[15mm]">
             
                 {/* Spacer at the top */}
                 <div />
 
                 {/* Middle text content */}
-                <div className="w-[80%] text-center text-[#444]">
-                    <p className="font-bold text-4xl my-4 text-[#63532f]" style={{ fontFamily: "'Brush Script MT', cursive" }}>
+                <div className="w-[85%] text-center text-[#444]">
+                   <p className="font-bold my-4 text-[#63532f]" style={{ fontFamily: "'Brush Script MT', cursive", fontSize: '42pt' }}>
                        {member?.nome || '________________'}
                    </p>
-                   <p className="text-lg leading-relaxed mt-4">
+                   <p className="leading-relaxed mt-4" style={{ fontSize: '12pt' }}>
                        Crendo e obedecendo nas sagradas Escrituras e as doutrinas ensinadas por 
                        Jesus Cristo, foi {genderTerm} sob profissão de fé em nome do Pai, do Filho e do Espírito Santo,
                        no dia <span className="font-semibold">{formatDate(member?.dataBatismo, true)}</span> na Assembleia de Deus Kairós congregação de {member?.congregacao || '____________'}.
@@ -93,13 +93,13 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
                     <div className="flex justify-around items-end">
                         <div className="text-center w-2/5">
                             <div className="border-b-2 border-black w-full" />
-                            <p className="text-sm mt-1">{presidentName}</p>
-                            <p className="text-xs italic">Pastor Presidente</p>
+                            <p className="mt-1" style={{ fontSize: '10pt' }}>{presidentName}</p>
+                            <p className="italic" style={{ fontSize: '8pt' }}>Pastor Presidente</p>
                         </div>
                          <div className="text-center w-2/5">
                             <div className="border-b-2 border-black w-full" />
-                            <p className="text-sm mt-1">{celebrantPastor || '________________'}</p>
-                            <p className="text-xs italic">Pastor Celebrante</p>
+                            <p className="mt-1" style={{ fontSize: '10pt' }}>{celebrantPastor || '________________'}</p>
+                            <p className="italic" style={{ fontSize: '8pt' }}>Pastor Celebrante</p>
                         </div>
                     </div>
                 </footer>
@@ -137,10 +137,12 @@ export default function BaptismCertificatePage() {
     const { data: members, isLoading: isLoadingMembers } = useCollection<Member>(membersQuery);
 
     const handleGeneratePdf = async () => {
-        if (!documentRef.current) return;
+        const source = documentRef.current;
+        if (!source) return;
         setIsGeneratingPdf(true);
+        
         try {
-            const canvas = await html2canvas(documentRef.current, { scale: 4, useCORS: true, backgroundColor: null });
+            const canvas = await html2canvas(source, { scale: 4, useCORS: true, backgroundColor: null });
             const imgData = canvas.toDataURL('image/png');
             
             // A4 landscape: 297mm x 210mm
@@ -226,16 +228,18 @@ export default function BaptismCertificatePage() {
                 </CardContent>
             </Card>
 
-            <div className="p-4 bg-muted/50 rounded-lg">
-                 <DocumentRenderer 
-                    ref={documentRef}
-                    churchInfo={churchInfo}
-                    member={selectedMember}
-                    date={new Date()}
-                    city="Veranópolis"
-                    celebrantPastor={celebrantPastor}
-                    bgImage={bgImage}
-                />
+            <div className="p-4 bg-muted/50 rounded-lg w-full flex justify-center items-start overflow-x-auto">
+                <div className="origin-top transform scale-[0.3] sm:scale-[0.5] md:scale-[0.7] lg:scale-[0.9] xl:scale-100 transition-transform duration-300">
+                    <DocumentRenderer 
+                        ref={documentRef}
+                        churchInfo={churchInfo}
+                        member={selectedMember}
+                        date={new Date()}
+                        city="Veranópolis"
+                        celebrantPastor={celebrantPastor}
+                        bgImage={bgImage}
+                    />
+                </div>
             </div>
         </div>
     );

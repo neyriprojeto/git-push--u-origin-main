@@ -39,6 +39,8 @@ type ChurchInfo = {
     websiteUrl?: string;
     radioUrl?: string;
     radioPageUrl?: string;
+    conventionLogo1Url?: string;
+    conventionLogo2Url?: string;
 }
 
 type Leader = {
@@ -383,11 +385,19 @@ export default function CongregationsPage() {
                                     <Button variant="outline" onClick={() => triggerFileInput('pastorSignatureUrl', undefined)}>
                                         <Upload className="mr-2 h-4 w-4"/> Assinatura Pr. Presidente
                                     </Button>
+                                    <Button variant="outline" onClick={() => triggerFileInput('conventionLogo1Url', undefined)}>
+                                        <Upload className="mr-2 h-4 w-4"/> Logo Convenção 1
+                                    </Button>
+                                    <Button variant="outline" onClick={() => triggerFileInput('conventionLogo2Url', undefined)}>
+                                        <Upload className="mr-2 h-4 w-4"/> Logo Convenção 2
+                                    </Button>
                                 </div>
                                 <div className='flex flex-wrap gap-4 mt-4'>
                                     {churchInfo.bannerImageUrl && <div><Label className='text-xs'>Banner Atual</Label><Image src={churchInfo.bannerImageUrl} alt="Banner" width={200} height={112} className="rounded-md border object-cover"/></div>}
                                     {churchInfo.pastorImageUrl && <div><Label className='text-xs'>Foto Atual</Label><Image src={churchInfo.pastorImageUrl} alt="Pastor" width={100} height={100} className="rounded-full border object-cover"/></div>}
                                     {churchInfo.pastorSignatureUrl && <div><Label className='text-xs'>Assinatura Atual</Label><div className="h-[50px] w-[150px] rounded-md border p-2 bg-slate-100"><Image src={churchInfo.pastorSignatureUrl} alt="Assinatura" width={150} height={50} className="object-contain"/></div></div>}
+                                    {churchInfo.conventionLogo1Url && <div><Label className='text-xs'>Logo Convenção 1</Label><Image src={churchInfo.conventionLogo1Url} alt="Logo Convenção 1" width={100} height={100} className="rounded-md border object-contain p-2"/></div>}
+                                    {churchInfo.conventionLogo2Url && <div><Label className='text-xs'>Logo Convenção 2</Label><Image src={churchInfo.conventionLogo2Url} alt="Logo Convenção 2" width={100} height={100} className="rounded-md border object-contain p-2"/></div>}
                                 </div>
                             </div>
                             <Button onClick={handleSaveChurchInfo} disabled={isSavingChurchInfo}>

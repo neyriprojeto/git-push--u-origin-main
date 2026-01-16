@@ -159,6 +159,16 @@
           "type": "string",
           "description": "URL of the pastor's signature image.",
           "format": "uri"
+        },
+        "conventionLogo1Url": {
+          "type": "string",
+          "description": "URL for the first convention logo.",
+          "format": "uri"
+        },
+        "conventionLogo2Url": {
+          "type": "string",
+          "description": "URL for the second convention logo.",
+          "format": "uri"
         }
       },
       "required": [

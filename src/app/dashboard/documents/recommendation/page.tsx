@@ -18,18 +18,21 @@ import html2canvas from 'html2canvas';
 // Tipos
 type Member = { id: string; nome: string; cargo: string; dataMembro?: any; congregacao?: string; };
 type UserData = { nome: string; cargo?: string; congregacao?: string; };
-type ChurchInfo = { pastorName?: string; pastorSignatureUrl?: string; };
+type ChurchInfo = { 
+    pastorName?: string; 
+    pastorSignatureUrl?: string; 
+    conventionLogo1Url?: string;
+    conventionLogo2Url?: string;
+};
 
 const DocumentRenderer = React.forwardRef<HTMLDivElement, {
-    templateUrl?: string,
+    churchInfo: ChurchInfo | null,
     member: Member | null,
     docType: 'recomendacao' | 'mudanca' | null,
     date: Date,
     city: string,
-    presidentName?: string,
     directorName?: string,
-    pastorSignatureUrl?: string,
-}>(({ templateUrl, member, docType, date, city, presidentName, directorName, pastorSignatureUrl }, ref) => {
+}>(({ churchInfo, member, docType, date, city, directorName }, ref) => {
     
     const formatDate = (d: any): string => {
         if (!d) return '';
@@ -42,56 +45,91 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
         } catch { return ''; }
     };
 
+    const logo1Url = churchInfo?.conventionLogo1Url;
+    const logo2Url = churchInfo?.conventionLogo2Url;
+    const presidentName = churchInfo?.pastorName || '';
+    const pastorSignatureUrl = churchInfo?.pastorSignatureUrl;
+
     return (
-        <div ref={ref} className="relative w-[148mm] h-[210mm] bg-white mx-auto scale-50 sm:scale-75 md:scale-100 origin-top">
-            {templateUrl ? (
-                <Image src={templateUrl} alt="Fundo da carta" layout="fill" objectFit="contain" priority />
-            ) : (
-                 <div className="w-full h-full border flex items-center justify-center">
-                    <p className='text-center text-muted-foreground'>Fundo da carta não configurado.<br/>Vá para Configurações para fazer o upload.</p>
-                </div>
-            )}
+        <div ref={ref} className="relative w-[148mm] h-[210mm] bg-white mx-auto shadow-lg p-[8mm] font-serif text-[11pt] text-black flex flex-col">
             
-            <div className="absolute inset-0 font-serif text-[11pt] text-black">
-                {/* Checkboxes */}
-                <div className="absolute font-bold" style={{ top: '86.5mm', left: '77mm' }}>
-                    {docType === 'recomendacao' && <span className='text-lg'>X</span>}
+            {/* Header */}
+            <header className="flex justify-between items-center pb-4 border-b-2 border-black">
+                <div className="w-20 h-20 relative">
+                    {logo1Url ? <Image src={logo1Url} alt="Logo Convenção 1" layout="fill" objectFit="contain" priority /> : <div className="w-full h-full bg-gray-100 flex items-center justify-center text-xs text-gray-400">Logo 1</div>}
                 </div>
-                <div className="absolute font-bold" style={{ top: '94.5mm', left: '77mm' }}>
-                    {docType === 'mudanca' && <span className='text-lg'>X</span>}
+                <div className="text-center">
+                    <p className="font-bold text-sm">IGREJA ASSEMBLEIA DE DEUS</p>
+                    <p className="font-bold text-sm">MINISTÉRIO KAIRÓS</p>
+                    <p className="text-xs">A.D. KAIRÓS</p>
+                    <p className="text-[10px] italic">TEMPO DE DEUS</p>
                 </div>
+                <div className="w-20 h-20 relative">
+                    {logo2Url ? <Image src={logo2Url} alt="Logo Convenção 2" layout="fill" objectFit="contain" priority /> : <div className="w-full h-full bg-gray-100 flex items-center justify-center text-xs text-gray-400">Logo 2</div>}
+                </div>
+            </header>
 
-                {/* Member data */}
-                <div className="absolute" style={{ top: '122mm', left: '42mm' }}>{member?.nome || ''}</div>
-                <div className="absolute" style={{ top: '128mm', left: '33mm' }}>{member?.cargo || ''}</div>
-                <div className="absolute" style={{ top: '134mm', left: '47mm' }}>{formatDate(member?.dataMembro)}</div>
+            {/* Title */}
+            <div className="text-center my-8">
+                <p className="font-bold text-base mb-2">CARTA DE,</p>
+                <div className="flex justify-center gap-6 text-sm font-sans">
+                    <div className="flex items-center gap-2">RECOMENDAÇÃO ({docType === 'recomendacao' ? <span className="font-bold">X</span> : ' '})</div>
+                    <div className="flex items-center gap-2">MUDANÇA ({docType === 'mudanca' ? <span className="font-bold">X</span> : ' '})</div>
+                </div>
+            </div>
 
-                {/* Date */}
-                <div className="absolute" style={{ top: '165mm', left: '31mm' }}>{city}</div>
-                <div className="absolute" style={{ top: '165mm', left: '56mm' }}>{format(date, 'd')}</div>
-                <div className="absolute" style={{ top: '165mm', left: '80mm' }}>{format(date, 'MMMM', { locale: ptBR })}</div>
-                <div className="absolute" style={{ top: '165mm', left: '118mm' }}>{format(date, 'yy')}</div>
-                
-                {/* Signatures */}
-                <div className="absolute flex justify-around items-end" style={{ bottom: '22mm', left: '10mm', right: '10mm', gap: '10mm' }}>
-                    <div className="text-center w-[65mm]">
-                        <div className="border-t border-black w-full mx-auto" style={{ marginBottom: '1mm' }} />
-                        <p className="text-[10pt] mt-1">{directorName}</p>
-                        <p className="text-[9pt] italic">Pastor Dirigente</p>
-                    </div>
-                    <div className="text-center w-[65mm]">
+            {/* Body */}
+            <main className="space-y-4 leading-relaxed text-justify text-base">
+                <p className="font-bold text-center mb-6">Saudações no Senhor,</p>
+                <p>
+                    A Igreja Evangélica Assembleia de Deus Ministério Kairós apresenta,
+                    o(a) Irmão(ã): <span className="font-bold underline">{member?.nome || '...'}</span>
+                </p>
+                 <p>
+                    Cargo: <span className="font-bold underline">{member?.cargo || '...'}</span>
+                </p>
+                <p>
+                    Membro desde: <span className="font-bold underline">{formatDate(member?.dataMembro) || '...'}</span>
+                </p>
+                <p className="text-center font-bold my-8 text-sm">
+                    POR SE ACHAR EM COMUNHÃO COM ESSA IGREJA, RECOMENDAMOS QUE
+                    O(A) RECEBAIS NO SENHOR, COMO COSTUMAM FAZER OS SANTOS.
+                </p>
+            </main>
+
+            {/* Date */}
+            <div className="text-center mt-6 font-sans">
+                <p>{city}, {format(date, "d 'de' MMMM 'de' yyyy", { locale: ptBR })}</p>
+            </div>
+
+            {/* Spacer */}
+            <div className="flex-grow" />
+            
+            {/* Signatures */}
+            <footer className="pt-4">
+                <div className="flex justify-around items-end mb-4">
+                    <div className="text-center w-[70mm]">
                         {pastorSignatureUrl && (
-                            <div className="relative w-[60mm] h-[15mm] mx-auto -mb-1">
+                            <div className="relative w-full h-[15mm] mb-1">
                                <Image src={pastorSignatureUrl} alt="Assinatura Pastor Presidente" layout="fill" objectFit="contain" />
                             </div>
                         )}
-                        <div className="border-t border-black w-full mx-auto" style={{ marginBottom: '1mm' }}/>
-                        <p className="text-[10pt] mt-1">{presidentName}</p>
-                        <p className="text-[9pt] italic">Pastor Presidente</p>
+                        <div className="border-t border-black w-full mx-auto" />
+                        <p className="text-sm mt-1 font-sans">{presidentName}</p>
+                        <p className="text-xs font-sans italic">Pastor Presidente</p>
+                    </div>
+                    <div className="text-center w-[70mm]">
+                        <div className="h-[15mm] mb-1" />
+                        <div className="border-t border-black w-full mx-auto" />
+                        <p className="text-sm mt-1 font-sans">{directorName || ' '}</p>
+                        <p className="text-xs font-sans italic">Pastor Dirigente</p>
                     </div>
                 </div>
-
-            </div>
+                
+                <div className="text-center text-xs font-sans">
+                    <p>Válida por 30 dias</p>
+                </div>
+            </footer>
         </div>
     );
 });
@@ -123,9 +161,6 @@ export default function RecommendationLetterPage() {
     }, [firestore, userData]);
     const { data: members, isLoading: isLoadingMembers } = useCollection<Member>(membersQuery);
 
-    const templateRef = useMemoFirebase(() => (firestore ? doc(firestore, 'documentTemplates', 'recommendation-letter') : null), [firestore]);
-    const { data: templateData, isLoading: isLoadingTemplate } = useDoc<{ backgroundUrl?: string }>(templateRef);
-
     const handleGeneratePdf = async () => {
         if (!documentRef.current) return;
         setIsGeneratingPdf(true);
@@ -143,11 +178,9 @@ export default function RecommendationLetterPage() {
     };
     
     const selectedMember = members?.find(m => m.id === selectedMemberId) || null;
-    const presidentName = churchInfo?.pastorName || '';
-    const pastorSignatureUrl = churchInfo?.pastorSignatureUrl || '';
     const directorName = userData?.cargo === 'Pastor/dirigente' ? userData.nome : '';
 
-    const isLoading = isAuthUserLoading || isUserDataLoading || isLoadingMembers || isLoadingTemplate || isChurchInfoLoading;
+    const isLoading = isAuthUserLoading || isUserDataLoading || isLoadingMembers || isChurchInfoLoading;
 
     if (isLoading) {
         return (
@@ -176,7 +209,7 @@ export default function RecommendationLetterPage() {
     return (
         <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
             <div className="flex flex-wrap items-center justify-between gap-4">
-                <h2 className="text-3xl font-bold tracking-tight">Carta de Recomendação</h2>
+                <h2 className="text-3xl font-bold tracking-tight">Gerar Carta</h2>
                 <Button onClick={handleGeneratePdf} disabled={isGeneratingPdf || !selectedMember}>
                     {isGeneratingPdf ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Printer className="mr-2 h-4 w-4" />}
                     {isGeneratingPdf ? 'Gerando...' : 'Gerar PDF'}
@@ -219,14 +252,12 @@ export default function RecommendationLetterPage() {
             <div className="p-4 bg-muted/50 rounded-lg overflow-x-auto">
                  <DocumentRenderer 
                     ref={documentRef}
-                    templateUrl={templateData?.backgroundUrl}
+                    churchInfo={churchInfo}
                     member={selectedMember}
                     docType={documentType}
                     date={new Date()}
                     city="Veranópolis"
-                    presidentName={presidentName}
                     directorName={directorName}
-                    pastorSignatureUrl={pastorSignatureUrl}
                 />
             </div>
         </div>

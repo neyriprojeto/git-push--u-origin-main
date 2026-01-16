@@ -32,7 +32,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { updateMember, deleteMember, addMessage } from "@/firebase/firestore/mutations";
+import { updateMember, addMessage } from "@/firebase/firestore/mutations";
+import { deleteUser } from '@/ai/flows/delete-user-flow';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Slider } from '@/components/ui/slider';
 import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
@@ -496,15 +497,37 @@ export default function MemberProfilePage() {
   };
 
   const handleDelete = async () => {
-    if (!firestore || !memberId) return;
-    router.push('/dashboard/members'); 
+    if (!memberId) return;
+    
+    const deletingToast = toast({
+      title: "Excluindo...",
+      description: "Aguarde enquanto o membro é removido do sistema.",
+    });
+
     try {
-      await deleteMember(firestore, memberId);
-      toast({ title: "Sucesso!", description: "Membro excluído com sucesso." });
-    } catch (error) {
+      const result = await deleteUser({ userId: memberId });
+      
+      deletingToast.dismiss(); 
+
+      if (result.success) {
+        toast({
+          title: "Sucesso!",
+          description: "O membro foi excluído permanentemente.",
+        });
+        router.push('/dashboard/members');
+      } else {
+        throw new Error(result.message);
+      }
+    } catch (error: any) {
+      deletingToast.dismiss(); 
       console.error("Delete error: ", error);
-      toast({ variant: "destructive", title: "Erro", description: "Não foi possível excluir o membro." });
-    } 
+      toast({
+        variant: "destructive",
+        title: "Erro ao Excluir",
+        description: error.message || "Não foi possível excluir o membro.",
+        duration: 9000,
+      });
+    }
   }
 
 
@@ -1242,7 +1265,7 @@ export default function MemberProfilePage() {
                                               <AlertDialogHeader>
                                                   <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
                                                   <AlertDialogDescription>
-                                                      Esta ação é permanente e não pode ser desfeita. O cadastro do membro será removido do banco de dados, mas a conta de autenticação (login e senha) precisará ser removida manually no console do Firebase, se necessário.
+                                                      Esta ação é permanente e não pode ser desfeita. O cadastro de dados e a conta de login do membro serão removidos permanentemente.
                                                   </AlertDialogDescription>
                                               </AlertDialogHeader>
                                               <AlertDialogFooter>

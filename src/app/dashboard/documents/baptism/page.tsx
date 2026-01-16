@@ -70,32 +70,40 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
                 backgroundPosition: 'center',
             }}
         >
-             <div className="absolute top-[45%] left-1/2 -translate-x-1/2 w-[80%] text-center text-[#444]">
-                 <p className="font-bold text-4xl my-4 text-[#63532f]" style={{ fontFamily: "'Brush Script MT', cursive" }}>
-                    {member?.nome || '________________'}
-                </p>
-                <p className="text-lg leading-relaxed mt-4">
-                    Crendo e obedecendo nas sagradas Escrituras e as doutrinas ensinadas por 
-                    Jesus Cristo, foi {genderTerm} sob profissão de fé em nome do Pai, do Filho e do Espírito Santo,
-                    no dia <span className="font-semibold">{formatDate(member?.dataBatismo, true)}</span> na Assembleia de Deus Kairós congregação de {member?.congregacao || '____________'}.
-                </p>
-            </div>
+            {/* This container will hold all the content and manage spacing */}
+            <div className="absolute inset-0 flex flex-col items-center justify-between p-16">
             
-            {/* Footer */}
-            <footer className="absolute bottom-12 w-full px-16">
-                <div className="flex justify-around items-end">
-                    <div className="text-center w-2/5">
-                        <div className="border-b-2 border-black w-full" />
-                        <p className="text-sm mt-1">{presidentName}</p>
-                        <p className="text-xs italic">Pastor Presidente</p>
+                {/* Spacer at the top */}
+                <div />
+
+                {/* Middle text content */}
+                <div className="w-[80%] text-center text-[#444]">
+                    <p className="font-bold text-4xl my-4 text-[#63532f]" style={{ fontFamily: "'Brush Script MT', cursive" }}>
+                       {member?.nome || '________________'}
+                   </p>
+                   <p className="text-lg leading-relaxed mt-4">
+                       Crendo e obedecendo nas sagradas Escrituras e as doutrinas ensinadas por 
+                       Jesus Cristo, foi {genderTerm} sob profissão de fé em nome do Pai, do Filho e do Espírito Santo,
+                       no dia <span className="font-semibold">{formatDate(member?.dataBatismo, true)}</span> na Assembleia de Deus Kairós congregação de {member?.congregacao || '____________'}.
+                   </p>
+               </div>
+           
+                {/* Footer at the bottom */}
+                <footer className="w-full">
+                    <div className="flex justify-around items-end">
+                        <div className="text-center w-2/5">
+                            <div className="border-b-2 border-black w-full" />
+                            <p className="text-sm mt-1">{presidentName}</p>
+                            <p className="text-xs italic">Pastor Presidente</p>
+                        </div>
+                         <div className="text-center w-2/5">
+                            <div className="border-b-2 border-black w-full" />
+                            <p className="text-sm mt-1">{celebrantPastor || '________________'}</p>
+                            <p className="text-xs italic">Pastor Celebrante</p>
+                        </div>
                     </div>
-                     <div className="text-center w-2/5">
-                        <div className="border-b-2 border-black w-full" />
-                        <p className="text-sm mt-1">{celebrantPastor || '________________'}</p>
-                        <p className="text-xs italic">Pastor Celebrante</p>
-                    </div>
-                </div>
-            </footer>
+                </footer>
+            </div>
         </div>
     );
 });

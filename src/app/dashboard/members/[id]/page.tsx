@@ -487,13 +487,12 @@ export default function MemberProfilePage() {
     selectRandomVerse();
   }, [selectRandomVerse]);
 
-  const getAvatar = (avatarId?: string) => {
-    if (!avatarId || !member?.avatar) {
-      const placeholder = PlaceHolderImages.find((p) => p.id === 'member-avatar-1');
-      return placeholder;
+  const getAvatar = (avatarId?: string): { imageUrl: string } | undefined => {
+    if (!avatarId) {
+      return PlaceHolderImages.find((p) => p.id === 'member-avatar-1');
     }
-    if(member.avatar.startsWith('http')) {
-        return { imageUrl: member.avatar };
+    if(avatarId.startsWith('http')) {
+        return { imageUrl: avatarId };
     }
     return PlaceHolderImages.find((p) => p.id === avatarId);
   }
@@ -573,78 +572,30 @@ export default function MemberProfilePage() {
 
   const isLoading = isUserLoading || isCurrentUserLoading || memberLoading || isTemplateLoading || !permission.hasChecked || isChurchInfoLoading;
 
-  if (isLoading) {
-      return (
-          <div className="flex-1 h-screen flex items-center justify-center bg-secondary">
-              <Loader2 className="h-16 w-16 animate-spin" />
-          </div>
-      )
-  }
-
-  // After loading, if permission has been checked and is still false, deny access.
-  if (permission.hasChecked && !permission.canView) {
-       return (
-           <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-                <Card className="border-destructive">
-                    <CardHeader className="items-center text-center">
-                        <ShieldAlert className="h-12 w-12 text-destructive mb-4" />
-                        <CardTitle className="text-destructive">Acesso Negado</CardTitle>
-                    </CardHeader>
-                    <CardContent className='pt-4 text-center'>
-                        <p>Você não tem permissão para acessar esta página ou o membro não foi encontrado.</p>
-                        <Button onClick={() => router.back()} className="mt-6">Voltar</Button>
-                    </CardContent>
-                </Card>
-            </div>
-      );
-  }
-
-  // Handle case where member doc does not exist but user might have permission to view it (e.g. broken link)
-  if (!member) {
-     return notFound();
-  }
-  
-  if (!templateData) {
-        return (
-            <div className="flex-1 h-screen flex items-center justify-center bg-secondary">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Template Não Encontrado</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p>O template da carteirinha ainda não foi configurado.</p>
-                        <p>Por favor, vá para o <Link href="/dashboard/card-studio" className="underline text-primary">Estúdio de Carteirinha</Link> para criá-lo.</p>
-                    </CardContent>
-                </Card>
-            </div>
-        );
-    }
-
-  const avatar = getAvatar(member.avatar);
-
-  const getMemberDataForField = (fieldId: string) => {
-    // Note: 'member' is from the parent scope and is reactive via useDoc
+  // This function now explicitly depends on the member object
+  const getMemberDataForField = (currentMember: Member, fieldId: string) => {
     switch (fieldId) {
       case 'Valor Nome':
-        return `Nome: ${member.nome || ''}`;
+        return `Nome: ${currentMember.nome || ''}`;
       case 'Valor Nº Reg.':
-        return `Nº Reg.: ${member.recordNumber || ''}`;
+        return `Nº Reg.: ${currentMember.recordNumber || ''}`;
       case 'Valor CPF':
-        return `CPF: ${member.cpf || ''}`;
+        return `CPF: ${currentMember.cpf || ''}`;
       case 'Valor Data de Batismo':
-        return `Data de Batismo: ${formatDate(member.dataBatismo, 'dd/MM/yyyy') || ''}`;
+        return `Data de Batismo: ${formatDate(currentMember.dataBatismo, 'dd/MM/yyyy') || ''}`;
       case 'Valor Cargo':
-        return `Cargo: ${member.cargo || ''}`;
+        return `Cargo: ${currentMember.cargo || ''}`;
       case 'Membro Desde':
-        return `Membro desde: ${formatDate(member.dataMembro, 'dd/MM/yyyy') || ''}`;
+        return `Membro desde: ${formatDate(currentMember.dataMembro, 'dd/MM/yyyy') || ''}`;
       case 'Congregação':
-        return member.congregacao; // Return the value directly or undefined
+        return currentMember.congregacao;
       default:
-        return null; // Indicates no dynamic text for this field
+        return null;
     }
   };
 
-  const renderElement = (id: string, el: ElementStyle) => {
+  // This function now explicitly depends on the member object
+  const renderElement = (currentMember: Member, id: string, el: ElementStyle) => {
     if (!el) return null;
     
     const isImage = 'src' in el;
@@ -677,8 +628,9 @@ export default function MemberProfilePage() {
         style.height = el.size.height ? `${el.size.height}px` : 'auto';
 
         let src = el.src;
-        if (id === 'Foto do Membro' && avatar) {
-            src = avatar.imageUrl;
+        if (id === 'Foto do Membro') {
+            const memberAvatar = getAvatar(currentMember.avatar);
+            if (memberAvatar?.imageUrl) src = memberAvatar.imageUrl;
         }
 
         if (!src) {
@@ -706,7 +658,7 @@ export default function MemberProfilePage() {
         style.textAlign = el.textAlign;
         style.whiteSpace = 'pre-wrap';
 
-        const dynamicText = getMemberDataForField(id);
+        const dynamicText = getMemberDataForField(currentMember, id);
         
         if (id.includes('Título') || id.includes('Valor') || id.includes('Assinatura Pastor') || id.includes('Validade') || id.includes('Membro Desde')) {
             style.whiteSpace = 'nowrap';
@@ -716,10 +668,10 @@ export default function MemberProfilePage() {
     }
 
     return <div key={id}>{elementContent}</div>;
-};
+  };
 
-const StudioCard = ({ isFront }: { isFront: boolean }) => {
-    if (isTemplateLoading || !templateData || !member) {
+  const StudioCard = ({ isFront, currentMember }: { isFront: boolean, currentMember: Member }) => {
+    if (!templateData || !currentMember) {
         return <div className="flex items-center justify-center h-full"><Loader2 className="animate-spin" /></div>;
     }
 
@@ -746,10 +698,10 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
             style={backgroundStyle}
         >
             {isFront ? (
-                frontElements.map(id => renderElement(id, elements[id]))
+                frontElements.map(id => renderElement(currentMember, id, elements[id]))
             ) : (
                 <>
-                {backElements.map(id => renderElement(id, elements[id]))}
+                {backElements.map(id => renderElement(currentMember, id, elements[id]))}
                 {signatureLineElement && (
                      <div 
                         style={{
@@ -766,8 +718,57 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
             )}
         </Card>
     );
-};
+  };
 
+
+  if (isLoading) {
+      return (
+          <div className="flex-1 h-screen flex items-center justify-center bg-secondary">
+              <Loader2 className="h-16 w-16 animate-spin" />
+          </div>
+      )
+  }
+
+  // After loading, if permission has been checked and is still false, deny access.
+  if (permission.hasChecked && !permission.canView) {
+       return (
+           <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+                <Card className="border-destructive">
+                    <CardHeader className="items-center text-center">
+                        <ShieldAlert className="h-12 w-12 text-destructive mb-4" />
+                        <CardTitle className="text-destructive">Acesso Negado</CardTitle>
+                    </CardHeader>
+                    <CardContent className='pt-4 text-center'>
+                        <p>Você não tem permissão para acessar esta página ou o membro não foi encontrado.</p>
+                        <Button onClick={() => router.back()} className="mt-6">Voltar</Button>
+                    </CardContent>
+                </Card>
+            </div>
+      );
+  }
+
+  // Handle case where member doc does not exist but user might have permission to view it (e.g. broken link)
+  if (!member) {
+     return notFound();
+  }
+  
+  if (isTemplateLoading || !templateData) {
+        return (
+            <div className="flex-1 h-screen flex items-center justify-center bg-secondary">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Template Não Encontrado</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p>O template da carteirinha ainda não foi configurado.</p>
+                        <p>Por favor, vá para o <Link href="/dashboard/card-studio" className="underline text-primary">Estúdio de Carteirinha</Link> para criá-lo.</p>
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    }
+
+  const avatar = getAvatar(member.avatar);
 
   return (
     <div className="flex-1 space-y-4 bg-secondary">
@@ -885,10 +886,10 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
                     >
                         <div className={cn("flip-card w-full h-full", { 'flipped': isCardFlipped })}>
                             <div className="flip-card-front">
-                                <StudioCard isFront={true} />
+                                <StudioCard isFront={true} currentMember={member} />
                             </div>
                             <div className="flip-card-back">
-                                 <StudioCard isFront={false} />
+                                 <StudioCard isFront={false} currentMember={member} />
                             </div>
                         </div>
                     </div>

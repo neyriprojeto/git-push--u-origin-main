@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -43,7 +43,8 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
     member: Member | null,
     localPastor: string,
     bgImage?: string;
-}>(({ churchInfo, member, localPastor, bgImage }, ref) => {
+    logoImage?: string;
+}>(({ churchInfo, member, localPastor, bgImage, logoImage }, ref) => {
     
     const formatDate = (d: any, isLong = false): string => {
         if (!d) return '___/___/______';
@@ -69,10 +70,18 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
                 backgroundPosition: 'center',
             }}
         >
+            {logoImage && (
+                <img 
+                    src={logoImage} 
+                    alt="Logo" 
+                    className="absolute top-[20mm] left-[25mm] w-[40mm] h-[40mm] object-contain" 
+                    crossOrigin="anonymous"
+                />
+            )}
             <div className="absolute inset-0 flex flex-col items-center justify-between p-[15mm]">
                 <div />
                 <div className="w-[85%] text-center text-[#444]">
-                   <p className="font-bold my-4 text-[#63532f] uppercase" style={{ fontFamily: "'Brush Script MT', cursive", fontSize: '42pt' }}>
+                   <p className="font-bold my-4 text-black uppercase" style={{ fontFamily: "serif", fontSize: '28pt', letterSpacing: '0.1em' }}>
                        {member?.nome || '________________'}
                    </p>
                    <p className="leading-relaxed mt-4" style={{ fontSize: '12pt' }}>
@@ -109,12 +118,14 @@ export default function BaptismCertificatePage() {
     const { user: authUser, isUserLoading: isAuthUserLoading } = useUser();
     const documentRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const logoFileInputRef = useRef<HTMLInputElement>(null);
     
     // States
     const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
     const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [bgImage, setBgImage] = useState(PlaceHolderImages.find(p => p.id === 'baptism-certificate-bg')?.imageUrl || '');
+    const [logoImage, setLogoImage] = useState('');
 
 
     // Data fetching
@@ -132,15 +143,29 @@ export default function BaptismCertificatePage() {
     }, [firestore, userData]);
     const { data: members, isLoading: isLoadingMembers } = useCollection<Member>(membersQuery);
 
-    const onSelectFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    useEffect(() => {
+        if (churchInfo?.conventionLogo1Url) {
+            setLogoImage(churchInfo.conventionLogo1Url);
+        } else {
+            const defaultLogo = PlaceHolderImages.find(p => p.id === 'church-logo')?.imageUrl || '';
+            setLogoImage(defaultLogo);
+        }
+    }, [churchInfo]);
+
+    const onSelectFile = async (e: React.ChangeEvent<HTMLInputElement>, target: 'background' | 'logo') => {
         const file = e.target.files?.[0];
         if (!file) return;
 
         setIsUploading(true);
         try {
             const src = await uploadArquivo(file);
-            setBgImage(src);
-            toast({ title: 'Sucesso', description: 'Imagem de fundo atualizada.' });
+            if (target === 'background') {
+                setBgImage(src);
+                toast({ title: 'Sucesso', description: 'Imagem de fundo atualizada.' });
+            } else {
+                setLogoImage(src);
+                toast({ title: 'Sucesso', description: 'Logo atualizado.' });
+            }
         } catch (error: any) {
             toast({ variant: 'destructive', title: 'Erro de Upload', description: error.message });
         } finally {
@@ -227,7 +252,7 @@ export default function BaptismCertificatePage() {
             <Card>
                 <CardHeader>
                     <CardTitle>Configurar Certificado</CardTitle>
-                    <CardDescription>Selecione o membro e o fundo para gerar o documento.</CardDescription>
+                    <CardDescription>Selecione o membro e as imagens para gerar o documento.</CardDescription>
                 </CardHeader>
                 <CardContent className="grid md:grid-cols-2 gap-6">
                     <div className="space-y-2">
@@ -242,36 +267,54 @@ export default function BaptismCertificatePage() {
                         </Select>
                     </div>
                      <div className="space-y-2">
-                        <Label>Imagem de Fundo</Label>
-                        <Input
-                            type="file"
-                            accept="image/*"
-                            ref={fileInputRef}
-                            onChange={onSelectFile}
-                            className="hidden"
-                        />
-                        <Button
-                            variant="outline"
-                            onClick={() => fileInputRef.current?.click()}
-                            disabled={isUploading}
-                        >
-                            {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-                            {isUploading ? 'Enviando...' : 'Trocar Fundo'}
-                        </Button>
+                        <Label>Imagens do Certificado</Label>
+                        <div className='flex flex-wrap gap-2'>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                ref={fileInputRef}
+                                onChange={(e) => onSelectFile(e, 'background')}
+                                className="hidden"
+                            />
+                            <Button
+                                variant="outline"
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={isUploading}
+                            >
+                                {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                                Trocar Fundo
+                            </Button>
+                             <input
+                                type="file"
+                                accept="image/*"
+                                ref={logoFileInputRef}
+                                onChange={(e) => onSelectFile(e, 'logo')}
+                                className="hidden"
+                            />
+                            <Button
+                                variant="outline"
+                                onClick={() => logoFileInputRef.current?.click()}
+                                disabled={isUploading}
+                            >
+                                {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                                Trocar Logo
+                            </Button>
+                        </div>
                     </div>
                 </CardContent>
             </Card>
 
             <div className="p-4 bg-muted/50 rounded-lg w-full flex justify-center items-start overflow-x-auto">
                 <div 
-                    ref={documentRef}
                     className="origin-top transform scale-[0.3] sm:scale-[0.5] md:scale-[0.6] lg:scale-[0.8] xl:scale-[0.9] transition-transform duration-300"
                 >
                     <DocumentRenderer 
+                        ref={documentRef}
                         churchInfo={churchInfo}
                         member={selectedMember}
                         localPastor={localPastorName}
                         bgImage={bgImage}
+                        logoImage={logoImage}
                     />
                 </div>
             </div>

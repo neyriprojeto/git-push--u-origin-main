@@ -155,6 +155,7 @@ export default function PresentationCertificatePage() {
         
         initialElements['NomeCrianca'].text = childName || '________________';
         initialElements['Detalhes'].text = `${childDetails || 'Nascida no dia ___ de ________ de _____, filha(o) de ______________ e ______________'}\nfoi apresentada oficialmente ao SENHOR JESUS CRISTO,\nna Igreja Evangélica Assembleia de Deus Ministério Kairós.\nNo dia ${today}`;
+        initialElements['Versiculo'].text = "“E, cumprindo-se os dias da purificação dela, segundo a lei de Moisés, o levaram a Jerusalém, para o apresentarem ao Senhor.” (Lucas 2:22)";
         initialElements['AssinaturaPresidente'].src = churchInfo?.pastorSignatureUrl || '';
         initialElements['NomePresidente'].text = churchInfo?.pastorName || '____________________';
         initialElements['NomePastorDirigente'].text = localPastor || '____________________';
@@ -287,7 +288,10 @@ export default function PresentationCertificatePage() {
                                 </div>
                             </div>
                         </div>
-                         <Button onClick={handleSaveChanges} disabled={isSaving}>{isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />}Salvar Layout</Button>
+                         <Button onClick={handleSaveChanges} disabled={isSaving}>
+                            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />} 
+                            Salvar Alterações
+                        </Button>
                     </CardContent>
                 </Card>
             )}
@@ -306,3 +310,5 @@ export default function PresentationCertificatePage() {
         </div>
     );
 }
+
+    

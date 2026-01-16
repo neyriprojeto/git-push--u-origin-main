@@ -346,7 +346,7 @@ no dia ${baptismDate} na Assembleia de Deus Kairós congregação de ${selectedM
                         </div>
                          <Button onClick={handleSaveChanges} disabled={isSaving}>
                             {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />}
-                            Salvar Layout
+                            Salvar Alterações
                         </Button>
                     </CardContent>
                 </Card>
@@ -366,3 +366,5 @@ no dia ${baptismDate} na Assembleia de Deus Kairós congregação de ${selectedM
         </div>
     );
 }
+
+    

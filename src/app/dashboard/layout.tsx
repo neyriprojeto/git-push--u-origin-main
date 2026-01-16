@@ -16,7 +16,7 @@ import {
   SidebarGroupLabel,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { Home, LayoutGrid, CreditCard, Users, UserPlus, UserCog, Settings, Mail, Instagram, Youtube, Globe, Radio } from "lucide-react";
+import { Home, LayoutGrid, CreditCard, Users, UserPlus, UserCog, Settings, Mail, Instagram, Youtube, Globe, Radio, FileText } from "lucide-react";
 import { AppLogo } from "@/components/icons";
 import { useUser, useDoc, useFirestore, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
@@ -97,14 +97,24 @@ export default function DashboardLayout({
             
             {/* General menus visible to Admins and Pastors */}
             {canSeeAdminMenus && (
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip={{ children: "Mural" }}>
-                  <Link href="/dashboard/mural">
-                    <LayoutGrid />
-                    <span>Mural</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              <>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip={{ children: "Mural" }}>
+                    <Link href="/dashboard/mural">
+                      <LayoutGrid />
+                      <span>Mural</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                    <SidebarMenuButton asChild tooltip={{ children: "Documentos" }}>
+                    <Link href="/dashboard/documents">
+                        <FileText />
+                        <span>Documentos</span>
+                    </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+              </>
             )}
 
              {/* Messages menu visible to all authenticated users */}

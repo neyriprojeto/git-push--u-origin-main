@@ -162,5 +162,16 @@ service cloud.firestore {
       allow get, list: if true;
       allow create, update, delete: if isAdmin();
     }
+
+    /**
+     * @description
+     *   Manages document templates, like for letters of recommendation.
+     *   Readable by signed-in users, but only writable by an Admin.
+     * @path /documentTemplates/{templateId}
+     */
+    match /documentTemplates/{templateId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
   }
 }

@@ -203,6 +203,30 @@
         "name",
         "role"
       ]
+    },
+    "DocumentTemplate": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "DocumentTemplate",
+      "type": "object",
+      "description": "Represents a template for generating documents like letters of recommendation.",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the template (e.g., 'Carta de Recomendação')."
+        },
+        "backgroundUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL of the background image for the document."
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ]
     }
   },
   "auth": {
@@ -276,8 +300,24 @@
             }
           ]
         }
+      },
+      {
+        "path": "/documentTemplates/{templateId}",
+        "definition": {
+          "entityName": "DocumentTemplate",
+          "schema": {
+            "$ref": "#/backend/entities/DocumentTemplate"
+          },
+          "description": "Stores templates for official documents.",
+          "params": [
+            {
+              "name": "templateId",
+              "description": "The unique identifier for the template (e.g., 'recommendation-letter')."
+            }
+          ]
+        }
       }
     ],
-    "reasoning": "The Firestore structure is designed to manage church member data, group affiliations, and church information for the AdKairos Connect app. The structure prioritizes authorization independence and supports secure list operations. User authentication is handled via Firebase Auth, and roles are managed within the database using membership maps. This approach avoids hierarchical authorization dependencies and simplifies security rules.\n\nTo ensure **Authorization Independence**, the `groupIds` within each `Member` document, as well as the `memberIds` within each `Group` document are arrays of simple ID values, and do not require `get()` calls in the rules. For collaborative access, the structure uses a `members` map on the `/groups/{groupId}` document, containing user IDs as keys and their roles within the group as values. The `ChurchInfo` collection contains a single document with the church's banner image URL, pastor information, and pastoral message. This data is publicly accessible. The `leaders` collection stores a manually curated list of executive committee members for public display."
+    "reasoning": "The Firestore structure is designed to manage church member data, group affiliations, and church information for the AdKairos Connect app. The structure prioritizes authorization independence and supports secure list operations. User authentication is handled via Firebase Auth, and roles are managed within the database using membership maps. This approach avoids hierarchical authorization dependencies and simplifies security rules.\n\nTo ensure **Authorization Independence**, the `groupIds` within each `Member` document, as well as the `memberIds` within each `Group` document are arrays of simple ID values, and do not require `get()` calls in the rules. For collaborative access, the structure uses a `members` map on the `/groups/{groupId}` document, containing user IDs as keys and their roles within the group as values. The `ChurchInfo` collection contains a single document with the church's banner image URL, pastor information, and pastoral message. This data is publicly accessible. The `leaders` collection stores a manually curated list of executive committee members for public display. The `documentTemplates` collection will store background images and other metadata for generating official documents."
   }
 }

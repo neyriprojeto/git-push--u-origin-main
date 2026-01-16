@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
 import { addCongregacao, deleteCongregacao, updateCongregacao, addLeader, updateLeader, deleteLeader } from '@/firebase/firestore/mutations';
-import { Trash2, Save, Loader2, Upload, GripVertical, Plus } from 'lucide-react';
+import { Trash2, Save, Loader2, Upload, Plus } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { collection, doc, setDoc } from 'firebase/firestore';
 import { Textarea } from '@/components/ui/textarea';
@@ -87,6 +87,12 @@ export default function CongregationsPage() {
   const [newLeader, setNewLeader] = useState({ name: '', role: '', email: '' });
   const [isAddLeaderOpen, setIsAddLeaderOpen] = useState(false);
   const [savingLeaderId, setSavingLeaderId] = useState<string | null>(null);
+  
+  // Document Template State
+  const recommendationLetterRef = useMemoFirebase(() => (firestore ? doc(firestore, 'documentTemplates', 'recommendation-letter') : null), [firestore]);
+  const { data: recommendationLetterData, isLoading: loadingRecommendationLetter } = useDoc<{ backgroundUrl?: string }>(recommendationLetterRef);
+  const [recommendationLetterBg, setRecommendationLetterBg] = useState('');
+  const [isSavingTemplate, setIsSavingTemplate] = useState(false);
 
   // Image Cropping State
   const [crop, setCrop] = useState<Crop>();
@@ -111,6 +117,12 @@ export default function CongregationsPage() {
       setDisplayLeaders(sorted);
     }
   }, [leadersData]);
+
+  useEffect(() => {
+    if (recommendationLetterData) {
+        setRecommendationLetterBg(recommendationLetterData.backgroundUrl || '');
+    }
+  }, [recommendationLetterData]);
 
 
   const handleAddressChange = (id: string, value: string) => {
@@ -228,6 +240,19 @@ export default function CongregationsPage() {
     }
   }
 
+  const handleSaveRecommendationLetter = async () => {
+    if (!recommendationLetterRef) return;
+    setIsSavingTemplate(true);
+    try {
+        await setDoc(recommendationLetterRef, { backgroundUrl: recommendationLetterBg }, { merge: true });
+        toast({ title: 'Sucesso!', description: 'Template da carta de recomendação salvo.' });
+    } catch (error) {
+        toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível salvar o template.' });
+    } finally {
+        setIsSavingTemplate(false);
+    }
+  }
+
 
   const triggerFileInput = (id: string, cropAspect: number | undefined) => {
     setCroppingId(id);
@@ -291,6 +316,9 @@ export default function CongregationsPage() {
                 const leaderId = croppingId.substring('leader-'.length);
                 await updateLeader(firestore, leaderId, { imageUrl: src });
                 toast({ title: 'Sucesso!', description: 'Foto do líder atualizada.' });
+            } else if (croppingId === 'recommendation-letter-bg') {
+                setRecommendationLetterBg(src);
+                toast({ title: 'Sucesso', description: 'Imagem enviada! Clique em "Salvar Template" para aplicar.' });
             } else {
                  setChurchInfo(prev => ({...prev, [croppingId]: src }));
                  toast({ title: 'Sucesso', description: 'Imagem enviada! Clique em "Salvar Informações" para aplicar.' });
@@ -484,7 +512,37 @@ export default function CongregationsPage() {
                     ) : (
                         <p className="text-muted-foreground text-center p-4">Nenhum líder cadastrado.</p>
                     )}
+                </CardContent>
+            </Card>
 
+            <Card>
+                <CardHeader>
+                    <CardTitle>Templates de Documentos</CardTitle>
+                    <CardDescription>Faça o upload do fundo para os documentos oficiais.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {loadingRecommendationLetter ? (
+                        <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>
+                    ) : (
+                        <div className="space-y-2">
+                            <Label>Carta de Recomendação</Label>
+                            <div className="flex flex-wrap items-center gap-2">
+                                <Button variant="outline" onClick={() => triggerFileInput('recommendation-letter-bg', 210/297)}>
+                                    <Upload className="mr-2 h-4 w-4"/> Fundo da Carta
+                                </Button>
+                                <Button onClick={handleSaveRecommendationLetter} disabled={isSavingTemplate}>
+                                     {isSavingTemplate ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                                    Salvar Template
+                                </Button>
+                            </div>
+                            {recommendationLetterBg && (
+                                <div className="mt-4">
+                                    <Label className="text-xs">Fundo Atual</Label>
+                                    <Image src={recommendationLetterBg} alt="Fundo da Carta" width={150} height={212} className="rounded-md border object-contain"/>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </CardContent>
             </Card>
 

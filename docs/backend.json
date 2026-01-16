@@ -231,11 +231,6 @@
         "name": {
           "type": "string",
           "description": "Name of the template (e.g., 'Carta de Recomendação')."
-        },
-        "backgroundUrl": {
-          "type": "string",
-          "format": "uri",
-          "description": "URL of the background image for the document."
         }
       },
       "required": [

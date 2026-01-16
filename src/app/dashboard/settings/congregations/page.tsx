@@ -83,6 +83,7 @@ export default function CongregationsPage() {
   const { data: churchInfoData, isLoading: loadingChurchInfo } = useDoc<ChurchInfo>(churchInfoRef);
   const [churchInfo, setChurchInfo] = useState<ChurchInfo>({});
   const [isSavingChurchInfo, setIsSavingChurchInfo] = useState(false);
+  const [isSavingLetterConfig, setIsSavingLetterConfig] = useState(false);
 
   // Leader State
   const leadersCollection = useMemoFirebase(() => (firestore ? collection(firestore, 'leaders') : null), [firestore]);
@@ -91,12 +92,6 @@ export default function CongregationsPage() {
   const [newLeader, setNewLeader] = useState({ name: '', role: '', email: '' });
   const [isAddLeaderOpen, setIsAddLeaderOpen] = useState(false);
   const [savingLeaderId, setSavingLeaderId] = useState<string | null>(null);
-  
-  // Document Template State
-  const recommendationLetterRef = useMemoFirebase(() => (firestore ? doc(firestore, 'documentTemplates', 'recommendation-letter') : null), [firestore]);
-  const { data: recommendationLetterData, isLoading: loadingRecommendationLetter } = useDoc<{ backgroundUrl?: string }>(recommendationLetterRef);
-  const [recommendationLetterBg, setRecommendationLetterBg] = useState('');
-  const [isSavingLetterConfig, setIsSavingLetterConfig] = useState(false);
 
   // Image Cropping State
   const [crop, setCrop] = useState<Crop>();
@@ -121,13 +116,6 @@ export default function CongregationsPage() {
       setDisplayLeaders(sorted);
     }
   }, [leadersData]);
-
-  useEffect(() => {
-    if (recommendationLetterData) {
-        setRecommendationLetterBg(recommendationLetterData.backgroundUrl || '');
-    }
-  }, [recommendationLetterData]);
-
 
   const handleAddressChange = (id: string, value: string) => {
     setAddresses(prev => ({ ...prev, [id]: value }));
@@ -191,6 +179,23 @@ export default function CongregationsPage() {
     const { name, value } = e.target;
     setChurchInfo(prev => ({ ...prev, [name]: value }));
   }
+  
+  const handleSaveLetterConfig = async () => {
+    if (!churchInfoRef) return;
+    setIsSavingLetterConfig(true);
+    try {
+        // Save logos and signature to churchInfo
+        await setDoc(churchInfoRef, churchInfo, { merge: true });
+
+        toast({ title: 'Sucesso!', description: 'Configurações da carta atualizadas.' });
+    } catch (error) {
+        console.error("Error saving letter config:", error);
+        toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível salvar as configurações.' });
+    } finally {
+        setIsSavingLetterConfig(false);
+    }
+  };
+
 
   const handleLeaderFieldChange = (id: string, field: keyof Omit<Leader, 'id' | 'imageUrl'>, value: string | number) => {
     setDisplayLeaders(prev => prev.map(l => l.id === id ? { ...l, [field]: value } : l));
@@ -243,26 +248,6 @@ export default function CongregationsPage() {
       toast({ variant: 'destructive', title: 'Erro ao remover', description: 'Não foi possível remover o líder.' });
     }
   }
-
-  const handleSaveLetterConfig = async () => {
-    if (!churchInfoRef || !recommendationLetterRef) return;
-    setIsSavingLetterConfig(true);
-    try {
-        // Save logos and signature to churchInfo
-        await setDoc(churchInfoRef, churchInfo, { merge: true });
-        
-        // Save background to document template
-        await setDoc(recommendationLetterRef, { backgroundUrl: recommendationLetterBg }, { merge: true });
-
-        toast({ title: 'Sucesso!', description: 'Configurações da carta atualizadas.' });
-    } catch (error) {
-        console.error("Error saving letter config:", error);
-        toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível salvar as configurações.' });
-    } finally {
-        setIsSavingLetterConfig(false);
-    }
-};
-
 
   const triggerFileInput = (id: string, cropAspect: number | undefined) => {
     setCroppingId(id);
@@ -326,9 +311,6 @@ export default function CongregationsPage() {
                 const leaderId = croppingId.substring('leader-'.length);
                 await updateLeader(firestore, leaderId, { imageUrl: src });
                 toast({ title: 'Sucesso!', description: 'Foto do líder atualizada.' });
-            } else if (croppingId === 'recommendation-letter-bg') {
-                setRecommendationLetterBg(src);
-                toast({ title: 'Sucesso', description: 'Imagem enviada! Clique em "Salvar Configurações da Carta" para aplicar.' });
             } else {
                  setChurchInfo(prev => ({...prev, [croppingId]: src }));
                  toast({ title: 'Sucesso', description: 'Imagem enviada! Clique no botão de salvar correspondente para aplicar.' });
@@ -448,41 +430,38 @@ export default function CongregationsPage() {
             <Card>
                 <CardHeader>
                     <CardTitle>Configurações da Carta de Recomendação</CardTitle>
-                    <CardDescription>Configure os logos, assinatura e imagem de fundo para a carta de recomendação.</CardDescription>
+                    <CardDescription>Configure os logos e a assinatura para a carta de recomendação.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    {loadingChurchInfo || loadingRecommendationLetter ? (
+                    {loadingChurchInfo ? (
                          <div className="flex justify-center p-8"> <Loader2 className="h-8 w-8 animate-spin" /></div>
                     ) : (
                         <>
-                             <div className="space-y-2">
-                                <Label>Assinatura Digital do Presidente</Label>
-                                <div className='flex items-center gap-4'>
-                                    <Button variant="outline" onClick={() => triggerFileInput('pastorSignatureUrl', 4 / 1)}>
-                                        <Upload className="mr-2 h-4 w-4"/> Enviar Assinatura
-                                    </Button>
-                                    {churchInfo.pastorSignatureUrl && <div className="h-[40px] w-[120px] rounded-md border p-1 bg-slate-100"><Image src={churchInfo.pastorSignatureUrl} alt="Assinatura" width={120} height={40} className="object-contain"/></div>}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div className="space-y-2">
+                                    <Label>Assinatura Digital do Presidente</Label>
+                                    <div className='flex items-center gap-4'>
+                                        <Button variant="outline" onClick={() => triggerFileInput('pastorSignatureUrl', 1 / 1)}>
+                                            <Upload className="mr-2 h-4 w-4"/> Enviar Assinatura
+                                        </Button>
+                                        {churchInfo.pastorSignatureUrl && <div className="h-[60px] w-[60px] rounded-md border p-1 bg-slate-100"><Image src={churchInfo.pastorSignatureUrl} alt="Assinatura" width={60} height={60} className="object-contain"/></div>}
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Imagens do Documento</Label>
+                                    <div className='flex flex-wrap gap-2'>
+                                        <Button variant="outline" onClick={() => triggerFileInput('conventionLogo1Url', 3 / 4)}>
+                                            <Upload className="mr-2 h-4 w-4"/> Logo Esquerda (Cabeçalho)
+                                        </Button>
+                                        <Button variant="outline" onClick={() => triggerFileInput('conventionLogo2Url', 1 / 1)}>
+                                            <Upload className="mr-2 h-4 w-4"/> Logo Direita (Cabeçalho)
+                                        </Button>
+                                    </div>
                                 </div>
                             </div>
-                            <Separator />
-                            <div className="space-y-2">
-                                <Label>Imagens do Documento</Label>
-                                <div className='flex flex-wrap gap-2'>
-                                    <Button variant="outline" onClick={() => triggerFileInput('conventionLogo1Url', 3 / 4)}>
-                                        <Upload className="mr-2 h-4 w-4"/> Logo Esquerda (Cabeçalho)
-                                    </Button>
-                                    <Button variant="outline" onClick={() => triggerFileInput('conventionLogo2Url', 1 / 1)}>
-                                        <Upload className="mr-2 h-4 w-4"/> Logo Direita (Cabeçalho)
-                                    </Button>
-                                    <Button variant="outline" onClick={() => triggerFileInput('recommendation-letter-bg', 210/297)}>
-                                        <Upload className="mr-2 h-4 w-4"/> Fundo da Carta
-                                    </Button>
-                                </div>
-                                <div className='flex flex-wrap gap-4 mt-4'>
-                                    {churchInfo.conventionLogo1Url && <div><Label className='text-xs'>Logo Esquerda</Label><Image src={churchInfo.conventionLogo1Url} alt="Logo Convenção 1" width={100} height={100} className="rounded-md border object-contain p-2"/></div>}
-                                    {churchInfo.conventionLogo2Url && <div><Label className='text-xs'>Logo Direita</Label><Image src={churchInfo.conventionLogo2Url} alt="Logo Convenção 2" width={100} height={100} className="rounded-md border object-contain p-2"/></div>}
-                                    {recommendationLetterBg && <div><Label className="text-xs">Fundo Atual</Label><Image src={recommendationLetterBg} alt="Fundo da Carta" width={150} height={212} className="rounded-md border object-contain"/></div>}
-                                </div>
+                             <div className='flex flex-wrap gap-4 mt-4'>
+                                {churchInfo.conventionLogo1Url && <div><Label className='text-xs'>Logo Esquerda</Label><Image src={churchInfo.conventionLogo1Url} alt="Logo Convenção 1" width={100} height={100} className="rounded-md border object-contain p-2"/></div>}
+                                {churchInfo.conventionLogo2Url && <div><Label className='text-xs'>Logo Direita</Label><Image src={churchInfo.conventionLogo2Url} alt="Logo Convenção 2" width={100} height={100} className="rounded-md border object-contain p-2"/></div>}
                             </div>
                              <Button onClick={handleSaveLetterConfig} disabled={isSavingLetterConfig}>
                                 {isSavingLetterConfig ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : <Save className="h-4 w-4 mr-2" />}
@@ -686,5 +665,3 @@ export default function CongregationsPage() {
     </>
   );
 }
-
-    

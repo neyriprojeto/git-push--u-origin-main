@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { notFound, useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -12,6 +12,10 @@ import { doc } from 'firebase/firestore';
 import { Loader2, Printer, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+import { useToast } from '@/hooks/use-toast';
+
 
 // Define a interface para o objeto de membro para garantir a tipagem
 interface Member {
@@ -70,11 +74,16 @@ const DetailItem = ({ label, value }: { label: string; value?: string | null | D
 export default function MemberFilePage() {
     const params = useParams();
     const router = useRouter();
+    const { toast } = useToast();
     const memberId = params.id as string;
     const firestore = useFirestore();
     const { user: authUser, isUserLoading } = useUser();
     
     const [isFront, setIsFront] = useState(true);
+    const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+
+    const frontRef = useRef<HTMLDivElement>(null);
+    const backRef = useRef<HTMLDivElement>(null);
 
     const memberRef = useMemoFirebase(() => (firestore ? doc(firestore, 'users', memberId) : null), [firestore, memberId]);
     const { data: member, isLoading: memberLoading } = useDoc<Member>(memberRef);
@@ -104,6 +113,50 @@ export default function MemberFilePage() {
         }
 
     }, [currentUser, member, currentUserLoading, memberLoading]);
+    
+    const handleGeneratePdf = async () => {
+        const frontElement = frontRef.current;
+        const backElement = backRef.current;
+
+        if (!frontElement || !backElement || !member) {
+            toast({
+                variant: 'destructive',
+                title: 'Erro',
+                description: 'Não foi possível encontrar os elementos para gerar o PDF.',
+            });
+            return;
+        }
+
+        setIsGeneratingPdf(true);
+
+        try {
+            const pdf = new jsPDF('p', 'mm', 'a4'); // A4 portrait
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = pdf.internal.pageSize.getHeight();
+            
+            // --- Capture Front Page ---
+            const frontCanvas = await html2canvas(frontElement, { scale: 3, useCORS: true });
+            const frontImgData = frontCanvas.toDataURL('image/png');
+            pdf.addImage(frontImgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            
+            // --- Capture Back Page ---
+            pdf.addPage();
+            const backCanvas = await html2canvas(backElement, { scale: 3, useCORS: true });
+            const backImgData = backCanvas.toDataURL('image/png');
+            pdf.addImage(backImgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+
+            pdf.save(`ficha-membro-${member.nome.replace(/ /g, '_')}.pdf`);
+        } catch (error) {
+            console.error("Error generating PDF:", error);
+            toast({
+                variant: 'destructive',
+                title: 'Erro ao gerar PDF',
+                description: 'Houve um problema ao criar o arquivo PDF. Tente novamente.',
+            });
+        } finally {
+            setIsGeneratingPdf(false);
+        }
+    };
 
 
     const isLoading = memberLoading || churchInfoLoading || isUserLoading || currentUserLoading || hasAccess === null;
@@ -145,31 +198,31 @@ export default function MemberFilePage() {
     const fichaLogoUrl = churchInfo?.fichaLogoUrl || defaultFichaLogo?.imageUrl;
 
     const FichaFrente = () => (
-        <div className="bg-white shadow-lg p-[2vw] md:p-8 flex flex-col h-full">
+        <div className="bg-white shadow-lg p-8 flex flex-col h-full font-sans">
             {/* Header */}
-            <div className="flex justify-between items-start pb-[1vw] md:pb-4 border-b border-black gap-4">
-                <div className="w-[12vw] h-[16vw] md:w-24 md:h-32 border border-gray-300 flex items-center justify-center shrink-0 bg-gray-100">
+            <div className="flex justify-between items-start pb-4 border-b border-black gap-4">
+                <div className="w-24 h-32 border border-gray-300 flex items-center justify-center shrink-0 bg-gray-100">
                     {avatar ? (
                         <Image src={avatar.imageUrl} alt={member.nome} width={96} height={128} className="object-cover w-full h-full" />
                     ) : (
-                        <span className="text-[1.2vw] md:text-xs text-gray-400 text-center">Foto 3x4</span>
+                        <span className="text-xs text-gray-400 text-center">Foto 3x4</span>
                     )}
                 </div>
                 <div className="text-center flex-grow px-4">
-                    <h1 className="text-[2.5vw] md:text-3xl font-bold">Ficha de Membro</h1>
-                    <p className="text-[1.8vw] md:text-lg font-sans">Nº: {member.recordNumber}</p>
+                    <h1 className="text-3xl font-bold">Ficha de Membro</h1>
+                    <p className="text-lg">Nº: {member.recordNumber}</p>
                 </div>
-                <div className="w-[12vw] h-[12vw] md:w-24 md:h-24 flex items-center justify-center shrink-0">
+                <div className="w-24 h-24 flex items-center justify-center shrink-0">
                     {fichaLogoUrl ? (
                         <Image src={fichaLogoUrl} alt="Logo da Ficha" width={96} height={96} className="object-contain p-1" />
                     ) : (
-                        <span className="text-[1.2vw] md:text-xs text-gray-500">Logo</span>
+                        <span className="text-xs text-gray-500">Logo</span>
                     )}
                 </div>
             </div>
 
             {/* Content */}
-            <div className="flex-grow pt-[2vw] md:pt-6 grid grid-cols-12 gap-x-[2vw] md:gap-x-8 gap-y-[1vw] md:gap-y-4 font-sans text-[1.5vw] md:text-sm">
+            <div className="flex-grow pt-6 grid grid-cols-12 gap-x-8 gap-y-4 text-sm">
                 <div className="col-span-8"><DetailItem label="Nome" value={member.nome} /></div>
                 <div className="col-span-4"><DetailItem label="Data Nasc" value={member.dataNascimento} /></div>
 
@@ -197,15 +250,15 @@ export default function MemberFilePage() {
     );
 
     const FichaVerso = () => (
-         <div className="bg-white shadow-lg p-[2vw] md:p-8 flex flex-col h-full">
+         <div className="bg-white shadow-lg p-8 flex flex-col h-full font-sans">
            <div className="flex flex-col h-full">
                 {/* Header */}
-                <div className="text-center pb-[1vw] md:pb-4 border-b border-black">
-                    <h1 className="text-[2.5vw] md:text-3xl font-bold">Dados Eclesiásticos</h1>
+                <div className="text-center pb-4 border-b border-black">
+                    <h1 className="text-3xl font-bold">Dados Eclesiásticos</h1>
                 </div>
 
                 {/* Content */}
-                <div className="flex-grow pt-[2vw] md:pt-6 grid grid-cols-12 gap-x-[2vw] md:gap-x-8 gap-y-[1vw] md:gap-y-4 font-sans text-[1.5vw] md:text-sm">
+                <div className="flex-grow pt-6 grid grid-cols-12 gap-x-8 gap-y-4 text-sm">
                     <div className="col-span-6"><DetailItem label="Data de Membresia" value={member.dataMembro} /></div>
                     <div className="col-span-6"><DetailItem label="Data de Batismo" value={member.dataBatismo} /></div>
                     
@@ -213,9 +266,11 @@ export default function MemberFilePage() {
                     
                     <div className="col-span-12"><DetailItem label="Pastor Responsável" value={member.responsiblePastor} /></div>
                     
-                    <div className="col-span-12 pt-[2vw] md:pt-8">
-                        <h2 className="text-[2vw] md:text-lg font-bold text-center mb-4 font-serif">Observações</h2>
-                        <div className="space-y-[1.5vw] md:space-y-6 mt-4">
+                    <div className="col-span-12 pt-8">
+                        <h2 className="text-lg font-bold text-center mb-4">Observações</h2>
+                        <div className="space-y-6 mt-4">
+                            <div className="border-b border-dotted border-gray-400"></div>
+                            <div className="border-b border-dotted border-gray-400"></div>
                             <div className="border-b border-dotted border-gray-400"></div>
                             <div className="border-b border-dotted border-gray-400"></div>
                             <div className="border-b border-dotted border-gray-400"></div>
@@ -223,16 +278,15 @@ export default function MemberFilePage() {
                     </div>
                 </div>
 
-
                 {/* Footer com assinaturas */}
-                <div className="flex justify-around mt-auto pt-4 md:pt-8">
+                <div className="flex justify-around mt-auto pt-8">
                     <div className="text-center w-1/2">
                         <div className="border-t border-black mt-8 w-full max-w-xs mx-auto"></div>
-                        <p className="mt-2 text-[1.5vw] md:text-sm font-sans">Assinatura do Membro</p>
+                        <p className="mt-2 text-sm">Assinatura do Membro</p>
                     </div>
                     <div className="text-center w-1/2">
                         <div className="border-t border-black mt-8 w-full max-w-xs mx-auto"></div>
-                        <p className="mt-2 text-[1.5vw] md:text-sm font-sans">Assinatura do Pastor</p>
+                        <p className="mt-2 text-sm">Assinatura do Pastor</p>
                     </div>
                 </div>
            </div>
@@ -240,22 +294,20 @@ export default function MemberFilePage() {
     );
 
     return (
-        <div className="w-full min-h-screen bg-secondary p-4 flex flex-col justify-center items-center font-serif print:bg-white print:p-0">
-            <div className="w-full max-w-5xl mb-4 flex justify-end print:hidden">
-                <Button onClick={() => window.print()}>
-                    <Printer className="mr-2 h-4 w-4" />
-                    Gerar PDF
+        <div className="w-full min-h-screen bg-secondary p-4 flex flex-col justify-center items-center font-serif">
+            <div className="w-full max-w-4xl mb-4 flex justify-end">
+                <Button onClick={handleGeneratePdf} disabled={isGeneratingPdf}>
+                    {isGeneratingPdf ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Printer className="mr-2 h-4 w-4" />}
+                    {isGeneratingPdf ? 'Gerando...' : 'Gerar PDF'}
                 </Button>
             </div>
             
             {/* Flip container for screen view */}
             <div 
-                className="w-full max-w-5xl print:hidden cursor-pointer"
+                className="w-full max-w-3xl cursor-pointer"
                 onClick={() => setIsFront(!isFront)}
             >
-                <div 
-                    className="flip-card-container aspect-[1.414/1]"
-                >
+                 <div className="origin-top transform scale-[0.35] sm:scale-[0.5] md:scale-[0.7] lg:scale-[0.8] xl:scale-100 transition-transform duration-300 h-[1056px]">
                     <div className={cn("flip-card w-full h-full transition-transform duration-700", { 'flipped': !isFront })} style={{ transformStyle: 'preserve-3d' }}>
                         <div className="flip-card-front">
                             <FichaFrente />
@@ -267,18 +319,17 @@ export default function MemberFilePage() {
                 </div>
             </div>
             
-            <div className='flex gap-2 justify-center mt-4 print:hidden'>
+            <div className='flex gap-2 justify-center mt-4'>
                 <Button variant={isFront ? 'default' : 'outline'} onClick={() => setIsFront(true)}>Frente</Button>
                 <Button variant={!isFront ? 'default' : 'outline'} onClick={() => setIsFront(false)}>Verso</Button>
             </div>
 
-
-            {/* Hidden container for printing */}
-            <div className="hidden print:block">
-                <div className="print-page">
+            {/* Hidden container for PDF generation */}
+            <div className="absolute -left-[9999px] top-auto">
+                <div ref={frontRef} className="w-[210mm] h-[297mm] bg-white">
                    <FichaFrente />
                 </div>
-                <div className="print-page">
+                <div ref={backRef} className="w-[210mm] h-[297mm] bg-white">
                    <FichaVerso />
                 </div>
             </div>

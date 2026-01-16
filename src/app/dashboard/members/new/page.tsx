@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -36,6 +37,7 @@ const formSchema = z.object({
   cargo: z.string({ required_error: 'O cargo é obrigatório.' }),
   congregacao: z.string({ required_error: 'A congregação é obrigatória.' }),
   dataBatismo: z.string().optional(),
+  responsiblePastor: z.string().optional(),
 
   // Endereço
   cep: z.string().optional(),
@@ -80,6 +82,7 @@ export default function NewMemberPage() {
       bairro: '',
       cidade: '',
       estado: '',
+      responsiblePastor: '',
     },
   });
 
@@ -301,6 +304,19 @@ export default function NewMemberPage() {
                                     </FormItem>
                                 )}
                                 />
+                             <FormField
+                                control={form.control}
+                                name="responsiblePastor"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Pastor Responsável</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Nome do pastor responsável" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                         </div>
                     </div>
 

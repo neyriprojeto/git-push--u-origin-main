@@ -1,333 +1,150 @@
-
 {
   "entities": {
-    "Member": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Member",
+    "User": {
+      "title": "User",
       "type": "object",
-      "description": "Represents a member of the church.",
+      "description": "Represents a user account and their member profile.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Member entity."
-        },
-        "firstName": {
-          "type": "string",
-          "description": "The first name of the member."
-        },
-        "lastName": {
-          "type": "string",
-          "description": "The last name of the member."
-        },
-        "email": {
-          "type": "string",
-          "description": "The email address of the member.",
-          "format": "email"
-        },
-        "phoneNumber": {
-          "type": "string",
-          "description": "The phone number of the member."
-        },
-        "address": {
-          "type": "string",
-          "description": "The address of the member."
-        },
-        "dateOfBirth": {
-          "type": "string",
-          "description": "The date of birth of the member.",
-          "format": "date-time"
-        },
-        "membershipDate": {
-          "type": "string",
-          "description": "The date when the member joined the church.",
-          "format": "date-time"
-        },
-        "congregacao": {
-          "type": "string",
-          "description": "The congregation the member belongs to. Used for role-based access."
-        },
-        "groupIds": {
-          "type": "array",
-          "description": "References to Groups. (Relationship: Member N:N Group)",
-          "items": {
-            "type": "string"
-          }
-        }
+        "id": { "type": "string", "description": "The user's unique ID (matches Auth UID)." },
+        "nome": { "type": "string", "description": "Full name of the user." },
+        "email": { "type": "string", "format": "email", "description": "User's email address." },
+        "avatar": { "type": "string", "format": "uri", "description": "URL for the user's profile picture." },
+        "recordNumber": { "type": "string", "description": "Member record number." },
+        "status": { "type": "string", "enum": ["Ativo", "Inativo", "Pendente"], "description": "Membership status." },
+        "gender": { "type": "string", "enum": ["Masculino", "Feminino"], "description": "User's gender." },
+        "dataNascimento": { "type": "string", "format": "date-time", "description": "Date of birth." },
+        "dataBatismo": { "type": "string", "format": "date-time", "description": "Date of baptism." },
+        "dataMembro": { "type": "string", "format": "date-time", "description": "Date they became a member." },
+        "maritalStatus": { "type": "string", "enum": ["Solteiro(a)", "Casado(a)", "Divorciado(a)", "Viúvo(a)"], "description": "Marital status." },
+        "cpf": { "type": "string", "description": "User's CPF document number." },
+        "rg": { "type": "string", "description": "User's RG document number." },
+        "naturalness": { "type": "string", "description": "City/State of birth." },
+        "nationality": { "type": "string", "description": "User's nationality." },
+        "phone": { "type": "string", "description": "Primary phone number." },
+        "whatsapp": { "type": "string", "description": "WhatsApp number." },
+        "cargo": { "type": "string", "description": "Role within the church (e.g., Membro, Pastor)." },
+        "cep": { "type": "string", "description": "Postal code." },
+        "logradouro": { "type": "string", "description": "Street name." },
+        "numero": { "type": "string", "description": "Address number." },
+        "bairro": { "type": "string", "description": "Neighborhood." },
+        "cidade": { "type": "string", "description": "City." },
+        "estado": { "type": "string", "description": "State." },
+        "complemento": { "type": "string", "description": "Address complement." },
+        "congregacao": { "type": "string", "description": "Congregation the user belongs to." },
+        "responsiblePastor": { "type": "string", "description": "Name of the responsible pastor/leader." }
       },
-      "required": [
-        "id",
-        "firstName",
-        "lastName",
-        "email",
-        "phoneNumber",
-        "address",
-        "dateOfBirth",
-        "membershipDate",
-        "congregacao"
-      ]
+      "required": ["nome", "email", "cargo", "status"]
     },
     "Group": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Group",
       "type": "object",
       "description": "Represents a group within the church (e.g., youth group, choir).",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Group entity."
-        },
-        "name": {
-          "type": "string",
-          "description": "The name of the group."
-        },
-        "description": {
-          "type": "string",
-          "description": "A description of the group."
-        },
-        "memberIds": {
-          "type": "array",
-          "description": "References to Members. (Relationship: Group N:N Member)",
-          "items": {
-            "type": "string"
-          }
-        }
+        "id": { "type": "string", "description": "Unique identifier for the Group entity." },
+        "name": { "type": "string", "description": "The name of the group." },
+        "description": { "type": "string", "description": "A description of the group." }
       },
-      "required": [
-        "id",
-        "name",
-        "description"
-      ]
+      "required": ["id", "name"]
     },
     "ChurchInfo": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "ChurchInfo",
       "type": "object",
-      "description": "Represents the church's banner, pastor information, and pastoral message.",
+      "description": "Singleton document for general church information.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the ChurchInfo entity."
-        },
-        "bannerImageUrl": {
-          "type": "string",
-          "description": "URL of the church banner image.",
-          "format": "uri"
-        },
-        "pastorImageUrl": {
-          "type": "string",
-          "description": "URL of the pastor's image.",
-          "format": "uri"
-        },
-        "pastorName": {
-          "type": "string",
-          "description": "The name of the pastor."
-        },
-        "pastoralMessage": {
-          "type": "string",
-          "description": "The pastoral message from the pastor."
-        },
-        "aboutUs": {
-          "type": "string",
-          "description": "The 'about us' section for the mini site."
-        },
-        "instagramUrl": {
-          "type": "string",
-          "description": "URL for the church's Instagram profile.",
-          "format": "uri"
-        },
-        "youtubeUrl": {
-          "type": "string",
-          "description": "URL for the church's YouTube channel.",
-          "format": "uri"
-        },
-        "websiteUrl": {
-          "type": "string",
-          "description": "URL for the church's external website.",
-          "format": "uri"
-        },
-        "radioUrl": {
-          "type": "string",
-          "description": "URL for the embedded radio player.",
-          "format": "uri"
-        },
-        "radioPageUrl": {
-          "type": "string",
-          "description": "URL for the radio page to be opened in a new tab.",
-          "format": "uri"
-        },
-        "pastorSignatureUrl": {
-          "type": "string",
-          "description": "URL of the pastor's signature image.",
-          "format": "uri"
-        },
-        "conventionLogo1Url": {
-          "type": "string",
-          "description": "URL for the first convention logo.",
-          "format": "uri"
-        },
-        "conventionLogo2Url": {
-          "type": "string",
-          "description": "URL for the second convention logo.",
-          "format": "uri"
-        }
-      },
-      "required": [
-        "id",
-        "bannerImageUrl",
-        "pastorImageUrl",
-        "pastorName",
-        "pastoralMessage",
-        "aboutUs"
-      ]
+        "bannerImageUrl": { "type": "string", "format": "uri" },
+        "pastorImageUrl": { "type": "string", "format": "uri" },
+        "pastorName": { "type": "string" },
+        "pastoralMessage": { "type": "string" },
+        "aboutUs": { "type": "string" },
+        "instagramUrl": { "type": "string", "format": "uri" },
+        "youtubeUrl": { "type": "string", "format": "uri" },
+        "websiteUrl": { "type": "string", "format": "uri" },
+        "radioUrl": { "type": "string", "format": "uri" },
+        "radioPageUrl": { "type": "string", "format": "uri" },
+        "pastorSignatureUrl": { "type": "string", "format": "uri" },
+        "conventionLogo1Url": { "type": "string", "format": "uri" },
+        "conventionLogo2Url": { "type": "string", "format": "uri" },
+        "fichaLogoUrl": { "type": "string", "format": "uri" }
+      }
     },
     "Leader": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Leader",
       "type": "object",
-      "description": "Represents a member of the executive committee displayed on the homepage.",
+      "description": "Represents a member of the executive committee for the homepage.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Leader."
-        },
-        "name": {
-          "type": "string",
-          "description": "The name of the leader."
-        },
-        "role": {
-          "type": "string",
-          "description": "The role or function of the leader (e.g., '1º Vice-presidente')."
-        },
-        "imageUrl": {
-          "type": "string",
-          "description": "URL of the leader's photo.",
-          "format": "uri"
-        },
-        "email": {
-          "type": "string",
-          "description": "The email address of the leader.",
-          "format": "email"
-        },
-        "order": {
-          "type": "number",
-          "description": "A number used for ordering the leaders in the list."
-        }
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "role": { "type": "string" },
+        "imageUrl": { "type": "string", "format": "uri" },
+        "email": { "type": "string", "format": "email" },
+        "order": { "type": "number" }
       },
-      "required": [
-        "id",
-        "name",
-        "role"
-      ]
+      "required": ["name", "role"]
     },
     "DocumentTemplate": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "DocumentTemplate",
       "type": "object",
-      "description": "Represents a template for generating documents like letters of recommendation.",
+      "description": "Represents a template for generating documents.",
       "properties": {
-        "id": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string",
-          "description": "Name of the template (e.g., 'Carta de Recomendação')."
-        }
+        "id": { "type": "string" },
+        "name": { "type": "string" }
       },
-      "required": [
-        "id",
-        "name"
-      ]
+      "required": ["id", "name"]
+    },
+    "Congregacao": {
+        "title": "Congregacao",
+        "type": "object",
+        "description": "Represents a single church congregation.",
+        "properties": {
+            "id": { "type": "string" },
+            "nome": { "type": "string" },
+            "endereco": { "type": "string" }
+        },
+        "required": ["nome"]
+    },
+    "CardTemplate": {
+        "title": "CardTemplate",
+        "type": "object",
+        "description": "Stores the template for member ID cards.",
+        "properties": {
+            "id": { "type": "string" },
+            "elements": { "type": "object" },
+            "cardStyles": { "type": "object" },
+            "textColors": { "type": "object" }
+        }
     }
   },
   "auth": {
-    "providers": [
-      "password",
-      "anonymous"
-    ]
+    "providers": ["password"]
   },
   "firestore": {
-    "structure": [
-      {
-        "path": "/members/{memberId}",
-        "definition": {
-          "entityName": "Member",
-          "schema": {
-            "$ref": "#/backend/entities/Member"
-          },
-          "description": "Stores member information. Each document represents a church member.",
-          "params": [
-            {
-              "name": "memberId",
-              "description": "The unique identifier for the member."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/groups/{groupId}",
-        "definition": {
-          "entityName": "Group",
-          "schema": {
-            "$ref": "#/backend/entities/Group"
-          },
-          "description": "Stores group information. Each document represents a group within the church.",
-          "params": [
-            {
-              "name": "groupId",
-              "description": "The unique identifier for the group."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/churchInfo/{churchInfoId}",
-        "definition": {
-          "entityName": "ChurchInfo",
-          "schema": {
-            "$ref": "#/backend/entities/ChurchInfo"
-          },
-          "description": "Stores church information, including banner image URL, pastor information, and pastoral message.  There should only ever be ONE document in this collection.",
-          "params": [
-            {
-              "name": "churchInfoId",
-              "description": "The unique identifier for the church information (e.g., 'main')."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/leaders/{leaderId}",
-        "definition": {
-          "entityName": "Leader",
-          "schema": {
-            "$ref": "#/backend/entities/Leader"
-          },
-          "description": "Stores executive committee leader information for public display on the homepage.",
-          "params": [
-            {
-              "name": "leaderId",
-              "description": "The unique identifier for the leader."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/documentTemplates/{templateId}",
-        "definition": {
-          "entityName": "DocumentTemplate",
-          "schema": {
-            "$ref": "#/backend/entities/DocumentTemplate"
-          },
-          "description": "Stores templates for official documents.",
-          "params": [
-            {
-              "name": "templateId",
-              "description": "The unique identifier for the template (e.g., 'recommendation-letter')."
-            }
-          ]
-        }
-      }
-    ],
-    "reasoning": "The Firestore structure is designed to manage church member data, group affiliations, and church information for the AdKairos Connect app. The structure prioritizes authorization independence and supports secure list operations. User authentication is handled via Firebase Auth, and roles are managed within the database using membership maps. This approach avoids hierarchical authorization dependencies and simplifies security rules.\n\nTo ensure **Authorization Independence**, the `groupIds` within each `Member` document, as well as the `memberIds` within each `Group` document are arrays of simple ID values, and do not require `get()` calls in the rules. For collaborative access, the structure uses a `members` map on the `/groups/{groupId}` document, containing user IDs as keys and their roles within the group as values. The `ChurchInfo` collection contains a single document with the church's banner image URL, pastor information, and pastoral message. This data is publicly accessible. The `leaders` collection stores a manually curated list of executive committee members for public display. The `documentTemplates` collection will store background images and other metadata for generating official documents."
+    "/users/{userId}": {
+        "schema": { "$ref": "#/entities/User" },
+        "description": "Stores all user and member data. The document ID is the Firebase Auth UID."
+    },
+    "/groups/{groupId}": {
+        "schema": { "$ref": "#/entities/Group" },
+        "description": "Stores group information. This collection is currently locked down in security rules."
+    },
+    "/churchInfo/{churchInfoId}": {
+        "schema": { "$ref": "#/entities/ChurchInfo" },
+        "description": "Stores general, public-facing church information. Should only contain one document (e.g., with ID 'main')."
+    },
+    "/leaders/{leaderId}": {
+        "schema": { "$ref": "#/entities/Leader" },
+        "description": "Stores executive committee leaders for public display."
+    },
+    "/documentTemplates/{templateId}": {
+        "schema": { "$ref": "#/entities/DocumentTemplate" },
+        "description": "Stores templates for documents."
+    },
+    "/congregacoes/{congregacaoId}": {
+        "schema": { "$ref": "#/entities/Congregacao" },
+        "description": "Stores the list of congregations."
+    },
+    "/cardTemplates/{templateId}": {
+        "schema": { "$ref": "#/entities/CardTemplate" },
+        "description": "Stores the template for member ID cards. Should only contain one document (e.g., with ID 'default')."
+    }
   }
 }

@@ -106,6 +106,7 @@ interface Member {
     estado?: string;
     complemento?: string;
     congregacao?: string;
+    responsiblePastor?: string;
 }
 
 interface ChurchInfo {
@@ -148,6 +149,7 @@ const formSchema = z.object({
   dataBatismo: z.string().optional(),
   dataMembro: z.string().optional(),
   recordNumber: z.string().optional(),
+  responsiblePastor: z.string().optional(),
 });
 
 type MemberFormData = z.infer<typeof formSchema>;
@@ -266,7 +268,7 @@ export default function MemberProfilePage() {
       avatar: '', dataNascimento: '', rg: '', cpf: '', gender: 'Masculino',
       maritalStatus: 'Solteiro(a)', naturalness: '', nationality: '',
       cargo: '', status: 'Pendente', congregacao: '', dataBatismo: '',
-      dataMembro: '', recordNumber: ''
+      dataMembro: '', recordNumber: '', responsiblePastor: ''
     },
   });
 
@@ -326,6 +328,7 @@ export default function MemberProfilePage() {
         dataBatismo: formatDate(member.dataBatismo) || '',
         dataMembro: formatDate(member.dataMembro) || '',
         recordNumber: member.recordNumber || '',
+        responsiblePastor: member.responsiblePastor || '',
       });
     }
   }, [member, form]);
@@ -876,6 +879,17 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
                                             )} />
                                              <FormField control={form.control} name="dataMembro" render={({ field }) => (<FormItem><FormLabel>Data de Membresia</FormLabel><FormControl><Input type="date" {...field} disabled={!permission.canManage} /></FormControl><FormMessage /></FormItem>)} />
                                              <FormField control={form.control} name="dataBatismo" render={({ field }) => (<FormItem><FormLabel>Data de Batismo</FormLabel><FormControl><Input type="date" {...field} disabled={!permission.canManage} /></FormControl><FormMessage /></FormItem>)} />
+                                             <FormField
+                                                control={form.control}
+                                                name="responsiblePastor"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Pastor Responsável</FormLabel>
+                                                        <FormControl><Input {...field} placeholder="Nome do pastor" disabled={!permission.canManage} /></FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
                                         </div>
                                     </div>
                                 )}

@@ -11,15 +11,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { AppLogo } from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
-import { User, CreditCard, FileText, MessageSquare, BookOpen, RefreshCw, Loader2, LayoutGrid, Save, Upload, ShieldAlert, Trash2, Instagram, Youtube, Globe, Radio } from "lucide-react";
+import { User, CreditCard, FileText, MessageSquare, BookOpen, RefreshCw, Loader2, LayoutGrid, Save, Upload, ShieldAlert, Trash2 } from "lucide-react";
 import { bibleVerses } from "@/data/bible-verses";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
@@ -34,7 +32,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { useToast } from "@/hooks/use-toast";
 import { updateMember, addMessage } from "@/firebase/firestore/mutations";
 import { deleteUser } from '@/ai/flows/delete-user-flow';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Slider } from '@/components/ui/slider';
 import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
@@ -267,6 +265,7 @@ export default function MemberProfilePage() {
   const [isCardFlipped, setIsCardFlipped] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const [activeView, setActiveView] = useState('perfil');
   
   const [permission, setPermission] = useState<{ canView: boolean, canEdit: boolean, canManage: boolean, hasChecked: boolean }>({
     canView: false,
@@ -824,6 +823,491 @@ export default function MemberProfilePage() {
 
   const avatar = getAvatar(member.avatar);
 
+  const renderActiveView = () => {
+    switch (activeView) {
+      case 'mural':
+        return (
+          <Card className="mt-4">
+            <CardHeader>
+              <CardTitle>Mural de Avisos</CardTitle>
+              <CardDescription>Fique por dentro das últimas notícias da comunidade.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {isLoadingPosts ? (
+                <div className="flex justify-center items-center py-10">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : posts && posts.length > 0 ? (
+                  posts.map((post) => {
+                      const avatarMural = getPostAvatar(post);
+                      return (
+                          <Card key={post.id} className="shadow-none border">
+                          <CardHeader>
+                              <div className="flex items-start gap-4">
+                              <Avatar className="h-10 w-10 border">
+                                  {avatarMural && <AvatarImage src={avatarMural.imageUrl} alt={post.authorName} />}
+                                  <AvatarFallback>{post.authorName.charAt(0)}</AvatarFallback>
+                              </Avatar>
+                              <div className="grid gap-0.5 flex-1">
+                                  <CardTitle className="text-lg">{post.title}</CardTitle>
+                                  <CardDescription>
+                                  Por {post.authorName} em {post.createdAt?.toDate().toLocaleDateString('pt-BR')}
+                                  </CardDescription>
+                              </div>
+                              </div>
+                          </CardHeader>
+                          <CardContent>
+                              {post.imageUrl && (
+                                <div className="mb-4 relative aspect-video w-full rounded-md overflow-hidden">
+                                  <Image src={post.imageUrl} alt={post.title} layout="fill" objectFit="cover" />
+                                </div>
+                              )}
+                              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{post.content}</p>
+                          </CardContent>
+                          </Card>
+                      )
+                  })
+              ) : (
+                <div className="p-8 text-center text-muted-foreground border-dashed border-2 rounded-md">
+                  <p>Nenhuma postagem no mural ainda.</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        );
+      case 'carteirinha':
+        return (
+          <Card className="mt-4">
+            <CardHeader>
+              <CardTitle>Minha Carteirinha Digital</CardTitle>
+              <CardDescription>Clique na carteirinha para visualizar o verso.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex justify-center items-center">
+              <div 
+                  className="max-w-lg mx-auto flip-card-container cursor-pointer aspect-[85.6/54]"
+                  onClick={() => setIsCardFlipped(!isCardFlipped)}
+              >
+                  <div className={cn("flip-card w-full h-full", { 'flipped': isCardFlipped })}>
+                      <div className="flip-card-front">
+                          <StudioCard isFront={true} currentMember={member} />
+                      </div>
+                      <div className="flip-card-back">
+                            <StudioCard isFront={false} currentMember={member} />
+                      </div>
+                  </div>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      case 'contato':
+        return (
+          <Card className="mt-4">
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <MessageSquare className="h-5 w-5"/>
+                    Fale com a Administração
+                </CardTitle>
+                <CardDescription>Envie sua mensagem, dúvida, ou anexe um documento.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Form {...messageForm}>
+                  <form onSubmit={messageForm.handleSubmit(onMessageSubmit)} className="space-y-4">
+                      <FormField
+                          control={messageForm.control}
+                          name="destinatario"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Enviar para</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value} disabled={loadingCongregacoes}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder={loadingCongregacoes ? "Carregando..." : "Selecione o destinatário"} />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                      <SelectItem value="Administração Geral">Administração Geral</SelectItem>
+                                      {congregacoes?.map(c => <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>)}
+                                  </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      <FormField
+                          control={messageForm.control}
+                          name="assunto"
+                          render={({ field }) => (
+                              <FormItem>
+                                  <FormLabel>Assunto</FormLabel>
+                                  <FormControl>
+                                      <Input placeholder="Sobre o que você quer falar?" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                              </FormItem>
+                          )}
+                      />
+                      <FormField
+                          control={messageForm.control}
+                          name="mensagem"
+                          render={({ field }) => (
+                              <FormItem>
+                                  <FormLabel>Mensagem</FormLabel>
+                                  <FormControl>
+                                      <Textarea placeholder="Digite sua mensagem aqui..." {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                              </FormItem>
+                          )}
+                      />
+                      <Button type="submit" disabled={isSendingMessage}>
+                        {isSendingMessage ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
+                        {isSendingMessage ? 'Enviando...' : 'Enviar Mensagem'}
+                      </Button>
+                  </form>
+                </Form>
+            </CardContent>
+          </Card>
+        );
+      case 'perfil':
+      default:
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Meus Dados</CardTitle>
+                    <CardDescription>Atualize suas informações pessoais e de contato.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                     <Form {...memberForm}>
+                        <form onSubmit={memberForm.handleSubmit(onMemberSubmit)} className="space-y-8">
+                            
+                            {/* --- Foto e Nome --- */}
+                            <div className="space-y-4">
+                                 <div className="flex items-center gap-4">
+                                    <Avatar className="h-20 w-20 border">
+                                        {avatar && <AvatarImage src={avatar.imageUrl} alt={member.nome} />}
+                                        <AvatarFallback className="text-3xl">
+                                            {member.nome.charAt(0)}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <div className="grid gap-2">
+                                        <Label>Foto de Perfil</Label>
+                                        <Input id="avatar-upload" type="file" accept="image/*" className="hidden" onChange={onSelectFile} disabled={!permission.canEdit} />
+                                        <Button type="button" variant="outline" onClick={() => document.getElementById('avatar-upload')?.click()} disabled={!permission.canEdit}>
+                                            <Upload className="mr-2 h-4 w-4" />
+                                            Alterar Foto
+                                        </Button>
+                                    </div>
+                                </div>
+                                <FormField
+                                    control={memberForm.control}
+                                    name="nome"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Nome Completo</FormLabel>
+                                            <FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                            
+                            {/* --- Dados de Acesso --- */}
+                            <div className="space-y-4">
+                                <h3 className="font-medium text-lg border-b pb-2">Dados de Acesso</h3>
+                                <FormField
+                                    control={memberForm.control}
+                                    name="email"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Email</FormLabel>
+                                            <FormControl><Input {...field} disabled /></FormControl>
+                                            <FormDescription>O e-mail não pode ser alterado.</FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+
+                            {/* --- Dados Eclesiásticos --- */}
+                            {permission.canManage && (
+                                <div className="space-y-4">
+                                    <h3 className="font-medium text-lg border-b pb-2">Dados Eclesiásticos</h3>
+                                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                         <FormField control={memberForm.control} name="recordNumber" render={({ field }) => (<FormItem><FormLabel>Nº da Ficha</FormLabel><FormControl><Input {...field} disabled={!permission.canManage} /></FormControl><FormMessage /></FormItem>)} />
+                                        <FormField control={memberForm.control} name="cargo" render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Cargo Ministerial</FormLabel>
+                                                <Select onValueChange={field.onChange} value={field.value} disabled={!permission.canManage}>
+                                                    <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="Membro">Membro</SelectItem>
+                                                        <SelectItem value="Cooperador(a)">Cooperador(a)</SelectItem>
+                                                        <SelectItem value="Diácono(a)">Diácono(a)</SelectItem>
+                                                        <SelectItem value="Presbítero">Presbítero</SelectItem>
+                                                        <SelectItem value="Evangelista">Evangelista</SelectItem>
+                                                        <SelectItem value="Missionário(a)">Missionário(a)</SelectItem>
+                                                        <SelectItem value="Pastor(a)">Pastor(a)</SelectItem>
+                                                        <SelectItem value="Pastor/dirigente">Pastor/dirigente</SelectItem>
+                                                        <SelectItem value="Administrador">Administrador</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )} />
+                                        <FormField control={memberForm.control} name="status" render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Status</FormLabel>
+                                                <Select onValueChange={field.onChange} value={field.value} disabled={!permission.canManage}>
+                                                    <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="Ativo">Ativo</SelectItem>
+                                                        <SelectItem value="Inativo">Inativo</SelectItem>
+                                                        <SelectItem value="Pendente">Pendente</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )} />
+                                        <FormField control={memberForm.control} name="congregacao" render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Congregação</FormLabel>
+                                                <Select onValueChange={field.onChange} value={field.value} disabled={loadingCongregacoes || !permission.canManage}>
+                                                    <FormControl><SelectTrigger><SelectValue placeholder={loadingCongregacoes ? "Carregando..." : "Selecione a congregação"} /></SelectTrigger></FormControl>
+                                                    <SelectContent>
+                                                        {congregacoes?.map((c) => <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>)}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )} />
+                                         <FormField control={memberForm.control} name="dataMembro" render={({ field }) => (<FormItem><FormLabel>Data de Membresia</FormLabel><FormControl><Input type="date" {...field} disabled={!permission.canManage} /></FormControl><FormMessage /></FormItem>)} />
+                                         <FormField control={memberForm.control} name="dataBatismo" render={({ field }) => (<FormItem><FormLabel>Data de Batismo</FormLabel><FormControl><Input type="date" {...field} disabled={!permission.canManage} /></FormControl><FormMessage /></FormItem>)} />
+                                         <FormField
+                                            control={memberForm.control}
+                                            name="responsiblePastor"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Pastor Responsável</FormLabel>
+                                                    <FormControl><Input {...field} placeholder="Nome do pastor" disabled={!permission.canManage} /></FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {/* --- Dados Pessoais --- */}
+                            <div className="space-y-4">
+                                 <h3 className="font-medium text-lg border-b pb-2">Dados Pessoais</h3>
+                                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <FormField control={memberForm.control} name="dataNascimento" render={({ field }) => (<FormItem><FormLabel>Data de Nascimento</FormLabel><FormControl><Input type="date" {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                    <FormField control={memberForm.control} name="cpf" render={({ field }) => (<FormItem><FormLabel>CPF</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                    <FormField control={memberForm.control} name="rg" render={({ field }) => (<FormItem><FormLabel>RG</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                    <FormField control={memberForm.control} name="gender" render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Gênero</FormLabel>
+                                            <Select onValueChange={field.onChange} value={field.value} disabled={!permission.canEdit}>
+                                                <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="Masculino">Masculino</SelectItem>
+                                                    <SelectItem value="Feminino">Feminino</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )} />
+                                     <FormField control={memberForm.control} name="maritalStatus" render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Estado Civil</FormLabel>
+                                            <Select onValueChange={field.onChange} value={field.value} disabled={!permission.canEdit}>
+                                                <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="Solteiro(a)">Solteiro(a)</SelectItem>
+                                                    <SelectItem value="Casado(a)">Casado(a)</SelectItem>
+                                                    <SelectItem value="Divorciado(a)">Divorciado(a)</SelectItem>
+                                                    <SelectItem value="Viúvo(a)">Viúvo(a)</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )} />
+                                </div>
+                                <div className="grid md:grid-cols-2 gap-4 items-start">
+                                    <FormItem>
+                                        <FormLabel>Estado de Nascimento</FormLabel>
+                                        <Select
+                                            value={selectedState}
+                                            onValueChange={(value) => {
+                                                setSelectedState(value);
+                                                setSelectedCity(''); // Reset city
+                                                memberForm.setValue('naturalness', ''); // Reset form value
+                                            }}
+                                            disabled={isLoadingStates || !permission.canEdit}
+                                        >
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder={isLoadingStates ? "Carregando..." : "Selecione o estado"} />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {brazilianStates.map((state) => (
+                                                    <SelectItem key={state.sigla} value={state.sigla}>
+                                                        {state.nome}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </FormItem>
+                                    <FormField
+                                        control={memberForm.control}
+                                        name="naturalness"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Cidade de Nascimento</FormLabel>
+                                                <Select
+                                                    value={selectedCity}
+                                                    onValueChange={(cityValue) => {
+                                                        setSelectedCity(cityValue);
+                                                        field.onChange(`${cityValue}/${selectedState}`);
+                                                    }}
+                                                    disabled={isLoadingCities || !selectedState || !permission.canEdit}
+                                                >
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder={
+                                                                !selectedState ? "Selecione um estado" :
+                                                                isLoadingCities ? "Carregando..." :
+                                                                "Selecione a cidade"
+                                                            } />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {cities.map((city) => (
+                                                            <SelectItem key={city.nome} value={city.nome}>
+                                                                {city.nome}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                     <FormField control={memberForm.control} name="nationality" render={({ field }) => (<FormItem><FormLabel>Nacionalidade</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                </div>
+                            </div>
+
+                            {/* --- Contato --- */}
+                            <div className="space-y-4">
+                                 <h3 className="font-medium text-lg border-b pb-2">Contato</h3>
+                                 <div className="grid md:grid-cols-2 gap-4">
+                                     <FormField control={memberForm.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Telefone</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                     <FormField control={memberForm.control} name="whatsapp" render={({ field }) => (<FormItem><FormLabel>WhatsApp</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                </div>
+                            </div>
+
+                            {/* --- Endereço --- */}
+                            <div className="space-y-4">
+                                <h3 className="font-medium text-lg border-b pb-2">Endereço</h3>
+                                <div className="grid md:grid-cols-3 gap-4">
+                                    <FormField name="cep" control={memberForm.control} render={({ field }) => (<FormItem><FormLabel>CEP</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                    <FormField name="logradouro" control={memberForm.control} render={({ field }) => (<FormItem className="md:col-span-2"><FormLabel>Logradouro</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                </div>
+                                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <FormField name="numero" control={memberForm.control} render={({ field }) => (<FormItem><FormLabel>Número</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                    <FormField name="complemento" control={memberForm.control} render={({ field }) => (<FormItem><FormLabel>Complemento</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                    <FormField name="bairro" control={memberForm.control} render={({ field }) => (<FormItem><FormLabel>Bairro</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                     <FormField
+                                        control={memberForm.control}
+                                        name="estado"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Estado</FormLabel>
+                                                <Select
+                                                    onValueChange={(value) => {
+                                                        field.onChange(value);
+                                                        setAddressState(value);
+                                                        memberForm.setValue('cidade', '');
+                                                    }}
+                                                    value={field.value}
+                                                    disabled={isLoadingStates || !permission.canEdit}
+                                                >
+                                                    <FormControl><SelectTrigger><SelectValue placeholder={isLoadingStates ? "Carregando..." : "Selecione o estado"} /></SelectTrigger></FormControl>
+                                                    <SelectContent>
+                                                        {brazilianStates.map((state) => (
+                                                            <SelectItem key={state.sigla} value={state.sigla}>{state.nome}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={memberForm.control}
+                                        name="cidade"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Cidade</FormLabel>
+                                                <Select
+                                                    onValueChange={field.onChange}
+                                                    value={field.value}
+                                                    disabled={isLoadingAddressCities || !addressState || !permission.canEdit}
+                                                >
+                                                    <FormControl><SelectTrigger><SelectValue placeholder={!addressState ? "Selecione um estado" : isLoadingAddressCities ? "Carregando..." : "Selecione a cidade"} /></SelectTrigger></FormControl>
+                                                    <SelectContent>
+                                                        {addressCities.map((city) => (
+                                                            <SelectItem key={city.nome} value={city.nome}>{city.nome}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                            </div>
+                            
+                            <div className="flex flex-wrap gap-2">
+                              {permission.canEdit && (
+                                  <Button type="submit" disabled={isSubmitting || isUploading}>
+                                      {isSubmitting || isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                                      {isSubmitting || isUploading ? 'Salvando...' : 'Salvar Alterações'}
+                                  </Button>
+                              )}
+                              {currentUserData?.cargo === 'Administrador' && (
+                                  <AlertDialog>
+                                      <AlertDialogTrigger asChild>
+                                          <Button type="button" variant="destructive" disabled={isSubmitting}>
+                                              <Trash2 className="mr-2 h-4 w-4" /> Excluir Membro
+                                          </Button>
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                          <AlertDialogHeader>
+                                              <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                                              <AlertDialogDescription>
+                                                  Esta ação é permanente e não pode ser desfeita. O cadastro de dados e a conta de login do membro serão removidos permanentemente.
+                                              </AlertDialogDescription>
+                                          </AlertDialogHeader>
+                                          <AlertDialogFooter>
+                                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                              <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+                                                  Excluir Permanentemente
+                                              </AlertDialogAction>
+                                          </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                  </AlertDialog>
+                              )}
+                            </div>
+                        </form>
+                     </Form>
+                </CardContent>
+            </Card>
+        );
+    }
+  };
+
   return (
     <div className="flex-1 space-y-4 bg-secondary">
        <Dialog open={isCropping} onOpenChange={setIsCropping}>
@@ -913,530 +1397,63 @@ export default function MemberProfilePage() {
             </CardContent>
         </Card>
 
-        {verse && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between text-lg">
-                <div className="flex items-center gap-2">
-                  <BookOpen className="h-5 w-5 text-primary" />
-                  Promessa do Dia
-                </div>
-                 <Button variant="ghost" size="icon" onClick={selectRandomVerse} className="h-8 w-8">
-                    <RefreshCw className="h-4 w-4" />
-                    <span className="sr-only">Nova Promessa</span>
-                </Button>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <blockquote className="border-l-4 border-primary pl-4 italic">
-                <p className="mb-2">"{verse.text}"</p>
-                <footer className="text-sm font-semibold not-italic">
-                  - {verse.book} {verse.chapter}:{verse.verse}
-                </footer>
-              </blockquote>
-            </CardContent>
-          </Card>
-        )}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {churchInfo?.radioUrl && (
+            <div className="aspect-video w-full rounded-lg overflow-hidden bg-black border">
+              <iframe
+                src={churchInfo.radioUrl}
+                className="w-full h-full border-0"
+                allow="autoplay"
+                title="Rádio Kairós Player"
+              />
+            </div>
+          )}
+          {verse && (
+            <Card className={cn(!churchInfo?.radioUrl && "lg:col-span-2")}>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between text-lg">
+                  <div className="flex items-center gap-2">
+                    <BookOpen className="h-5 w-5 text-primary" />
+                    Promessa do Dia
+                  </div>
+                   <Button variant="ghost" size="icon" onClick={selectRandomVerse} className="h-8 w-8">
+                      <RefreshCw className="h-4 w-4" />
+                      <span className="sr-only">Nova Promessa</span>
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <blockquote className="border-l-4 border-primary pl-4 italic">
+                  <p className="mb-2 text-xl md:text-2xl text-primary">"{verse.text}"</p>
+                  <footer className="text-sm font-semibold not-italic">
+                    - {verse.book} {verse.chapter}:{verse.verse}
+                  </footer>
+                </blockquote>
+              </CardContent>
+            </Card>
+          )}
+        </div>
 
-        {churchInfo?.radioUrl && (
-          <div className="aspect-video w-full rounded-lg overflow-hidden bg-black border">
-            <iframe
-              src={churchInfo.radioUrl}
-              className="w-full h-full border-0"
-              allow="autoplay"
-              title="Rádio Kairós Player"
-            />
-          </div>
-        )}
 
-        <Tabs defaultValue="mural" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
-                <TabsTrigger value="mural"><LayoutGrid className="mr-2"/>Mural</TabsTrigger>
-                <TabsTrigger value="dados"><User className="mr-2"/>Meus Dados</TabsTrigger>
-                <TabsTrigger value="carteirinha"><CreditCard className="mr-2"/>Carteirinha</TabsTrigger>
-                <TabsTrigger value="contato"><MessageSquare className="mr-2"/>Fale Conosco</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="mural">
-              <Card className="mt-4">
-                <CardHeader>
-                  <CardTitle>Mural de Avisos</CardTitle>
-                  <CardDescription>Fique por dentro das últimas notícias da comunidade.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {isLoadingPosts ? (
-                    <div className="flex justify-center items-center py-10">
-                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                    </div>
-                  ) : posts && posts.length > 0 ? (
-                      posts.map((post) => {
-                          const avatarMural = getPostAvatar(post);
-                          return (
-                              <Card key={post.id} className="shadow-none border">
-                              <CardHeader>
-                                  <div className="flex items-start gap-4">
-                                  <Avatar className="h-10 w-10 border">
-                                      {avatarMural && <AvatarImage src={avatarMural.imageUrl} alt={post.authorName} />}
-                                      <AvatarFallback>{post.authorName.charAt(0)}</AvatarFallback>
-                                  </Avatar>
-                                  <div className="grid gap-0.5">
-                                      <CardTitle className="text-lg">{post.title}</CardTitle>
-                                      <CardDescription>
-                                      Por {post.authorName} em {post.createdAt?.toDate().toLocaleDateString('pt-BR')}
-                                      </CardDescription>
-                                  </div>
-                                  </div>
-                              </CardHeader>
-                              <CardContent>
-                                  {post.imageUrl && (
-                                    <div className="mb-4 relative aspect-video w-full rounded-md overflow-hidden">
-                                      <Image src={post.imageUrl} alt={post.title} layout="fill" objectFit="cover" />
-                                    </div>
-                                  )}
-                                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{post.content}</p>
-                              </CardContent>
-                              </Card>
-                          )
-                      })
-                  ) : (
-                    <div className="p-8 text-center text-muted-foreground border-dashed border-2 rounded-md">
-                      <p>Nenhuma postagem no mural ainda.</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
+        <Card>
+          <CardContent className="p-2">
+            <div className="flex flex-wrap justify-around">
+              <Button size="lg" variant={activeView === 'perfil' ? 'secondary' : 'ghost'} onClick={() => setActiveView('perfil')}><User className="mr-2"/>Perfil</Button>
+              <Button size="lg" variant={activeView === 'mural' ? 'secondary' : 'ghost'} onClick={() => setActiveView('mural')}><LayoutGrid className="mr-2"/>Mural</Button>
+              <Button size="lg" variant={activeView === 'carteirinha' ? 'secondary' : 'ghost'} onClick={() => setActiveView('carteirinha')}><CreditCard className="mr-2"/>Carteirinha</Button>
+              <Button size="lg" variant={activeView === 'contato' ? 'secondary' : 'ghost'} onClick={() => setActiveView('contato')}><MessageSquare className="mr-2"/>Fale Conosco</Button>
+            </div>
+          </CardContent>
+        </Card>
 
-            <TabsContent value="dados">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Meus Dados</CardTitle>
-                        <CardDescription>Atualize suas informações pessoais e de contato.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                         <Form {...memberForm}>
-                            <form onSubmit={memberForm.handleSubmit(onMemberSubmit)} className="space-y-8">
-                                
-                                {/* --- Foto e Nome --- */}
-                                <div className="space-y-4">
-                                     <div className="flex items-center gap-4">
-                                        <Avatar className="h-20 w-20 border">
-                                            {avatar && <AvatarImage src={avatar.imageUrl} alt={member.nome} />}
-                                            <AvatarFallback className="text-3xl">
-                                                {member.nome.charAt(0)}
-                                            </AvatarFallback>
-                                        </Avatar>
-                                        <div className="grid gap-2">
-                                            <Label>Foto de Perfil</Label>
-                                            <Input id="avatar-upload" type="file" accept="image/*" className="hidden" onChange={onSelectFile} disabled={!permission.canEdit} />
-                                            <Button type="button" variant="outline" onClick={() => document.getElementById('avatar-upload')?.click()} disabled={!permission.canEdit}>
-                                                <Upload className="mr-2 h-4 w-4" />
-                                                Alterar Foto
-                                            </Button>
-                                        </div>
-                                    </div>
-                                    <FormField
-                                        control={memberForm.control}
-                                        name="nome"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Nome Completo</FormLabel>
-                                                <FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
-                                
-                                {/* --- Dados de Acesso --- */}
-                                <div className="space-y-4">
-                                    <h3 className="font-medium text-lg border-b pb-2">Dados de Acesso</h3>
-                                    <FormField
-                                        control={memberForm.control}
-                                        name="email"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Email</FormLabel>
-                                                <FormControl><Input {...field} disabled /></FormControl>
-                                                <FormDescription>O e-mail não pode ser alterado.</FormDescription>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
+        <div>
+          {renderActiveView()}
+        </div>
 
-                                {/* --- Dados Eclesiásticos --- */}
-                                {permission.canManage && (
-                                    <div className="space-y-4">
-                                        <h3 className="font-medium text-lg border-b pb-2">Dados Eclesiásticos</h3>
-                                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                             <FormField control={memberForm.control} name="recordNumber" render={({ field }) => (<FormItem><FormLabel>Nº da Ficha</FormLabel><FormControl><Input {...field} disabled={!permission.canManage} /></FormControl><FormMessage /></FormItem>)} />
-                                            <FormField control={memberForm.control} name="cargo" render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Cargo Ministerial</FormLabel>
-                                                    <Select onValueChange={field.onChange} value={field.value} disabled={!permission.canManage}>
-                                                        <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
-                                                        <SelectContent>
-                                                            <SelectItem value="Membro">Membro</SelectItem>
-                                                            <SelectItem value="Cooperador(a)">Cooperador(a)</SelectItem>
-                                                            <SelectItem value="Diácono(a)">Diácono(a)</SelectItem>
-                                                            <SelectItem value="Presbítero">Presbítero</SelectItem>
-                                                            <SelectItem value="Evangelista">Evangelista</SelectItem>
-                                                            <SelectItem value="Missionário(a)">Missionário(a)</SelectItem>
-                                                            <SelectItem value="Pastor(a)">Pastor(a)</SelectItem>
-                                                            <SelectItem value="Pastor/dirigente">Pastor/dirigente</SelectItem>
-                                                            <SelectItem value="Administrador">Administrador</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )} />
-                                            <FormField control={memberForm.control} name="status" render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Status</FormLabel>
-                                                    <Select onValueChange={field.onChange} value={field.value} disabled={!permission.canManage}>
-                                                        <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
-                                                        <SelectContent>
-                                                            <SelectItem value="Ativo">Ativo</SelectItem>
-                                                            <SelectItem value="Inativo">Inativo</SelectItem>
-                                                            <SelectItem value="Pendente">Pendente</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )} />
-                                            <FormField control={memberForm.control} name="congregacao" render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Congregação</FormLabel>
-                                                    <Select onValueChange={field.onChange} value={field.value} disabled={loadingCongregacoes || !permission.canManage}>
-                                                        <FormControl><SelectTrigger><SelectValue placeholder={loadingCongregacoes ? "Carregando..." : "Selecione a congregação"} /></SelectTrigger></FormControl>
-                                                        <SelectContent>
-                                                            {congregacoes?.map((c) => <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>)}
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )} />
-                                             <FormField control={memberForm.control} name="dataMembro" render={({ field }) => (<FormItem><FormLabel>Data de Membresia</FormLabel><FormControl><Input type="date" {...field} disabled={!permission.canManage} /></FormControl><FormMessage /></FormItem>)} />
-                                             <FormField control={memberForm.control} name="dataBatismo" render={({ field }) => (<FormItem><FormLabel>Data de Batismo</FormLabel><FormControl><Input type="date" {...field} disabled={!permission.canManage} /></FormControl><FormMessage /></FormItem>)} />
-                                             <FormField
-                                                control={memberForm.control}
-                                                name="responsiblePastor"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>Pastor Responsável</FormLabel>
-                                                        <FormControl><Input {...field} placeholder="Nome do pastor" disabled={!permission.canManage} /></FormControl>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                        </div>
-                                    </div>
-                                )}
-                                
-                                {/* --- Dados Pessoais --- */}
-                                <div className="space-y-4">
-                                     <h3 className="font-medium text-lg border-b pb-2">Dados Pessoais</h3>
-                                      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        <FormField control={memberForm.control} name="dataNascimento" render={({ field }) => (<FormItem><FormLabel>Data de Nascimento</FormLabel><FormControl><Input type="date" {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
-                                        <FormField control={memberForm.control} name="cpf" render={({ field }) => (<FormItem><FormLabel>CPF</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
-                                        <FormField control={memberForm.control} name="rg" render={({ field }) => (<FormItem><FormLabel>RG</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
-                                        <FormField control={memberForm.control} name="gender" render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Gênero</FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value} disabled={!permission.canEdit}>
-                                                    <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                                                    <SelectContent>
-                                                        <SelectItem value="Masculino">Masculino</SelectItem>
-                                                        <SelectItem value="Feminino">Feminino</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )} />
-                                         <FormField control={memberForm.control} name="maritalStatus" render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Estado Civil</FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value} disabled={!permission.canEdit}>
-                                                    <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                                                    <SelectContent>
-                                                        <SelectItem value="Solteiro(a)">Solteiro(a)</SelectItem>
-                                                        <SelectItem value="Casado(a)">Casado(a)</SelectItem>
-                                                        <SelectItem value="Divorciado(a)">Divorciado(a)</SelectItem>
-                                                        <SelectItem value="Viúvo(a)">Viúvo(a)</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )} />
-                                    </div>
-                                    <div className="grid md:grid-cols-2 gap-4 items-start">
-                                        <FormItem>
-                                            <FormLabel>Estado de Nascimento</FormLabel>
-                                            <Select
-                                                value={selectedState}
-                                                onValueChange={(value) => {
-                                                    setSelectedState(value);
-                                                    setSelectedCity(''); // Reset city
-                                                    memberForm.setValue('naturalness', ''); // Reset form value
-                                                }}
-                                                disabled={isLoadingStates || !permission.canEdit}
-                                            >
-                                                <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder={isLoadingStates ? "Carregando..." : "Selecione o estado"} />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    {brazilianStates.map((state) => (
-                                                        <SelectItem key={state.sigla} value={state.sigla}>
-                                                            {state.nome}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                        </FormItem>
-                                        <FormField
-                                            control={memberForm.control}
-                                            name="naturalness"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Cidade de Nascimento</FormLabel>
-                                                    <Select
-                                                        value={selectedCity}
-                                                        onValueChange={(cityValue) => {
-                                                            setSelectedCity(cityValue);
-                                                            field.onChange(`${cityValue}/${selectedState}`);
-                                                        }}
-                                                        disabled={isLoadingCities || !selectedState || !permission.canEdit}
-                                                    >
-                                                        <FormControl>
-                                                            <SelectTrigger>
-                                                                <SelectValue placeholder={
-                                                                    !selectedState ? "Selecione um estado" :
-                                                                    isLoadingCities ? "Carregando..." :
-                                                                    "Selecione a cidade"
-                                                                } />
-                                                            </SelectTrigger>
-                                                        </FormControl>
-                                                        <SelectContent>
-                                                            {cities.map((city) => (
-                                                                <SelectItem key={city.nome} value={city.nome}>
-                                                                    {city.nome}
-                                                                </SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                         <FormField control={memberForm.control} name="nationality" render={({ field }) => (<FormItem><FormLabel>Nacionalidade</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
-                                    </div>
-                                </div>
-
-                                {/* --- Contato --- */}
-                                <div className="space-y-4">
-                                     <h3 className="font-medium text-lg border-b pb-2">Contato</h3>
-                                     <div className="grid md:grid-cols-2 gap-4">
-                                         <FormField control={memberForm.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Telefone</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
-                                         <FormField control={memberForm.control} name="whatsapp" render={({ field }) => (<FormItem><FormLabel>WhatsApp</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
-                                    </div>
-                                </div>
-
-                                {/* --- Endereço --- */}
-                                <div className="space-y-4">
-                                    <h3 className="font-medium text-lg border-b pb-2">Endereço</h3>
-                                    <div className="grid md:grid-cols-3 gap-4">
-                                        <FormField name="cep" control={memberForm.control} render={({ field }) => (<FormItem><FormLabel>CEP</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
-                                        <FormField name="logradouro" control={memberForm.control} render={({ field }) => (<FormItem className="md:col-span-2"><FormLabel>Logradouro</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
-                                    </div>
-                                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        <FormField name="numero" control={memberForm.control} render={({ field }) => (<FormItem><FormLabel>Número</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
-                                        <FormField name="complemento" control={memberForm.control} render={({ field }) => (<FormItem><FormLabel>Complemento</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
-                                        <FormField name="bairro" control={memberForm.control} render={({ field }) => (<FormItem><FormLabel>Bairro</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
-                                         <FormField
-                                            control={memberForm.control}
-                                            name="estado"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Estado</FormLabel>
-                                                    <Select
-                                                        onValueChange={(value) => {
-                                                            field.onChange(value);
-                                                            setAddressState(value);
-                                                            memberForm.setValue('cidade', '');
-                                                        }}
-                                                        value={field.value}
-                                                        disabled={isLoadingStates || !permission.canEdit}
-                                                    >
-                                                        <FormControl><SelectTrigger><SelectValue placeholder={isLoadingStates ? "Carregando..." : "Selecione o estado"} /></SelectTrigger></FormControl>
-                                                        <SelectContent>
-                                                            {brazilianStates.map((state) => (
-                                                                <SelectItem key={state.sigla} value={state.sigla}>{state.nome}</SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={memberForm.control}
-                                            name="cidade"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Cidade</FormLabel>
-                                                    <Select
-                                                        onValueChange={field.onChange}
-                                                        value={field.value}
-                                                        disabled={isLoadingAddressCities || !addressState || !permission.canEdit}
-                                                    >
-                                                        <FormControl><SelectTrigger><SelectValue placeholder={!addressState ? "Selecione um estado" : isLoadingAddressCities ? "Carregando..." : "Selecione a cidade"} /></SelectTrigger></FormControl>
-                                                        <SelectContent>
-                                                            {addressCities.map((city) => (
-                                                                <SelectItem key={city.nome} value={city.nome}>{city.nome}</SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
-                                </div>
-                                
-                                <div className="flex flex-wrap gap-2">
-                                  {permission.canEdit && (
-                                      <Button type="submit" disabled={isSubmitting || isUploading}>
-                                          {isSubmitting || isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                                          {isSubmitting || isUploading ? 'Salvando...' : 'Salvar Alterações'}
-                                      </Button>
-                                  )}
-                                  {currentUserData?.cargo === 'Administrador' && (
-                                      <AlertDialog>
-                                          <AlertDialogTrigger asChild>
-                                              <Button type="button" variant="destructive" disabled={isSubmitting}>
-                                                  <Trash2 className="mr-2 h-4 w-4" /> Excluir Membro
-                                              </Button>
-                                          </AlertDialogTrigger>
-                                          <AlertDialogContent>
-                                              <AlertDialogHeader>
-                                                  <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
-                                                  <AlertDialogDescription>
-                                                      Esta ação é permanente e não pode ser desfeita. O cadastro de dados e a conta de login do membro serão removidos permanentemente.
-                                                  </AlertDialogDescription>
-                                              </AlertDialogHeader>
-                                              <AlertDialogFooter>
-                                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                                  <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
-                                                      Excluir Permanentemente
-                                                  </AlertDialogAction>
-                                              </AlertDialogFooter>
-                                          </AlertDialogContent>
-                                      </AlertDialog>
-                                  )}
-                                </div>
-                            </form>
-                         </Form>
-                    </CardContent>
-                </Card>
-            </TabsContent>
-            
-            <TabsContent value="carteirinha">
-                <Card className="mt-4">
-                  <CardHeader>
-                    <CardTitle>Minha Carteirinha Digital</CardTitle>
-                    <CardDescription>Clique na carteirinha para visualizar o verso.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex justify-center items-center">
-                    <div 
-                        className="max-w-lg mx-auto flip-card-container cursor-pointer aspect-[85.6/54]"
-                        onClick={() => setIsCardFlipped(!isCardFlipped)}
-                    >
-                        <div className={cn("flip-card w-full h-full", { 'flipped': isCardFlipped })}>
-                            <div className="flip-card-front">
-                                <StudioCard isFront={true} currentMember={member} />
-                            </div>
-                            <div className="flip-card-back">
-                                  <StudioCard isFront={false} currentMember={member} />
-                            </div>
-                        </div>
-                    </div>
-                  </CardContent>
-                </Card>
-            </TabsContent>
-
-             <TabsContent value="contato">
-                <Card className="mt-4">
-                  <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                          <MessageSquare className="h-5 w-5"/>
-                          Fale com a Administração
-                      </CardTitle>
-                      <CardDescription>Envie sua mensagem, dúvida, ou anexe um documento.</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                      <Form {...messageForm}>
-                        <form onSubmit={messageForm.handleSubmit(onMessageSubmit)} className="space-y-4">
-                            <FormField
-                                control={messageForm.control}
-                                name="destinatario"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Enviar para</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={loadingCongregacoes}>
-                                        <FormControl>
-                                          <SelectTrigger>
-                                              <SelectValue placeholder={loadingCongregacoes ? "Carregando..." : "Selecione o destinatário"} />
-                                          </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            <SelectItem value="Administração Geral">Administração Geral</SelectItem>
-                                            {congregacoes?.map(c => <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>)}
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                            <FormField
-                                control={messageForm.control}
-                                name="assunto"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Assunto</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="Sobre o que você quer falar?" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={messageForm.control}
-                                name="mensagem"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Mensagem</FormLabel>
-                                        <FormControl>
-                                            <Textarea placeholder="Digite sua mensagem aqui..." {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <Button type="submit" disabled={isSendingMessage}>
-                              {isSendingMessage ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
-                              {isSendingMessage ? 'Enviando...' : 'Enviar Mensagem'}
-                            </Button>
-                        </form>
-                      </Form>
-                  </CardContent>
-                </Card>
-            </TabsContent>
-        </Tabs>
       </div>
     </div>
   );
 }
+
+
+    

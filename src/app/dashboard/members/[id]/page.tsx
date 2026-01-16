@@ -284,6 +284,14 @@ export default function MemberProfilePage() {
     const previewCanvasRef = useRef<HTMLCanvasElement>(null);
     const [currentFile, setCurrentFile] = useState<File | null>(null);
 
+  // State for location dropdowns
+  const [brazilianStates, setBrazilianStates] = useState<{ sigla: string; nome: string }[]>([]);
+  const [cities, setCities] = useState<{ nome: string }[]>([]);
+  const [selectedState, setSelectedState] = useState('');
+  const [selectedCity, setSelectedCity] = useState('');
+  const [isLoadingStates, setIsLoadingStates] = useState(false);
+  const [isLoadingCities, setIsLoadingCities] = useState(false);
+
   const memberForm = useForm<MemberFormData>({
     resolver: zodResolver(memberFormSchema),
     defaultValues: {
@@ -304,6 +312,36 @@ export default function MemberProfilePage() {
       mensagem: '',
     },
   });
+
+  // Fetch Brazilian states
+  useEffect(() => {
+    setIsLoadingStates(true);
+    fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome')
+      .then(res => res.json())
+      .then(data => setBrazilianStates(data))
+      .catch(err => {
+        console.error("Failed to fetch states", err);
+        toast({ variant: 'destructive', title: 'Erro de Rede', description: 'Não foi possível carregar os estados.' });
+      })
+      .finally(() => setIsLoadingStates(false));
+  }, [toast]);
+
+  // Fetch cities when state changes
+  useEffect(() => {
+    if (!selectedState) {
+      setCities([]);
+      return;
+    }
+    setIsLoadingCities(true);
+    fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${selectedState}/municipios`)
+      .then(res => res.json())
+      .then(data => setCities(data))
+      .catch(err => {
+        console.error("Failed to fetch cities", err);
+        toast({ variant: 'destructive', title: 'Erro de Rede', description: 'Não foi possível carregar as cidades.' });
+      })
+      .finally(() => setIsLoadingCities(false));
+  }, [selectedState, toast]);
 
   // Effect to check permissions
   useEffect(() => {
@@ -363,8 +401,29 @@ export default function MemberProfilePage() {
         recordNumber: member.recordNumber || '',
         responsiblePastor: member.responsiblePastor || '',
       });
+
+      // Parse naturalness for dropdowns
+      if (member.naturalness && member.naturalness.includes('/')) {
+        const [city, state] = member.naturalness.split('/');
+        setSelectedState(state);
+        // The city will be set by the next useEffect once cities are loaded
+      } else {
+        setSelectedState('');
+        setSelectedCity('');
+      }
     }
   }, [member, memberForm]);
+
+  // Effect to set the city dropdown value after cities have been loaded
+  useEffect(() => {
+    if (member?.naturalness && cities.length > 0) {
+      const [city] = member.naturalness.split('/');
+      const cityExists = cities.some(c => c.nome === city);
+      if (cityExists) {
+        setSelectedCity(city);
+      }
+    }
+  }, [cities, member]);
 
 
   const onMemberSubmit: SubmitHandler<MemberFormData> = async (data) => {
@@ -995,8 +1054,67 @@ const StudioCard = ({ isFront }: { isFront: boolean }) => {
                                             </FormItem>
                                         )} />
                                     </div>
-                                    <div className="grid md:grid-cols-2 gap-4">
-                                         <FormField control={memberForm.control} name="naturalness" render={({ field }) => (<FormItem><FormLabel>Naturalidade</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                    <div className="grid md:grid-cols-2 gap-4 items-start">
+                                        <FormItem>
+                                            <FormLabel>Estado de Nascimento</FormLabel>
+                                            <Select
+                                                value={selectedState}
+                                                onValueChange={(value) => {
+                                                    setSelectedState(value);
+                                                    setSelectedCity(''); // Reset city
+                                                    memberForm.setValue('naturalness', ''); // Reset form value
+                                                }}
+                                                disabled={isLoadingStates || !permission.canEdit}
+                                            >
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder={isLoadingStates ? "Carregando..." : "Selecione o estado"} />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    {brazilianStates.map((state) => (
+                                                        <SelectItem key={state.sigla} value={state.sigla}>
+                                                            {state.nome}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </FormItem>
+                                        <FormField
+                                            control={memberForm.control}
+                                            name="naturalness"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Cidade de Nascimento</FormLabel>
+                                                    <Select
+                                                        value={selectedCity}
+                                                        onValueChange={(cityValue) => {
+                                                            setSelectedCity(cityValue);
+                                                            field.onChange(`${cityValue}/${selectedState}`);
+                                                        }}
+                                                        disabled={isLoadingCities || !selectedState || !permission.canEdit}
+                                                    >
+                                                        <FormControl>
+                                                            <SelectTrigger>
+                                                                <SelectValue placeholder={
+                                                                    !selectedState ? "Selecione um estado" :
+                                                                    isLoadingCities ? "Carregando..." :
+                                                                    "Selecione a cidade"
+                                                                } />
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent>
+                                                            {cities.map((city) => (
+                                                                <SelectItem key={city.nome} value={city.nome}>
+                                                                    {city.nome}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
                                          <FormField control={memberForm.control} name="nationality" render={({ field }) => (<FormItem><FormLabel>Nacionalidade</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
                                     </div>
                                 </div>

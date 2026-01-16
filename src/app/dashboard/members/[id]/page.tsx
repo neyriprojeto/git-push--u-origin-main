@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
-import { User, CreditCard, FileText, MessageSquare, BookOpen, RefreshCw, Loader2, LayoutGrid, Save, Upload, ShieldAlert, Trash2 } from "lucide-react";
+import { User, CreditCard, FileText, MessageSquare, BookOpen, RefreshCw, Loader2, LayoutGrid, Save, Upload, ShieldAlert, Trash2, ArrowLeft } from "lucide-react";
 import { bibleVerses } from "@/data/bible-verses";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
@@ -265,7 +265,7 @@ export default function MemberProfilePage() {
   const [isCardFlipped, setIsCardFlipped] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
-  const [activeView, setActiveView] = useState('perfil');
+  const [activeView, setActiveView] = useState<string | null>(null);
   
   const [permission, setPermission] = useState<{ canView: boolean, canEdit: boolean, canManage: boolean, hasChecked: boolean }>({
     canView: false,
@@ -274,6 +274,12 @@ export default function MemberProfilePage() {
     hasChecked: false,
   });
 
+  const navItems = [
+      { id: 'perfil', title: 'Meu Perfil', description: 'Veja e atualize suas informações pessoais.', icon: User },
+      { id: 'mural', title: 'Mural de Avisos', description: 'Fique por dentro das últimas notícias e comunicados.', icon: LayoutGrid },
+      { id: 'carteirinha', title: 'Minha Carteirinha', description: 'Acesse e visualize sua carteirinha digital.', icon: CreditCard },
+      { id: 'contato', title: 'Fale Conosco', description: 'Envie uma mensagem para a administração.', icon: MessageSquare },
+  ];
 
   // State for image cropping
     const [crop, setCrop] = useState<Crop>();
@@ -289,7 +295,6 @@ export default function MemberProfilePage() {
   const [brazilianStates, setBrazilianStates] = useState<{ sigla: string; nome: string }[]>([]);
   const [cities, setCities] = useState<{ nome: string }[]>([]);
   const [selectedState, setSelectedState] = useState('');
-  const [selectedCity, setSelectedCity] = useState('');
   const [isLoadingStates, setIsLoadingStates] = useState(false);
   const [isLoadingCities, setIsLoadingCities] = useState(false);
   
@@ -1362,98 +1367,64 @@ export default function MemberProfilePage() {
       </div>
 
       <div className="container mx-auto space-y-6 pb-8">
-        <Card>
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                  <div>
-                      <CardTitle>Bem-vindo(a), {member.nome.split(' ')[0]}!</CardTitle>
-                      <CardDescription>
-                          Este é o seu espaço central para interagir com as funcionalidades da igreja. Use o menu de navegação para explorar.
-                      </CardDescription>
-                  </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-                <div className="flex gap-2 mt-1">
-                <Badge variant="secondary">{member.cargo}</Badge>
-                <Badge variant={member.status === "Ativo" ? "default" : member.status === 'Pendente' ? 'outline' : "destructive"}>{member.status}</Badge>
-                </div>
-                {permission.canManage && (
-                    <div className="flex gap-2 mt-4">
-                         <Button asChild variant="outline" size="sm">
-                            <Link href={`/dashboard/members/${member.id}/file`}>
-                                <FileText className="mr-2 h-4 w-4"/>
-                                Ver Ficha
-                            </Link>
-                        </Button>
-                        <Button asChild variant="outline" size="sm">
-                            <Link href={`/dashboard/members/${member.id}/card`}>
-                                <CreditCard className="mr-2 h-4 w-4"/>
-                                Ver Carteirinha
-                            </Link>
-                        </Button>
-                    </div>
-                )}
-            </CardContent>
-        </Card>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {churchInfo?.radioUrl && (
-            <div className="aspect-video w-full rounded-lg overflow-hidden bg-black border">
-              <iframe
-                src={churchInfo.radioUrl}
-                className="w-full h-full border-0"
-                allow="autoplay"
-                title="Rádio Kairós Player"
-              />
-            </div>
-          )}
-          {verse && (
-            <Card className={cn(!churchInfo?.radioUrl && "lg:col-span-2")}>
+        {!activeView ? (
+          <>
+            <Card>
               <CardHeader>
-                <CardTitle className="flex items-center justify-between text-lg">
-                  <div className="flex items-center gap-2">
-                    <BookOpen className="h-5 w-5 text-primary" />
-                    Promessa do Dia
-                  </div>
-                   <Button variant="ghost" size="icon" onClick={selectRandomVerse} className="h-8 w-8">
-                      <RefreshCw className="h-4 w-4" />
-                      <span className="sr-only">Nova Promessa</span>
-                  </Button>
-                </CardTitle>
+                <CardTitle>Bem-vindo(a), {member.nome.split(' ')[0]}!</CardTitle>
+                <CardDescription>
+                    Este é o seu espaço central para interagir com as funcionalidades da igreja. Use o menu de navegação para explorar.
+                </CardDescription>
               </CardHeader>
-              <CardContent>
-                <blockquote className="border-l-4 border-primary pl-4 italic">
-                  <p className="mb-2 text-xl md:text-2xl text-primary">"{verse.text}"</p>
-                  <footer className="text-sm font-semibold not-italic">
-                    - {verse.book} {verse.chapter}:{verse.verse}
-                  </footer>
-                </blockquote>
-              </CardContent>
             </Card>
-          )}
-        </div>
+            
+            {verse && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center justify-between text-lg">
+                        <div className="flex items-center gap-2">
+                            <BookOpen className="h-5 w-5 text-primary" />
+                            Promessa do Dia
+                        </div>
+                        <Button variant="ghost" size="icon" onClick={selectRandomVerse} className="h-8 w-8">
+                            <RefreshCw className="h-4 w-4" />
+                            <span className="sr-only">Nova Promessa</span>
+                        </Button>
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <blockquote className="border-l-4 border-primary pl-4 italic">
+                        <p className="mb-2 text-xl md:text-2xl text-primary">"{verse.text}"</p>
+                        <footer className="text-sm font-semibold not-italic">
+                            - {verse.book} {verse.chapter}:{verse.verse}
+                        </footer>
+                        </blockquote>
+                    </CardContent>
+                </Card>
+            )}
 
-
-        <Card>
-          <CardContent className="p-2">
-            <div className="flex flex-wrap justify-around">
-              <Button size="lg" variant={activeView === 'perfil' ? 'secondary' : 'ghost'} onClick={() => setActiveView('perfil')}><User className="mr-2"/>Perfil</Button>
-              <Button size="lg" variant={activeView === 'mural' ? 'secondary' : 'ghost'} onClick={() => setActiveView('mural')}><LayoutGrid className="mr-2"/>Mural</Button>
-              <Button size="lg" variant={activeView === 'carteirinha' ? 'secondary' : 'ghost'} onClick={() => setActiveView('carteirinha')}><CreditCard className="mr-2"/>Carteirinha</Button>
-              <Button size="lg" variant={activeView === 'contato' ? 'secondary' : 'ghost'} onClick={() => setActiveView('contato')}><MessageSquare className="mr-2"/>Fale Conosco</Button>
+            <div className="space-y-4 pt-4">
+              {navItems.map((item) => (
+                  <div key={item.id} onClick={() => setActiveView(item.id)} className="flex items-center justify-between rounded-lg border bg-card text-card-foreground shadow-sm p-6 cursor-pointer hover:bg-accent transition-colors">
+                      <div className="space-y-1">
+                          <p className="text-xl font-semibold">{item.title}</p>
+                          <p className="text-sm text-muted-foreground">{item.description}</p>
+                      </div>
+                      <item.icon className="h-8 w-8 text-muted-foreground" />
+                  </div>
+              ))}
             </div>
-          </CardContent>
-        </Card>
 
-        <div>
-          {renderActiveView()}
-        </div>
-
+          </>
+        ) : (
+          <div>
+            <Button variant="ghost" onClick={() => setActiveView(null)} className="mb-4">
+                <ArrowLeft className="mr-2 h-4 w-4" /> Voltar ao Painel
+            </Button>
+            {renderActiveView()}
+          </div>
+        )}
       </div>
     </div>
   );
 }
-
-
-    

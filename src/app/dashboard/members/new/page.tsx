@@ -74,15 +74,17 @@ export default function NewMemberPage() {
       password: '',
       rg: '',
       cpf: '',
+      dataNascimento: '',
       cargo: 'Membro',
       congregacao: '',
+      dataBatismo: '',
+      responsiblePastor: '',
       cep: '',
       logradouro: '',
       numero: '',
       bairro: '',
       cidade: '',
       estado: '',
-      responsiblePastor: '',
     },
   });
 

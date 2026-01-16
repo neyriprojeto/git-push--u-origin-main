@@ -98,15 +98,17 @@ export default function RegisterPage() {
       password: '',
       rg: '',
       cpf: '',
+      dataNascimento: '',
       cargo: 'Membro',
       congregacao: '',
+      dataBatismo: '',
+      responsiblePastor: '',
       cep: '',
       logradouro: '',
       numero: '',
       bairro: '',
       cidade: '',
       estado: '',
-      responsiblePastor: '',
     },
   });
 

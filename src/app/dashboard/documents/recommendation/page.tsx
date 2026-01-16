@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useRef } from 'react';
@@ -9,7 +10,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useUser, useFirestore, useMemoFirebase, useDoc, useCollection } from '@/firebase';
 import { doc, collection, query, where } from 'firebase/firestore';
 import { Loader2, Printer, ShieldAlert } from 'lucide-react';
-import Image from 'next/image';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import jsPDF from 'jspdf';
@@ -56,7 +56,7 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
             {/* Header */}
             <header className="flex justify-between items-center pb-4 border-b-2 border-black">
                 <div className="w-20 h-20 relative">
-                    {logo1Url ? <Image src={logo1Url} alt="Logo Convenção 1" layout="fill" objectFit="contain" priority /> : <div className="w-full h-full bg-gray-100 flex items-center justify-center text-xs text-gray-400">Logo 1</div>}
+                    {logo1Url ? <img src={logo1Url} alt="Logo Convenção 1" style={{ objectFit: 'contain', width: '100%', height: '100%' }} crossOrigin="anonymous" /> : <div className="w-full h-full bg-gray-100 flex items-center justify-center text-xs text-gray-400">Logo 1</div>}
                 </div>
                 <div className="text-center">
                     <p className="font-bold text-sm">IGREJA ASSEMBLEIA DE DEUS</p>
@@ -65,7 +65,7 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
                     <p className="text-[10px] italic">TEMPO DE DEUS</p>
                 </div>
                 <div className="w-20 h-20 relative">
-                    {logo2Url ? <Image src={logo2Url} alt="Logo Convenção 2" layout="fill" objectFit="contain" priority /> : <div className="w-full h-full bg-gray-100 flex items-center justify-center text-xs text-gray-400">Logo 2</div>}
+                    {logo2Url ? <img src={logo2Url} alt="Logo Convenção 2" style={{ objectFit: 'contain', width: '100%', height: '100%' }} crossOrigin="anonymous" /> : <div className="w-full h-full bg-gray-100 flex items-center justify-center text-xs text-gray-400">Logo 2</div>}
                 </div>
             </header>
 
@@ -101,30 +101,27 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
             <div className="text-center mt-6 font-sans">
                 <p>{city}, {format(date, "d 'de' MMMM 'de' yyyy", { locale: ptBR })}</p>
             </div>
-
-            {/* Spacer */}
-            <div className="flex-grow" />
             
             {/* Signatures */}
-            <footer className="pt-4">
-                <div className="flex justify-between items-start mb-4">
-                    <div className="text-center w-[70mm]">
-                        <div className="relative w-full h-[15mm] mb-1">
-                           {pastorSignatureUrl && <Image src={pastorSignatureUrl} alt="Assinatura Pastor Presidente" layout="fill" objectFit="contain" priority />}
-                        </div>
-                        <div className="border-t border-black w-full mx-auto" />
-                        <p className="text-sm mt-1 font-sans">{presidentName}</p>
+            <footer className="pt-4 mt-auto">
+                <div className="w-full flex justify-center mb-1">
+                    <div className="relative w-[60mm] h-[15mm]">
+                        {pastorSignatureUrl && <img src={pastorSignatureUrl} alt="Assinatura Pastor Presidente" style={{ objectFit: 'contain', width: '100%', height: '100%' }} crossOrigin="anonymous" />}
+                    </div>
+                </div>
+                <div className="border-t border-black w-[130mm] mx-auto mb-1" />
+                <div className="flex justify-between items-start w-[130mm] mx-auto">
+                    <div className="text-center">
+                        <p className="text-sm font-sans">{presidentName}</p>
                         <p className="text-xs font-sans italic">Pastor Presidente</p>
                     </div>
-                    <div className="text-center w-[70mm]">
-                        <div className="h-[15mm] mb-1" />
-                        <div className="border-t border-black w-full mx-auto" />
-                        <p className="text-sm mt-1 font-sans">{directorName || ' '}</p>
+                    <div className="text-center">
+                        <p className="text-sm font-sans">{directorName || ' '}</p>
                         <p className="text-xs font-sans italic">Pastor Dirigente</p>
                     </div>
                 </div>
-                
-                <div className="text-center text-xs font-sans">
+
+                <div className="text-center text-xs font-sans mt-8">
                     <p>Válida por 30 dias</p>
                 </div>
             </footer>

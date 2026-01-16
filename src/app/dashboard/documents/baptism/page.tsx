@@ -9,12 +9,14 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useUser, useFirestore, useMemoFirebase, useDoc, useCollection } from '@/firebase';
 import { doc, collection, query, where } from 'firebase/firestore';
-import { Loader2, Printer, ShieldAlert } from 'lucide-react';
+import { Loader2, Printer, ShieldAlert, Upload } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { uploadArquivo } from '@/lib/cloudinary';
+import { useToast } from '@/hooks/use-toast';
 
 // --- Types ---
 type Member = { 
@@ -39,17 +41,14 @@ type ChurchInfo = {
 const DocumentRenderer = React.forwardRef<HTMLDivElement, {
     churchInfo: ChurchInfo | null,
     member: Member | null,
-    date: Date,
-    city: string,
-    celebrantPastor?: string,
+    localPastor: string,
     bgImage?: string;
-}>(({ churchInfo, member, date, city, celebrantPastor, bgImage }, ref) => {
+}>(({ churchInfo, member, localPastor, bgImage }, ref) => {
     
     const formatDate = (d: any, isLong = false): string => {
         if (!d) return '___/___/______';
         try {
             const dateObj = d.toDate ? d.toDate() : new Date(d);
-            // Corrige o problema de fuso horário que pode fazer a data voltar um dia
             const timeZoneOffset = dateObj.getTimezoneOffset() * 60000;
             const adjustedDate = new Date(dateObj.getTime() + timeZoneOffset);
             return isLong ? format(adjustedDate, "d 'de' MMMM 'de' yyyy", { locale: ptBR }) : format(adjustedDate, 'dd/MM/yyyy');
@@ -70,15 +69,10 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
                 backgroundPosition: 'center',
             }}
         >
-            {/* This container will hold all the content and manage spacing */}
             <div className="absolute inset-0 flex flex-col items-center justify-between p-[15mm]">
-            
-                {/* Spacer at the top */}
                 <div />
-
-                {/* Middle text content */}
                 <div className="w-[85%] text-center text-[#444]">
-                   <p className="font-bold my-4 text-[#63532f]" style={{ fontFamily: "'Brush Script MT', cursive", fontSize: '42pt' }}>
+                   <p className="font-bold my-4 text-[#63532f] uppercase" style={{ fontFamily: "'Brush Script MT', cursive", fontSize: '42pt' }}>
                        {member?.nome || '________________'}
                    </p>
                    <p className="leading-relaxed mt-4" style={{ fontSize: '12pt' }}>
@@ -87,8 +81,6 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
                        no dia <span className="font-semibold">{formatDate(member?.dataBatismo, true)}</span> na Assembleia de Deus Kairós congregação de {member?.congregacao || '____________'}.
                    </p>
                </div>
-           
-                {/* Footer at the bottom */}
                 <footer className="w-full">
                     <div className="flex justify-around items-end">
                         <div className="text-center w-2/5">
@@ -98,8 +90,8 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
                         </div>
                          <div className="text-center w-2/5">
                             <div className="border-b-2 border-black w-full" />
-                            <p className="mt-1" style={{ fontSize: '10pt' }}>{celebrantPastor || '________________'}</p>
-                            <p className="italic" style={{ fontSize: '8pt' }}>Pastor Celebrante</p>
+                            <p className="mt-1" style={{ fontSize: '10pt' }}>{localPastor}</p>
+                            <p className="italic" style={{ fontSize: '8pt' }}>Pastor Local</p>
                         </div>
                     </div>
                 </footer>
@@ -113,13 +105,17 @@ DocumentRenderer.displayName = 'DocumentRenderer';
 // --- Page Component ---
 export default function BaptismCertificatePage() {
     const firestore = useFirestore();
+    const { toast } = useToast();
     const { user: authUser, isUserLoading: isAuthUserLoading } = useUser();
     const documentRef = useRef<HTMLDivElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     
     // States
     const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
-    const [celebrantPastor, setCelebrantPastor] = useState('');
     const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
+    const [bgImage, setBgImage] = useState(PlaceHolderImages.find(p => p.id === 'baptism-certificate-bg')?.imageUrl || '');
+
 
     // Data fetching
     const userRef = useMemoFirebase(() => (firestore && authUser ? doc(firestore, 'users', authUser.uid) : null), [firestore, authUser]);
@@ -136,16 +132,44 @@ export default function BaptismCertificatePage() {
     }, [firestore, userData]);
     const { data: members, isLoading: isLoadingMembers } = useCollection<Member>(membersQuery);
 
+    const onSelectFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        try {
+            const src = await uploadArquivo(file);
+            setBgImage(src);
+            toast({ title: 'Sucesso', description: 'Imagem de fundo atualizada.' });
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: 'Erro de Upload', description: error.message });
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
     const handleGeneratePdf = async () => {
         const source = documentRef.current;
         if (!source) return;
         setIsGeneratingPdf(true);
         
         try {
-            const canvas = await html2canvas(source, { scale: 4, useCORS: true, backgroundColor: null });
+            // Temporarily set scale to 1 for high-quality capture
+            source.style.transform = 'scale(1)';
+            
+            const canvas = await html2canvas(source, {
+                scale: 3, // High scale for better resolution
+                useCORS: true,
+                backgroundColor: null,
+                width: source.offsetWidth,
+                height: source.offsetHeight
+            });
+
+            // Restore original scale for display
+            source.style.transform = '';
+
             const imgData = canvas.toDataURL('image/png');
             
-            // A4 landscape: 297mm x 210mm
             const pdf = new jsPDF('landscape', 'mm', 'a4');
             const pdfWidth = pdf.internal.pageSize.getWidth();
             const pdfHeight = pdf.internal.pageSize.getHeight();
@@ -154,14 +178,15 @@ export default function BaptismCertificatePage() {
             pdf.save(`certificado-batismo-${selectedMember?.nome.replace(/ /g, '_') || 'membro'}.pdf`);
         } catch (error) {
             console.error("Error generating PDF:", error);
+             toast({ variant: 'destructive', title: 'Erro ao gerar PDF', description: 'Não foi possível gerar o arquivo.' });
         } finally {
             setIsGeneratingPdf(false);
+            if(source) source.style.transform = ''; // Ensure scale is restored on error too
         }
     };
     
     const selectedMember = members?.find(m => m.id === selectedMemberId) || null;
-    const bgImage = PlaceHolderImages.find(p => p.id === 'baptism-certificate-bg')?.imageUrl;
-
+    const localPastorName = selectedMember?.responsiblePastor || (userData?.cargo === 'Pastor/dirigente' ? userData.nome : '________________');
 
     const isLoading = isAuthUserLoading || isUserDataLoading || isLoadingMembers || isChurchInfoLoading;
 
@@ -202,7 +227,7 @@ export default function BaptismCertificatePage() {
             <Card>
                 <CardHeader>
                     <CardTitle>Configurar Certificado</CardTitle>
-                    <CardDescription>Selecione o membro e preencha as informações para gerar o documento.</CardDescription>
+                    <CardDescription>Selecione o membro e o fundo para gerar o documento.</CardDescription>
                 </CardHeader>
                 <CardContent className="grid md:grid-cols-2 gap-6">
                     <div className="space-y-2">
@@ -216,27 +241,36 @@ export default function BaptismCertificatePage() {
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="space-y-2">
-                         <Label htmlFor="celebrantPastor">Pastor Celebrante</Label>
-                         <Input 
-                            id="celebrantPastor"
-                            placeholder="Nome do pastor que realizou o batismo"
-                            value={celebrantPastor}
-                            onChange={(e) => setCelebrantPastor(e.target.value)}
-                         />
+                     <div className="space-y-2">
+                        <Label>Imagem de Fundo</Label>
+                        <Input
+                            type="file"
+                            accept="image/*"
+                            ref={fileInputRef}
+                            onChange={onSelectFile}
+                            className="hidden"
+                        />
+                        <Button
+                            variant="outline"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={isUploading}
+                        >
+                            {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                            {isUploading ? 'Enviando...' : 'Trocar Fundo'}
+                        </Button>
                     </div>
                 </CardContent>
             </Card>
 
             <div className="p-4 bg-muted/50 rounded-lg w-full flex justify-center items-start overflow-x-auto">
-                <div className="origin-top transform scale-[0.3] sm:scale-[0.5] md:scale-[0.7] lg:scale-[0.9] xl:scale-100 transition-transform duration-300">
+                <div 
+                    ref={documentRef}
+                    className="origin-top transform scale-[0.3] sm:scale-[0.5] md:scale-[0.6] lg:scale-[0.8] xl:scale-[0.9] transition-transform duration-300"
+                >
                     <DocumentRenderer 
-                        ref={documentRef}
                         churchInfo={churchInfo}
                         member={selectedMember}
-                        date={new Date()}
-                        city="Veranópolis"
-                        celebrantPastor={celebrantPastor}
+                        localPastor={localPastorName}
                         bgImage={bgImage}
                     />
                 </div>

@@ -148,11 +148,12 @@ service cloud.firestore {
     /**
      * @description
      *   Manages the customizable card template for member IDs.
-     *   This is a highly administrative function, so only Admins can access it.
+     *   Readable by any signed-in user, but only writable by Admins.
      * @path /cardTemplates/{templateId}
      */
     match /cardTemplates/{templateId} {
-      allow read, write: if isAdmin();
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
     }
     
     /**

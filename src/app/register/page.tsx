@@ -69,6 +69,12 @@ export default function RegisterPage() {
   const [congregacoes, setCongregacoes] = useState<Congregacao[]>([]);
   const [loadingCongregacoes, setLoadingCongregacoes] = useState(true);
 
+  const [brazilianStates, setBrazilianStates] = useState<{ sigla: string; nome: string }[]>([]);
+  const [cities, setCities] = useState<{ nome: string }[]>([]);
+  const [selectedState, setSelectedState] = useState('');
+  const [isLoadingStates, setIsLoadingStates] = useState(false);
+  const [isLoadingCities, setIsLoadingCities] = useState(false);
+
   useEffect(() => {
     const fetchCongregacoes = async () => {
       if (!firestore) return;
@@ -92,6 +98,34 @@ export default function RegisterPage() {
 
     fetchCongregacoes();
   }, [firestore, toast]);
+  
+  useEffect(() => {
+    setIsLoadingStates(true);
+    fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome')
+      .then(res => res.json())
+      .then(data => setBrazilianStates(data))
+      .catch(err => {
+        console.error("Failed to fetch states", err);
+        toast({ variant: 'destructive', title: 'Erro de Rede', description: 'Não foi possível carregar os estados.' });
+      })
+      .finally(() => setIsLoadingStates(false));
+  }, [toast]);
+
+  useEffect(() => {
+    if (!selectedState) {
+      setCities([]);
+      return;
+    }
+    setIsLoadingCities(true);
+    fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${selectedState}/municipios?orderBy=nome`)
+      .then(res => res.json())
+      .then(data => setCities(data))
+      .catch(err => {
+        console.error("Failed to fetch cities", err);
+        toast({ variant: 'destructive', title: 'Erro de Rede', description: 'Não foi possível carregar as cidades.' });
+      })
+      .finally(() => setIsLoadingCities(false));
+  }, [selectedState, toast]);
 
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -126,6 +160,7 @@ export default function RegisterPage() {
           form.setValue('bairro', data.bairro);
           form.setValue('cidade', data.localidade);
           form.setValue('estado', data.uf);
+          setSelectedState(data.uf);
         } else {
           toast({ variant: 'destructive', title: 'CEP não encontrado' });
         }
@@ -507,26 +542,48 @@ export default function RegisterPage() {
                             />
                             <FormField
                                 control={form.control}
-                                name="cidade"
+                                name="estado"
                                 render={({ field }) => (
                                     <FormItem>
-                                    <FormLabel>Cidade</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="Sua cidade" {...field} />
-                                    </FormControl>
+                                    <FormLabel>Estado</FormLabel>
+                                    <Select onValueChange={(value) => {
+                                        field.onChange(value);
+                                        setSelectedState(value);
+                                        form.setValue('cidade', '');
+                                    }} value={field.value} disabled={isLoadingStates}>
+                                        <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder={isLoadingStates ? "Carregando..." : "Selecione o estado"} />
+                                        </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {brazilianStates.map((state) => (
+                                                <SelectItem key={state.sigla} value={state.sigla}>{state.nome}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                     <FormMessage />
                                     </FormItem>
                                 )}
                             />
                             <FormField
                                 control={form.control}
-                                name="estado"
+                                name="cidade"
                                 render={({ field }) => (
                                     <FormItem>
-                                    <FormLabel>Estado</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="UF" {...field} />
-                                    </FormControl>
+                                    <FormLabel>Cidade</FormLabel>
+                                    <Select onValueChange={field.onChange} value={field.value} disabled={isLoadingCities || !selectedState}>
+                                        <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder={!selectedState ? "Selecione um estado" : isLoadingCities ? "Carregando..." : "Selecione a cidade"} />
+                                        </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {cities.map((city) => (
+                                                <SelectItem key={city.nome} value={city.nome}>{city.nome}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                     <FormMessage />
                                     </FormItem>
                                 )}

@@ -291,6 +291,11 @@ export default function MemberProfilePage() {
   const [selectedCity, setSelectedCity] = useState('');
   const [isLoadingStates, setIsLoadingStates] = useState(false);
   const [isLoadingCities, setIsLoadingCities] = useState(false);
+  
+  // State for address dropdowns
+  const [addressState, setAddressState] = useState('');
+  const [addressCities, setAddressCities] = useState<{ nome: string }[]>([]);
+  const [isLoadingAddressCities, setIsLoadingAddressCities] = useState(false);
 
   const memberForm = useForm<MemberFormData>({
     resolver: zodResolver(memberFormSchema),
@@ -333,7 +338,7 @@ export default function MemberProfilePage() {
       return;
     }
     setIsLoadingCities(true);
-    fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${selectedState}/municipios`)
+    fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${selectedState}/municipios?orderBy=nome`)
       .then(res => res.json())
       .then(data => setCities(data))
       .catch(err => {
@@ -342,6 +347,23 @@ export default function MemberProfilePage() {
       })
       .finally(() => setIsLoadingCities(false));
   }, [selectedState, toast]);
+
+    // Fetch address cities when address state changes
+  useEffect(() => {
+    if (!addressState) {
+      setAddressCities([]);
+      return;
+    }
+    setIsLoadingAddressCities(true);
+    fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${addressState}/municipios?orderBy=nome`)
+      .then(res => res.json())
+      .then(data => setAddressCities(data))
+      .catch(err => {
+        console.error("Failed to fetch address cities", err);
+        toast({ variant: 'destructive', title: 'Erro de Rede', description: 'Não foi possível carregar as cidades do endereço.' });
+      })
+      .finally(() => setIsLoadingAddressCities(false));
+  }, [addressState, toast]);
 
   // Effect to check permissions
   useEffect(() => {
@@ -411,6 +433,14 @@ export default function MemberProfilePage() {
         setSelectedState('');
         setSelectedCity('');
       }
+
+       // Set initial state for address dropdowns
+      if (member.estado) {
+        setAddressState(member.estado);
+      } else {
+        setAddressState('');
+      }
+
     }
   }, [member, memberForm]);
 
@@ -1143,8 +1173,54 @@ export default function MemberProfilePage() {
                                         <FormField name="numero" control={memberForm.control} render={({ field }) => (<FormItem><FormLabel>Número</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
                                         <FormField name="complemento" control={memberForm.control} render={({ field }) => (<FormItem><FormLabel>Complemento</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
                                         <FormField name="bairro" control={memberForm.control} render={({ field }) => (<FormItem><FormLabel>Bairro</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
-                                        <FormField name="cidade" control={memberForm.control} render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
-                                        <FormField name="estado" control={memberForm.control} render={({ field }) => (<FormItem><FormLabel>Estado</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
+                                         <FormField
+                                            control={memberForm.control}
+                                            name="estado"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Estado</FormLabel>
+                                                    <Select
+                                                        onValueChange={(value) => {
+                                                            field.onChange(value);
+                                                            setAddressState(value);
+                                                            memberForm.setValue('cidade', '');
+                                                        }}
+                                                        value={field.value}
+                                                        disabled={isLoadingStates || !permission.canEdit}
+                                                    >
+                                                        <FormControl><SelectTrigger><SelectValue placeholder={isLoadingStates ? "Carregando..." : "Selecione o estado"} /></SelectTrigger></FormControl>
+                                                        <SelectContent>
+                                                            {brazilianStates.map((state) => (
+                                                                <SelectItem key={state.sigla} value={state.sigla}>{state.nome}</SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={memberForm.control}
+                                            name="cidade"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Cidade</FormLabel>
+                                                    <Select
+                                                        onValueChange={field.onChange}
+                                                        value={field.value}
+                                                        disabled={isLoadingAddressCities || !addressState || !permission.canEdit}
+                                                    >
+                                                        <FormControl><SelectTrigger><SelectValue placeholder={!addressState ? "Selecione um estado" : isLoadingAddressCities ? "Carregando..." : "Selecione a cidade"} /></SelectTrigger></FormControl>
+                                                        <SelectContent>
+                                                            {addressCities.map((city) => (
+                                                                <SelectItem key={city.nome} value={city.nome}>{city.nome}</SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
                                     </div>
                                 </div>
                                 

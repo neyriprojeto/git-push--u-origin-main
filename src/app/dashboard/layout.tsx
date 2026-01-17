@@ -54,15 +54,11 @@ export default function DashboardLayout({
   const isLoading = isUserLoading || isUserDataLoading;
   const userRole = userData?.cargo;
 
-  // Mostra menus de admin/pastor durante o carregamento ou se o usuário não for 'Membro'.
-  const canSeeAdminMenus = isLoading || (userRole && userRole !== 'Membro');
-  
-  // Condição estrita: Só mostra features de admin completo se o cargo for exatamente 'Administrador'.
-  // Não considera o estado de carregamento para evitar exibição indevida.
+  const isMember = !isLoading && userRole === 'Membro';
+  const canSeeAdminMenus = !isLoading && userRole && ['Administrador', 'Pastor/dirigente'].includes(userRole);
   const isFullAdmin = !isLoading && userRole === 'Administrador';
 
-  // Para membros, "Início" links to their profile. For others, to the main dashboard.
-  const homeLink = userRole === 'Membro' && user ? `/dashboard/members/${user.uid}` : '/dashboard';
+  const homeLink = isMember && user ? `/dashboard/members/${user.uid}` : '/dashboard';
 
   const settingsLink = userRole === 'Administrador'
     ? "/dashboard/settings/congregations"
@@ -75,7 +71,7 @@ export default function DashboardLayout({
       <Sidebar>
         <SidebarHeader>
           <div className="flex items-center justify-between">
-            <Link href="/dashboard" className="flex items-center gap-2">
+            <Link href={homeLink} className="flex items-center gap-2">
               <AppLogo className="size-6 text-sidebar-primary" />
               <span className="text-lg font-semibold text-sidebar-foreground">
                 A.D.KAIROS CONNECT
@@ -85,19 +81,32 @@ export default function DashboardLayout({
           </div>
         </SidebarHeader>
         <SidebarContent>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip={{ children: "Início" }}>
-                <Link href={homeLink}>
-                  <Home />
-                  <span>Início</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            
-            {/* General menus visible to Admins and Pastors */}
-            {canSeeAdminMenus && (
-              <>
+          {/* Member-specific Menu */}
+          {isMember && (
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip={{ children: "Início" }}>
+                  <Link href={homeLink}>
+                    <Home />
+                    <span>Início</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          )}
+          
+          {/* Admin and Pastor Menu */}
+          {canSeeAdminMenus && (
+            <>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip={{ children: "Início" }}>
+                    <Link href={homeLink}>
+                      <Home />
+                      <span>Início</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild tooltip={{ children: "Mural" }}>
                     <Link href="/dashboard/mural">
@@ -107,77 +116,71 @@ export default function DashboardLayout({
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                    <SidebarMenuButton asChild tooltip={{ children: "Documentos" }}>
+                  <SidebarMenuButton asChild tooltip={{ children: "Documentos" }}>
                     <Link href="/dashboard/documents">
-                        <FileText />
-                        <span>Documentos</span>
-                    </Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-                 <SidebarMenuItem>
-                    <SidebarMenuButton asChild tooltip={{ children: "Caixa de Entrada" }}>
-                        <Link href="/dashboard/messages">
-                        <Mail />
-                        <span>Caixa de Entrada</span>
-                        </Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-              </>
-            )}
-            
-            {/* Card Studio only for full admins */}
-            {isFullAdmin && (
-                <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip={{ children: "Carteirinhas" }}>
-                    <Link href="/dashboard/card-studio">
-                    <CreditCard />
-                    <span>Carteirinhas</span>
-                    </Link>
-                </SidebarMenuButton>
-                </SidebarMenuItem>
-            )}
-          </SidebarMenu>
-
-          {/* Admin Group for Admins and Pastors */}
-          {canSeeAdminMenus && (
-            <SidebarGroup>
-              <SidebarGroupLabel>Administração</SidebarGroupLabel>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip={{ children: "Membros" }}>
-                    <Link href="/dashboard/members">
-                      <Users />
-                      <span>Membros</span>
+                      <FileText />
+                      <span>Documentos</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip={{ children: "Cadastrar Membro" }}>
-                    <Link href="/dashboard/members/new">
-                      <UserPlus />
-                      <span>Cadastrar Membro</span>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip={{ children: "Caixa de Entrada" }}>
+                    <Link href="/dashboard/messages">
+                      <Mail />
+                      <span>Caixa de Entrada</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-                 {/* Manage Admins only for full admins */}
                 {isFullAdmin && (
                   <SidebarMenuItem>
-                    <SidebarMenuButton asChild tooltip={{ children: "Gerenciar Administradores" }}>
-                      <Link href="#">
-                        <UserCog />
-                        <span>Gerenciar Admins</span>
+                    <SidebarMenuButton asChild tooltip={{ children: "Carteirinhas" }}>
+                      <Link href="/dashboard/card-studio">
+                        <CreditCard />
+                        <span>Carteirinhas</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 )}
               </SidebarMenu>
-            </SidebarGroup>
+
+              <SidebarGroup>
+                <SidebarGroupLabel>Administração</SidebarGroupLabel>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild tooltip={{ children: "Membros" }}>
+                      <Link href="/dashboard/members">
+                        <Users />
+                        <span>Membros</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild tooltip={{ children: "Cadastrar Membro" }}>
+                      <Link href="/dashboard/members/new">
+                        <UserPlus />
+                        <span>Cadastrar Membro</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  {isFullAdmin && (
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild tooltip={{ children: "Gerenciar Administradores" }}>
+                        <Link href="#">
+                          <UserCog />
+                          <span>Gerenciar Admins</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )}
+                </SidebarMenu>
+              </SidebarGroup>
+            </>
           )}
-          
+
           <SidebarGroup>
             <SidebarGroupLabel>Links Externos</SidebarGroupLabel>
             <SidebarMenu>
-               <SidebarMenuItem>
+              <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip={{ children: "Portal de Entrada" }}>
                   <Link href="/">
                     <Home />
@@ -241,8 +244,7 @@ export default function DashboardLayout({
 
         </SidebarContent>
         <SidebarFooter className="border-t border-sidebar-border">
-           <SidebarMenu>
-             {/* Settings for Admins and Pastors */}
+          <SidebarMenu>
             {canSeeAdminMenus && (
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip={{ children: "Configurações" }}>

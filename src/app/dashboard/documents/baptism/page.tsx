@@ -58,8 +58,8 @@ type ChurchInfo = {
 
 const defaultElements: DocElements = {
     'Logo': { position: { top: 7, left: 10 }, size: { width: 150, height: 150, fontSize: 12 }, src: '' },
-    'NomeMembro': { position: { top: 45, left: 50 }, size: { fontSize: 48, width: 800 }, text: 'Nome do Membro', fontFamily: "'Great Vibes', cursive", fontWeight: 'bold', textAlign: 'center', letterSpacing: '0.1em' },
-    'TextoPrincipal': { position: { top: 58, left: 50 }, size: { fontSize: 24, width: 945 }, text: 'Crendo e obedecendo...', textAlign: 'center', lineHeight: 1.7 },
+    'NomeMembro': { position: { top: 45, left: 50 }, size: { fontSize: 25, width: 800 }, text: 'Nome do Membro', fontFamily: "'Great Vibes', cursive", fontWeight: 'bold', textAlign: 'center', letterSpacing: '0.1em' },
+    'TextoPrincipal': { position: { top: 58, left: 50 }, size: { fontSize: 14, width: 945 }, text: 'Crendo e obedecendo...', textAlign: 'center', lineHeight: 1.7 },
     'AssinaturaPresidente': { position: { top: 85, left: 25 }, size: { width: 180, height: 50, fontSize: 12 }, src: '' },
     'LinhaPresidente': { position: { top: 95, left: 25}, size: { fontSize: 12, width: 250, height: 2 } },
     'NomePresidente': { position: { top: 97, left: 25 }, size: { fontSize: 10 }, text: 'Pastor Presidente', textAlign: 'center' },
@@ -198,30 +198,24 @@ export default function BaptismCertificatePage() {
             const genderTerm = selectedMember?.gender === 'Feminino' ? 'batizada' : 'batizado';
             const baptismDate = selectedMember?.dataBatismo ? format(selectedMember.dataBatismo.toDate ? selectedMember.dataBatismo.toDate() : new Date(selectedMember.dataBatismo), "d 'de' MMMM 'de' yyyy", { locale: ptBR }) : '___/___/______';
 
-            // DYNAMIC FONT SIZE FOR NAME
             const memberName = selectedMember?.nome || 'NOME DO MEMBRO';
             const formattedName = toTitleCase(memberName);
-            let nameFontSize = 48; // Default size
-            if (formattedName.length > 20) nameFontSize = 40;
-            if (formattedName.length > 25) nameFontSize = 34;
-            if (formattedName.length > 30) nameFontSize = 28;
-            if (formattedName.length > 35) nameFontSize = 24;
 
             // --- Force override styles to ensure they are applied ---
             if (initialElements['TextoPrincipal']) {
                 initialElements['TextoPrincipal'].size.width = 945; // Approx 25cm
-                initialElements['TextoPrincipal'].size.fontSize = 24;
+                initialElements['TextoPrincipal'].size.fontSize = 14; // User request
                 initialElements['TextoPrincipal'].textAlign = 'center';
                 initialElements['TextoPrincipal'].lineHeight = 1.7;
             }
             if (initialElements['NomeMembro']) {
                  initialElements['NomeMembro'].fontFamily = "'Great Vibes', cursive";
+                 initialElements['NomeMembro'].size.fontSize = 25; // User request
             }
             // --- End of style override ---
 
             initialElements['Logo'].src = churchInfo.baptismCertLogoUrl || churchInfo.conventionLogo1Url || PlaceHolderImages.find(p => p.id === 'church-logo')?.imageUrl || '';
             initialElements['NomeMembro'].text = formattedName;
-            initialElements['NomeMembro'].size.fontSize = nameFontSize; // Apply dynamic size
             initialElements['TextoPrincipal'].text = `Crendo e obedecendo as sagradas Escrituras e as doutrinas ensinadas por Jesus Cristo, foi ${genderTerm} sob profissão de fé em nome do Pai, do Filho e do Espírito Santo, no dia ${baptismDate} na Assembleia de Deus Kairós congregação de ${selectedMember?.congregacao || '____________'}.`;
             initialElements['AssinaturaPresidente'].src = churchInfo.pastorSignatureUrl || '';
             initialElements['NomePresidente'].text = churchInfo.pastorSignatureName || '____________________';

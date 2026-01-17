@@ -78,9 +78,9 @@ const getMemberDataForField = (currentMember: Member, fieldId: string): string |
         'Valor Nome': `Nome: ${currentMember.nome || ''}`,
         'Valor Nº Reg.': `Nº Reg.: ${currentMember.recordNumber || ''}`,
         'Valor CPF': `CPF: ${currentMember.cpf || ''}`,
-        'Valor Data de Batismo': `Data de Batismo: ${formatDate(currentMember.dataBatismo, 'dd/MM/yyyy') || 'Não informado'}`,
+        'Valor Data de Batismo': `Data de Batismo: ${formatDate(currentMember.dataBatismo, 'dd/MM/yyyy') || ''}`,
         'Valor Cargo': `Cargo: ${currentMember.cargo || ''}`,
-        'Membro Desde': `Membro desde: ${formatDate(currentMember.dataMembro, 'dd/MM/yyyy') || 'Não informado'}`,
+        'Membro Desde': `Membro desde: ${formatDate(currentMember.dataMembro, 'dd/MM/yyyy') || ''}`,
         'Congregação': currentMember.congregacao
     };
 
@@ -237,7 +237,38 @@ export default function MemberProfilePage() {
   useEffect(() => { setIsLoadingStates(true); fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome').then(res => res.json()).then(setBrazilianStates).catch(err => console.error("Failed to fetch states", err)).finally(() => setIsLoadingStates(false)); }, []);
   useEffect(() => { if (!selectedState) { setCities([]); return; } setIsLoadingCities(true); fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${selectedState}/municipios?orderBy=nome`).then(res => res.json()).then(setCities).catch(err => console.error("Failed to fetch cities", err)).finally(() => setIsLoadingCities(false)); }, [selectedState]);
   useEffect(() => { if (!addressState) { setAddressCities([]); return; } setIsLoadingAddressCities(true); fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${addressState}/municipios?orderBy=nome`).then(res => res.json()).then(setAddressCities).catch(err => console.error("Failed to fetch address cities", err)).finally(() => setIsLoadingAddressCities(false)); }, [addressState]);
-  useEffect(() => { if (isCurrentUserLoading || !authUser) return; if (currentUserData) { const isAdmin = currentUserData.cargo === 'Administrador'; if (memberLoading) return; if (member) { const isUserOwner = authUser.uid === member.id; const isPastorOfCongregation = currentUserData.cargo === 'Pastor/dirigente' && currentUserData.congregacao === member.congregacao; const canView = isUserOwner || isAdmin || isPastorOfCongregation; const canEdit = isUserOwner || isAdmin || isPastorOfCongregation; const canManage = isAdmin || isPastorOfCongregation; setPermission({ canView, canEdit, canManage, hasChecked: true }); } else if (!memberLoading) { setPermission({ canView: false, canEdit: false, canManage: false, hasChecked: true }); } } else if (!isCurrentUserLoading) { setPermission({ canView: false, canEdit: false, canManage: false, hasChecked: true }); } }, [authUser, currentUserData, member, isCurrentUserLoading, memberLoading]);
+  
+  useEffect(() => {
+    // While any data is loading, don't make a decision.
+    if (isUserLoading || isCurrentUserLoading || memberLoading) {
+      return;
+    }
+
+    // If there is no authenticated user, or their data is missing, deny all permissions.
+    if (!authUser || !currentUserData) {
+      setPermission({ canView: false, canEdit: false, canManage: false, hasChecked: true });
+      return;
+    }
+
+    // If we can't find the member being requested, deny permissions.
+    if (!member) {
+        setPermission({ canView: false, canEdit: false, canManage: false, hasChecked: true });
+        return;
+    }
+
+    // Now we have all the data, determine permissions.
+    const isAdmin = currentUserData.cargo === 'Administrador';
+    const isUserOwner = authUser.uid === member.id;
+    const isPastorOfCongregation = currentUserData.cargo === 'Pastor/dirigente' && currentUserData.congregacao === member.congregacao;
+
+    const canView = isUserOwner || isAdmin || isPastorOfCongregation;
+    const canEdit = isUserOwner || isAdmin || isPastorOfCongregation;
+    const canManage = isAdmin || isPastorOfCongregation;
+
+    setPermission({ canView, canEdit, canManage, hasChecked: true });
+
+  }, [authUser, currentUserData, member, isUserLoading, isCurrentUserLoading, memberLoading]);
+
   useEffect(() => { if (member) { memberForm.reset({ nome: member.nome || '', email: member.email || '', phone: member.phone || '', whatsapp: member.whatsapp || '', cep: member.cep || '', logradouro: member.logradouro || '', numero: member.numero || '', complemento: member.complemento || '', bairro: member.bairro || '', cidade: member.cidade || '', estado: member.estado || '', avatar: member.avatar || '', dataNascimento: formatDate(member.dataNascimento) || '', rg: member.rg || '', cpf: member.cpf || '', gender: member.gender || 'Masculino', maritalStatus: member.maritalStatus || 'Solteiro(a)', naturalness: member.naturalness || '', nationality: member.nationality || '', cargo: member.cargo || '', status: member.status || 'Pendente', congregacao: member.congregacao || '', dataBatismo: formatDate(member.dataBatismo) || '', dataMembro: formatDate(member.dataMembro) || '', recordNumber: member.recordNumber || '', responsiblePastor: member.responsiblePastor || '', }); if (member.naturalness && member.naturalness.includes('/')) { const [city, state] = member.naturalness.split('/'); setSelectedState(state); setSelectedCity(city); } else { setSelectedState(''); setSelectedCity(''); } if (member.estado) { setAddressState(member.estado); } else { setAddressState(''); } } }, [member, memberForm]);
   useEffect(() => { if (member?.naturalness && cities.length > 0) { const [city] = member.naturalness.split('/'); const cityExists = cities.some(c => c.nome === city); if (cityExists) { setSelectedCity(city); } } }, [cities, member]);
 

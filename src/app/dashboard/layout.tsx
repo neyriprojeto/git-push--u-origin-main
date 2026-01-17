@@ -76,7 +76,7 @@ export default function DashboardLayout({
     if (auth) {
       try {
         await signOut(auth);
-        router.push('/login');
+        router.push('/');
       } catch (error) {
         console.error("Error signing out: ", error);
         // Optionally, show a toast message on error

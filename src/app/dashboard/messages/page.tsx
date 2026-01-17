@@ -1,9 +1,8 @@
-
 'use client';
 
-import React from 'react';
-import { useUser, useFirestore, useMemoFirebase, useDoc, useCollection } from '@/firebase';
-import { doc, collection, query, where, orderBy, Timestamp, deleteDoc } from 'firebase/firestore';
+import React, { useEffect, useState } from 'react';
+import { useUser, useFirestore, useMemoFirebase, useDoc } from '@/firebase';
+import { doc, collection, query, where, orderBy, Timestamp, deleteDoc, getDocs } from 'firebase/firestore';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Loader2, ShieldAlert, Mail, Trash2, Inbox } from 'lucide-react';
@@ -35,33 +34,69 @@ export default function MessagesPage() {
     const userRef = useMemoFirebase(() => (firestore && authUser ? doc(firestore, 'users', authUser.uid) : null), [firestore, authUser]);
     const { data: userData, isLoading: isUserDataLoading } = useDoc<UserData>(userRef);
 
-    // Construct the query based on the user's role
-    const messagesQuery = useMemoFirebase(() => {
-        if (!firestore || !userData) return null;
+    const [messages, setMessages] = useState<Message[] | null>(null);
+    const [isLoadingMessages, setIsLoadingMessages] = useState(true);
 
-        const baseQuery = collection(firestore, 'messages');
+    useEffect(() => {
+        const fetchMessages = async () => {
+            if (!firestore || !userData || !['Administrador', 'Pastor/dirigente'].includes(userData.cargo || '')) {
+                setMessages([]);
+                setIsLoadingMessages(false);
+                return;
+            }
 
-        if (userData.cargo === 'Administrador') {
-            return query(baseQuery, orderBy('createdAt', 'desc'));
-        }
-        if (userData.cargo === 'Pastor/dirigente' && userData.congregacao) {
-            // Pastors can see messages to their congregation and to the general administration
-            return query(
-                baseQuery,
-                where('recipient', 'in', [userData.congregacao, 'Administração Geral']),
-                orderBy('createdAt', 'desc')
-            );
-        }
-        // For any other role, return a query that finds nothing
-        return query(baseQuery, where('recipient', '==', 'no-one'));
-    }, [firestore, userData]);
+            setIsLoadingMessages(true);
+            try {
+                const baseQuery = collection(firestore, 'messages');
+                let finalMessages: Message[] = [];
 
-    const { data: messages, isLoading: isLoadingMessages } = useCollection<Message>(messagesQuery);
+                if (userData.cargo === 'Administrador') {
+                    const adminQuery = query(baseQuery, orderBy('createdAt', 'desc'));
+                    const snapshot = await getDocs(adminQuery);
+                    finalMessages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message));
+                } else if (userData.cargo === 'Pastor/dirigente' && userData.congregacao) {
+                    const congregationQuery = query(baseQuery, where('recipient', '==', userData.congregacao));
+                    const adminMessagesQuery = query(baseQuery, where('recipient', '==', 'Administração Geral'));
+                    
+                    const [congregationSnapshot, adminSnapshot] = await Promise.all([
+                        getDocs(congregationQuery),
+                        getDocs(adminMessagesQuery)
+                    ]);
+
+                    const congregationMessages = congregationSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message));
+                    const adminMessages = adminSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message));
+                    
+                    finalMessages = [...congregationMessages, ...adminMessages];
+                    finalMessages.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+                }
+
+                setMessages(finalMessages);
+            } catch (error: any) {
+                 if (error.name === 'FirestoreError' && error.code === 'permission-denied') {
+                    // Error is already handled by global listener
+                 } else {
+                    console.error("Error fetching messages:", error);
+                    toast({
+                        variant: 'destructive',
+                        title: 'Erro ao carregar mensagens',
+                        description: 'Não foi possível buscar as mensagens. Tente novamente mais tarde.',
+                    });
+                 }
+                 setMessages(null);
+            } finally {
+                setIsLoadingMessages(false);
+            }
+        };
+
+        fetchMessages();
+    }, [firestore, userData, toast]);
+
     
     const handleDeleteMessage = async (messageId: string) => {
         if (!firestore) return;
         try {
             await deleteDoc(doc(firestore, 'messages', messageId));
+            setMessages(prev => prev ? prev.filter(m => m.id !== messageId) : null);
             toast({ title: 'Sucesso', description: 'Mensagem removida.' });
         } catch (error) {
             console.error("Error deleting message:", error);
@@ -69,7 +104,7 @@ export default function MessagesPage() {
         }
     };
 
-    const isLoading = isAuthUserLoading || isUserDataLoading || isLoadingMessages;
+    const isLoading = isAuthUserLoading || isUserDataLoading;
 
     if (isLoading) {
         return <div className="flex-1 h-screen flex items-center justify-center"><Loader2 className="h-16 w-16 animate-spin" /></div>;
@@ -92,7 +127,9 @@ export default function MessagesPage() {
                     <CardDescription>Mensagens enviadas por membros através do formulário de contato.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    {messages && messages.length > 0 ? (
+                    {isLoadingMessages ? (
+                         <div className="flex justify-center items-center py-10"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
+                    ) : messages && messages.length > 0 ? (
                         <Accordion type="single" collapsible className="w-full">
                             {messages.map(message => (
                                 <AccordionItem value={message.id} key={message.id}>

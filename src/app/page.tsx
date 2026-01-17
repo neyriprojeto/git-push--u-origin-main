@@ -228,7 +228,7 @@ export default function Home() {
           )}
           <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-center p-4 pb-20">
             <AppLogo className="h-12 w-12" />
-            <h1 className="text-xl md:text-2xl font-bold">Bem-vindo a AD Kairós</h1>
+            <h1 className="text-xl md:text-2xl font-bold">Bem-vindo a A.D.KAIROS CONNECT</h1>
           </div>
         </div>
 
@@ -424,5 +424,3 @@ export default function Home() {
     </div>
   );
 }
-
-    

@@ -546,16 +546,14 @@ export default function MemberProfilePage() {
     }
   };
 
-  // This function now explicitly depends on the member object
-  const renderElement = (currentMember: Member, id: string, el: ElementStyle) => {
+  const renderElement = (currentMember: Member, id: string, el: ElementStyle, textColors: CardTemplateData['textColors']) => {
     if (!el) return null;
     
     const isImage = 'src' in el;
     const isText = 'text' in el;
 
     let color = '#000000';
-    if (isText && templateData) {
-        const { textColors } = templateData;
+    if (isText && textColors) {
         const isTitle = id.includes('Título') || id === 'Congregação' || id === 'Endereço';
         const isBackText = id.includes('Assinatura') || id.includes('Validade') || id.includes('Membro Desde');
         
@@ -627,7 +625,7 @@ export default function MemberProfilePage() {
         return <div className="flex items-center justify-center h-full"><Loader2 className="animate-spin" /></div>;
     }
 
-    const { elements, cardStyles } = templateData;
+    const { elements = {}, cardStyles = { frontBackground: '#F3F4F6', backBackground: '#F3F4F6', frontBackgroundImage: '', backBackgroundImage: '' }, textColors = { title: '#000000', personalData: '#333333', backText: '#333333' } } = templateData || {};
 
     const backgroundStyle: React.CSSProperties = {
         backgroundColor: isFront ? cardStyles.frontBackground : cardStyles.backBackground,
@@ -650,10 +648,10 @@ export default function MemberProfilePage() {
             style={backgroundStyle}
         >
             {isFront ? (
-                frontElements.map(id => renderElement(currentMember, id, elements[id]))
+                frontElements.map(id => renderElement(currentMember, id, elements[id], textColors))
             ) : (
                 <>
-                {backElements.map(id => renderElement(currentMember, id, elements[id]))}
+                {backElements.map(id => renderElement(currentMember, id, elements[id], textColors))}
                 {signatureLineElement && (
                      <div 
                         style={{
@@ -766,7 +764,7 @@ export default function MemberProfilePage() {
         <div className="container mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
             <SidebarTrigger className="md:hidden" />
-            <h1 className="text-xl font-semibold text-primary">AD Kairós</h1>
+            <h1 className="text-xl font-semibold text-primary">A.D.KAIROS CONNECT</h1>
           </div>
           <Avatar>
              {avatar && <AvatarImage src={avatar.imageUrl} />}

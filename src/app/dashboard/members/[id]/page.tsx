@@ -22,8 +22,8 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useDoc, useFirestore, useMemoFirebase, useCollection, useUser, useAuth } from "@/firebase";
-import { doc, collection, getDoc, serverTimestamp, query, orderBy, Timestamp, where } from "firebase/firestore";
+import { useDoc, useFirestore, useMemoFirebase, useUser, useAuth } from "@/firebase";
+import { doc, collection, getDoc, serverTimestamp, query, orderBy, Timestamp, where, getDocs } from "firebase/firestore";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -50,7 +50,7 @@ interface Member { id: string; nome: string; email?: string; avatar?: string; re
 type Congregacao = { id: string; nome: string; pastorId?: string; pastorName?: string; };
 type Post = { id: string; title: string; content: string; authorId: string; authorName: string; authorAvatar?: string; imageUrl?: string; createdAt: Timestamp; };
 type ChurchInfo = { radioUrl?: string };
-type Reply = { authorId: string; authorName: string; body: string; createdAt: Timestamp; };
+type Reply = { authorId: string; authorName: string; body: string; attachmentUrl?: string; createdAt: Timestamp; };
 type Message = { id: string; senderId: string; senderName: string; recipientId: string; recipientName: string; subject: string; body: string; attachmentUrl?: string; createdAt: Timestamp; replies?: Reply[]; };
 
 
@@ -223,9 +223,9 @@ export default function MemberProfilePage() {
   const templateRef = useMemoFirebase(() => (firestore && authUser ? doc(firestore, 'cardTemplates', 'default') : null), [firestore, authUser]);
   const { data: templateData, isLoading: isTemplateLoading } = useDoc<CardTemplateData>(templateRef);
   const congregacoesCollection = useMemoFirebase(() => (firestore ? collection(firestore, 'congregacoes') : null), [firestore]);
-  const { data: congregacoes, isLoading: loadingCongregacoes } = useCollection<Congregacao>(congregacoesCollection);
+  const { data: congregacoes, isLoading: loadingCongregacoes } = useDoc<Congregacao[]>(congregacoesCollection as any);
   const postsCollection = useMemoFirebase(() => (firestore ? query(collection(firestore, 'posts'), orderBy('createdAt', 'desc')) : null), [firestore]);
-  const { data: posts, isLoading: isLoadingPosts } = useCollection<Post>(postsCollection);
+  const { data: posts, isLoading: isLoadingPosts } = useDoc<Post[]>(postsCollection as any);
   const churchInfoRef = useMemoFirebase(() => (firestore ? doc(firestore, 'churchInfo', 'main') : null), [firestore]);
   const { data: churchInfo, isLoading: loadingChurchInfo } = useDoc<ChurchInfo>(churchInfoRef);
 
@@ -238,6 +238,7 @@ export default function MemberProfilePage() {
   const [addressState, setAddressState] = useState('');
   const [addressCities, setAddressCities] = useState<{ nome: string }[]>([]);
   const [isLoadingAddressCities, setIsLoadingAddressCities] = useState(false);
+  const [selectedCity, setSelectedCity] = useState('');
 
   // Form handling
   const memberForm = useForm<MemberFormData>({ resolver: zodResolver(memberFormSchema), defaultValues: { nome: '', email: '', phone: '', whatsapp: '', cep: '', logradouro: '', numero: '', complemento: '', bairro: '', cidade: '', estado: '', avatar: '', dataNascimento: '', rg: '', cpf: '', gender: 'Masculino', maritalStatus: 'Solteiro(a)', naturalness: '', nationality: '', cargo: '', status: 'Pendente', congregacao: '', dataBatismo: '', dataMembro: '', recordNumber: '', responsiblePastor: '' }, });
@@ -278,7 +279,6 @@ export default function MemberProfilePage() {
 
   }, [authUser, currentUserData, member, isUserLoading, isCurrentUserLoading, memberLoading]);
 
-  const [selectedCity, setSelectedCity] = useState('');
   useEffect(() => { if (member) { memberForm.reset({ nome: member.nome || '', email: member.email || '', phone: member.phone || '', whatsapp: member.whatsapp || '', cep: member.cep || '', logradouro: member.logradouro || '', numero: member.numero || '', complemento: member.complemento || '', bairro: member.bairro || '', cidade: member.cidade || '', estado: member.estado || '', avatar: member.avatar || '', dataNascimento: formatDate(member.dataNascimento) || '', rg: member.rg || '', cpf: member.cpf || '', gender: member.gender || 'Masculino', maritalStatus: member.maritalStatus || 'Solteiro(a)', naturalness: member.naturalness || '', nationality: member.nationality || '', cargo: member.cargo || '', status: member.status || 'Pendente', congregacao: member.congregacao || '', dataBatismo: formatDate(member.dataBatismo) || '', dataMembro: formatDate(member.dataMembro) || '', recordNumber: member.recordNumber || '', responsiblePastor: member.responsiblePastor || '', }); if (member.naturalness && member.naturalness.includes('/')) { const [city, state] = member.naturalness.split('/'); setSelectedState(state); setSelectedCity(city); } else { setSelectedState(''); setSelectedCity(''); } if (member.estado) { setAddressState(member.estado); } else { setAddressState(''); } } }, [member, memberForm]);
   useEffect(() => { if (member?.naturalness && cities.length > 0) { const [city] = member.naturalness.split('/'); const cityExists = cities.some(c => c.nome === city); if (cityExists) { setSelectedCity(city); } } }, [cities, member]);
 
@@ -467,7 +467,7 @@ export default function MemberProfilePage() {
                         <FormField control={memberForm.control} name="recordNumber" render={({ field }) => (<FormItem><FormLabel>Nº da Ficha</FormLabel><FormControl><Input {...field} disabled={!permission.canManage} /></FormControl><FormMessage /></FormItem>)} />
                         <FormField control={memberForm.control} name="cargo" render={({ field }) => (<FormItem><FormLabel>Cargo Ministerial</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={!permission.canManage}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="Membro">Membro</SelectItem><SelectItem value="Cooperador(a)">Cooperador(a)</SelectItem><SelectItem value="Diácono(a)">Diácono(a)</SelectItem><SelectItem value="Presbítero">Presbítero</SelectItem><SelectItem value="Evangelista">Evangelista</SelectItem><SelectItem value="Missionário(a)">Missionário(a)</SelectItem><SelectItem value="Pastor(a)">Pastor(a)</SelectItem><SelectItem value="Pastor/dirigente">Pastor/dirigente</SelectItem><SelectItem value="Administrador">Administrador</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
                         <FormField control={memberForm.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={!permission.canManage}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="Ativo">Ativo</SelectItem><SelectItem value="Inativo">Inativo</SelectItem><SelectItem value="Pendente">Pendente</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
-                        <FormField control={memberForm.control} name="congregacao" render={({ field }) => (<FormItem><FormLabel>Congregação</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={loadingCongregacoes || !permission.canManage}><FormControl><SelectTrigger><SelectValue placeholder={loadingCongregacoes ? "Carregando..." : "Selecione a congregação"} /></SelectTrigger></FormControl><SelectContent>{congregacoes?.map((c) => <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
+                        <FormField control={memberForm.control} name="congregacao" render={({ field }) => (<FormItem><FormLabel>Congregação</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={loadingCongregacoes || !permission.canManage}><FormControl><SelectTrigger><SelectValue placeholder={loadingCongregacoes ? "Carregando..." : "Selecione a congregação"} /></SelectTrigger></FormControl><SelectContent>{congregacoes?.map((c: Congregacao) => <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
                         <FormField control={memberForm.control} name="dataMembro" render={({ field }) => (<FormItem><FormLabel>Data de Membresia</FormLabel><FormControl><Input type="date" {...field} disabled={!permission.canManage} /></FormControl><FormMessage /></FormItem>)} />
                         <FormField control={memberForm.control} name="dataBatismo" render={({ field }) => (<FormItem><FormLabel>Data de Batismo</FormLabel><FormControl><Input type="date" {...field} disabled={!permission.canManage} /></FormControl><FormMessage /></FormItem>)} />
                         <FormField control={memberForm.control} name="responsiblePastor" render={({ field }) => (<FormItem><FormLabel>Pastor Responsável</FormLabel><FormControl><Input {...field} placeholder="Nome do pastor" disabled={!permission.canManage} /></FormControl><FormMessage /></FormItem>)} />
@@ -523,7 +523,7 @@ export default function MemberProfilePage() {
     <ViewContainer title="Mural de Avisos">
         <div className="space-y-4">
             {isLoadingPosts ? (<div className="flex justify-center items-center py-10"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>) 
-            : posts && posts.length > 0 ? (posts.map((post) => { const avatar = getAvatar(post); return (
+            : posts && posts.length > 0 ? ((posts as Post[]).map((post) => { const avatar = getAvatar(post.authorAvatar as any); return (
                 <Card key={post.id}>
                     <CardHeader>
                         <div className="flex items-start gap-4">
@@ -574,7 +574,7 @@ export default function MemberProfilePage() {
             attachmentUrl = await uploadArquivo(attachment);
         }
 
-        const selectedCongregacao = congregacoes?.find(c => c.id === recipient);
+        const selectedCongregacao = (congregacoes as Congregacao[])?.find(c => c.id === recipient);
         
         let recipientId = 'ADMIN_GROUP';
         let recipientName = 'Administração Geral';
@@ -614,7 +614,7 @@ export default function MemberProfilePage() {
               <SelectTrigger id="recipient"><SelectValue placeholder="Selecione o destinatário" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="ADMIN">Administração Geral</SelectItem>
-                {congregacoes?.filter(c => c.pastorId).map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+                {(congregacoes as Congregacao[])?.filter(c => c.pastorId).map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -643,18 +643,43 @@ export default function MemberProfilePage() {
   };
 
   const MyMessagesView = () => {
-    const messagesQuery = useMemoFirebase(
-      () => (firestore && authUser ? query(collection(firestore, 'messages'), where('senderId', '==', authUser.uid), orderBy('createdAt', 'desc')) : null),
-      [firestore, authUser]
-    );
-    const { data: messages, isLoading: isLoadingMessages } = useCollection<Message>(messagesQuery);
+    const [messages, setMessages] = useState<Message[]>([]);
+    const [isLoadingMessages, setIsLoadingMessages] = useState(true);
+
+    useEffect(() => {
+        if (!firestore || !authUser) {
+            setIsLoadingMessages(false);
+            return;
+        }
+
+        const fetchMessages = async () => {
+            setIsLoadingMessages(true);
+            try {
+                const q = query(collection(firestore, 'messages'), where('senderId', '==', authUser.uid), orderBy('createdAt', 'desc'));
+                const querySnapshot = await getDocs(q);
+                const fetchedMessages = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message));
+                setMessages(fetchedMessages);
+            } catch (error) {
+                console.error("Error fetching messages:", error);
+                toast({
+                    variant: "destructive",
+                    title: "Erro ao carregar mensagens",
+                    description: "Não foi possível buscar suas mensagens. Tente recarregar a página."
+                });
+            } finally {
+                setIsLoadingMessages(false);
+            }
+        };
+
+        fetchMessages();
+    }, [firestore, authUser]);
 
     return (
         <ViewContainer title="Minhas Mensagens">
             <div className="space-y-4">
                 {isLoadingMessages ? (
                     <div className="flex justify-center items-center py-10"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
-                ) : messages && messages.length > 0 ? (
+                ) : messages.length > 0 ? (
                     <Accordion type="single" collapsible className="w-full">
                         {messages.map(message => (
                             <AccordionItem value={message.id} key={message.id}>
@@ -706,6 +731,16 @@ export default function MemberProfilePage() {
                                                             </p>
                                                         </div>
                                                         <p className="text-sm text-muted-foreground whitespace-pre-wrap mt-1">{reply.body}</p>
+                                                        {reply.attachmentUrl && (
+                                                            <div className="pt-2">
+                                                                <Button asChild variant="link" className="p-0 h-auto text-left text-xs">
+                                                                    <a href={reply.attachmentUrl} target="_blank" rel="noopener noreferrer" className="truncate">
+                                                                        <Paperclip className="mr-2 h-3 w-3 shrink-0" /> 
+                                                                        <span className="truncate">{reply.attachmentUrl.split('/').pop()?.split('?')[0]}</span>
+                                                                    </a>
+                                                                </Button>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             ))}
@@ -774,4 +809,3 @@ export default function MemberProfilePage() {
   );
 }
 
-    

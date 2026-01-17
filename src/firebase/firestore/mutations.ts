@@ -1,6 +1,6 @@
 
 'use client';
-import { addDoc, collection, deleteDoc, doc, Firestore, serverTimestamp, setDoc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, Firestore, serverTimestamp, setDoc, updateDoc, arrayUnion, Timestamp } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
@@ -225,7 +225,7 @@ export const addReplyToMessage = async (firestore: Firestore, messageId: string,
     const dataToUpdate = {
         replies: arrayUnion({
             ...replyData,
-            createdAt: serverTimestamp()
+            createdAt: Timestamp.now()
         })
     };
     

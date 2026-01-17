@@ -8,13 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AppLogo } from "@/components/icons";
 import { useState } from "react";
-import { signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail } from "firebase/auth";
 import { useAuth, useFirestore } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { Eye, EyeOff } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -25,6 +26,51 @@ export default function LoginPage() {
   const auth = useAuth();
   const firestore = useFirestore();
   const router = useRouter();
+  
+  const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [isSendingReset, setIsSendingReset] = useState(false);
+
+  const handlePasswordReset = async () => {
+    if (!auth) {
+        toast({
+            variant: "destructive",
+            title: "Erro de autenticação",
+            description: "Serviço de autenticação não disponível.",
+        });
+        return;
+    }
+    if (!resetEmail) {
+        toast({
+            variant: "destructive",
+            title: "Campo obrigatório",
+            description: "Por favor, insira seu e-mail.",
+        });
+        return;
+    }
+    setIsSendingReset(true);
+    try {
+        await sendPasswordResetEmail(auth, resetEmail);
+        toast({
+            title: "E-mail enviado!",
+            description: "Verifique sua caixa de entrada para redefinir sua senha.",
+        });
+        setIsResetDialogOpen(false);
+        setResetEmail("");
+    } catch (error: any) {
+        let description = "Ocorreu um erro. Tente novamente.";
+        if (error.code === 'auth/user-not-found') {
+            description = "Nenhuma conta encontrada com este e-mail.";
+        }
+        toast({
+            variant: "destructive",
+            title: "Falha ao enviar e-mail",
+            description: description,
+        });
+    } finally {
+        setIsSendingReset(false);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -222,9 +268,39 @@ export default function LoginPage() {
                 <div className="space-y-2">
                   <div className="flex items-center">
                       <Label htmlFor="password">Senha</Label>
-                      <Link href="#" className="ml-auto inline-block text-sm underline">
-                      Esqueceu sua senha?
-                      </Link>
+                      <Dialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
+                          <DialogTrigger asChild>
+                              <button type="button" className="ml-auto inline-block text-sm underline">
+                                  Esqueceu sua senha?
+                              </button>
+                          </DialogTrigger>
+                          <DialogContent>
+                              <DialogHeader>
+                                  <DialogTitle>Redefinir Senha</DialogTitle>
+                                  <DialogDescription>
+                                      Digite seu e-mail abaixo para receber um link de redefinição de senha.
+                                  </DialogDescription>
+                              </DialogHeader>
+                              <div className="space-y-4 py-4">
+                                  <div className="space-y-2">
+                                      <Label htmlFor="reset-email">Email</Label>
+                                      <Input
+                                          id="reset-email"
+                                          type="email"
+                                          placeholder="membro@email.com"
+                                          value={resetEmail}
+                                          onChange={(e) => setResetEmail(e.target.value)}
+                                          disabled={isSendingReset}
+                                      />
+                                  </div>
+                              </div>
+                              <DialogFooter>
+                                  <Button onClick={handlePasswordReset} disabled={isSendingReset}>
+                                      {isSendingReset ? 'Enviando...' : 'Enviar Link de Redefinição'}
+                                  </Button>
+                              </DialogFooter>
+                          </DialogContent>
+                      </Dialog>
                   </div>
                   <div className="relative">
                     <Input 

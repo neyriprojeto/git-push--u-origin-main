@@ -142,7 +142,8 @@ service cloud.firestore {
      */
     match /churchInfo/{churchInfoId} {
       allow get, list: if true;
-      allow create, update, delete: if isAdmin();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || isPastor();
     }
     
     /**

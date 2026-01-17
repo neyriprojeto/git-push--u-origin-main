@@ -42,6 +42,7 @@ type ElementStyle = {
     color?: string;
     letterSpacing?: string;
     lineHeight?: number;
+    fontStyle?: 'normal' | 'italic';
 };
 type DocElements = { [key: string]: ElementStyle };
 
@@ -57,8 +58,8 @@ type ChurchInfo = {
 
 const defaultElements: DocElements = {
     'Logo': { position: { top: 7, left: 10 }, size: { width: 150, height: 150, fontSize: 12 }, src: '' },
-    'NomeMembro': { position: { top: 45, left: 50 }, size: { fontSize: 42 }, text: 'Nome do Membro', fontFamily: "'Times New Roman', Times, serif", fontWeight: 'bold', textAlign: 'center', letterSpacing: '0.1em' },
-    'TextoPrincipal': { position: { top: 60, left: 50 }, size: { fontSize: 12 }, text: 'Crendo e obedecendo...', textAlign: 'center', lineHeight: 1.6 },
+    'NomeMembro': { position: { top: 45, left: 50 }, size: { fontSize: 42 }, text: 'Nome do Membro', fontFamily: "'Great Vibes', cursive", fontWeight: 'bold', textAlign: 'center', letterSpacing: '0.1em' },
+    'TextoPrincipal': { position: { top: 60, left: 50 }, size: { fontSize: 12 }, text: 'Crendo e obedecendo...', textAlign: 'center', lineHeight: 2.2 },
     'AssinaturaPresidente': { position: { top: 78, left: 25 }, size: { width: 180, height: 50, fontSize: 12 }, src: '' },
     'LinhaPresidente': { position: { top: 90, left: 25}, size: { fontSize: 12, width: 250, height: 2 } },
     'NomePresidente': { position: { top: 92, left: 25 }, size: { fontSize: 10 }, text: 'Pastor Presidente', textAlign: 'center' },
@@ -116,12 +117,13 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
         }
 
         return (
-            <p key={id} style={style} onClick={(e) => {e.stopPropagation(); onElementClick(id); }}
-                 className={cn(
+            <p key={id} style={style} onClick={(e) => { e.stopPropagation(); onElementClick(id); }} 
+                className={cn(
                     // Apply nowrap for the name to prevent line breaks
                     id === 'NomeMembro' ? 'whitespace-nowrap' : 'whitespace-pre-wrap', 
                     { 'ring-2 ring-blue-500 p-1': selectedElementId === id }
-                )}>
+                )}
+            >
                 {el.text}
             </p>
         );
@@ -188,7 +190,7 @@ export default function BaptismCertificatePage() {
             const baptismDate = selectedMember?.dataBatismo ? format(selectedMember.dataBatismo.toDate ? selectedMember.dataBatismo.toDate() : new Date(selectedMember.dataBatismo), "d 'de' MMMM 'de' yyyy", { locale: ptBR }) : '___/___/______';
 
             // DYNAMIC FONT SIZE FOR NAME
-            const memberName = selectedMember?.nome.toUpperCase() || 'NOME DO MEMBRO';
+            const memberName = selectedMember?.nome || 'NOME DO MEMBRO';
             let nameFontSize = 42; // Default size
             if (memberName.length > 20) nameFontSize = 36;
             if (memberName.length > 25) nameFontSize = 30;

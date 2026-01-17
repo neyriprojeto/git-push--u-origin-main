@@ -212,8 +212,8 @@ service cloud.firestore {
      */
     match /messages/{messageId} {
       allow create: if isSignedIn();
-      allow get: if isAdmin() || (isPastor() && resource.data.recipient in [getRequestingUserData().congregacao, 'Administração Geral']);
-      allow list: if isAdmin() || isPastor();
+      allow get: if isAdmin() || (isPastor() && 'congregacao' in getRequestingUserData() && resource.data.recipient in [getRequestingUserData().congregacao, 'Administração Geral']);
+      allow list: if isAdmin() || (isPastor() && 'congregacao' in getRequestingUserData());
       allow update, delete: if isAdmin();
     }
   }

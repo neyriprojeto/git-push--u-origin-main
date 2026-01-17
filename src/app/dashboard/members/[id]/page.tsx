@@ -17,37 +17,27 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
-import { User, CreditCard, FileText, MessageSquare, BookOpen, RefreshCw, Loader2, LayoutGrid, Save, Upload, ShieldAlert, Trash2, ArrowLeft } from "lucide-react";
-import { bibleVerses } from "@/data/bible-verses";
+import { Loader2, Save, Upload, ShieldAlert, Trash2 } from "lucide-react";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { useDoc, useFirestore, useMemoFirebase, useCollection, useUser } from "@/firebase";
-import { doc, collection, getDoc, query, orderBy, Timestamp } from "firebase/firestore";
+import { doc, collection, getDoc } from "firebase/firestore";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { updateMember, addMessage } from "@/firebase/firestore/mutations";
+import { updateMember } from "@/firebase/firestore/mutations";
 import { deleteUser } from '@/ai/flows/delete-user-flow';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Slider } from '@/components/ui/slider';
 import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
-import { uploadArquivo } from '@/lib/cloudinary';
-import { Textarea } from "@/components/ui/textarea";
 import Link from "next/link";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
-
-type Verse = {
-  book: string;
-  chapter: number;
-  verse: number;
-  text: string;
-};
 
 // --- Tipos para a Carteirinha do Studio ---
 type ElementStyle = {
@@ -107,25 +97,6 @@ interface Member {
     responsiblePastor?: string;
 }
 
-interface ChurchInfo {
-  instagramUrl?: string;
-  youtubeUrl?: string;
-  websiteUrl?: string;
-  radioUrl?: string;
-  radioPageUrl?: string;
-}
-
-type Post = {
-  id: string;
-  title: string;
-  content: string;
-  authorId: string;
-  authorName: string;
-  authorAvatar?: string;
-  imageUrl?: string;
-  createdAt: Timestamp;
-};
-
 const memberFormSchema = z.object({
   nome: z.string().min(2, "Nome é obrigatório"),
   email: z.string().email("E-mail inválido").optional(),
@@ -162,15 +133,8 @@ const memberFormSchema = z.object({
   responsiblePastor: z.string().optional(),
 });
 
-const messageFormSchema = z.object({
-  destinatario: z.string({ required_error: 'Selecione um destinatário' }),
-  assunto: z.string().min(3, 'O assunto é muito curto.'),
-  mensagem: z.string().min(10, 'A mensagem é muito curta.'),
-});
-
 
 type MemberFormData = z.infer<typeof memberFormSchema>;
-type MessageFormData = z.infer<typeof messageFormSchema>;
 
 type Congregacao = {
     id: string;
@@ -234,8 +198,6 @@ export default function MemberProfilePage() {
   const { user: authUser, isUserLoading } = useUser();
   const router = useRouter();
   const { toast } = useToast();
-
-  const isOwner = authUser?.uid === memberId;
   
   const currentUserRef = useMemoFirebase(() => (firestore && authUser ? doc(firestore, 'users', authUser.uid) : null), [firestore, authUser]);
   const { data: currentUserData, isLoading: isCurrentUserLoading } = useDoc<Member>(currentUserRef);
@@ -246,26 +208,14 @@ export default function MemberProfilePage() {
   const templateRef = useMemoFirebase(() => firestore ? doc(firestore, 'cardTemplates', 'default') : null, [firestore]);
   const { data: templateData, isLoading: isTemplateLoading } = useDoc<CardTemplateData>(templateRef);
 
-  const churchInfoRef = useMemoFirebase(() => (firestore ? doc(firestore, 'churchInfo', 'main') : null), [firestore]);
-  const { data: churchInfo, isLoading: isChurchInfoLoading } = useDoc<ChurchInfo>(churchInfoRef);
-
   const congregacoesCollection = useMemoFirebase(
     () => (firestore ? collection(firestore, 'congregacoes') : null),
     [firestore]
   );
   const { data: congregacoes, isLoading: loadingCongregacoes } = useCollection<Congregacao>(congregacoesCollection);
 
-  const postsCollection = useMemoFirebase(
-    () => (firestore ? query(collection(firestore, 'posts'), orderBy('createdAt', 'desc')) : null),
-    [firestore]
-  );
-  const { data: posts, isLoading: isLoadingPosts } = useCollection<Post>(postsCollection);
-
-  const [verse, setVerse] = useState<Verse | null>(null);
   const [isCardFlipped, setIsCardFlipped] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSendingMessage, setIsSendingMessage] = useState(false);
-  const [activeView, setActiveView] = useState<string | null>(null);
   
   const [permission, setPermission] = useState<{ canView: boolean, canEdit: boolean, canManage: boolean, hasChecked: boolean }>({
     canView: false,
@@ -273,13 +223,6 @@ export default function MemberProfilePage() {
     canManage: false,
     hasChecked: false,
   });
-
-  const navItems = [
-      { id: 'perfil', title: 'Meu Perfil', description: 'Veja e atualize suas informações pessoais.', icon: User },
-      { id: 'mural', title: 'Mural de Avisos', description: 'Fique por dentro das últimas notícias e comunicados.', icon: LayoutGrid },
-      { id: 'carteirinha', title: 'Minha Carteirinha', description: 'Acesse e visualize sua carteirinha digital.', icon: CreditCard },
-      { id: 'contato', title: 'Fale Conosco', description: 'Envie uma mensagem para a administração.', icon: MessageSquare },
-  ];
 
   // State for image cropping
     const [crop, setCrop] = useState<Crop>();
@@ -313,15 +256,6 @@ export default function MemberProfilePage() {
       maritalStatus: 'Solteiro(a)', naturalness: '', nationality: '',
       cargo: '', status: 'Pendente', congregacao: '', dataBatismo: '',
       dataMembro: '', recordNumber: '', responsiblePastor: ''
-    },
-  });
-
-   const messageForm = useForm<MessageFormData>({
-    resolver: zodResolver(messageFormSchema),
-    defaultValues: {
-      destinatario: '',
-      assunto: '',
-      mensagem: '',
     },
   });
 
@@ -477,31 +411,6 @@ export default function MemberProfilePage() {
     }
   };
   
-  const onMessageSubmit: SubmitHandler<MessageFormData> = async (data) => {
-    if (!firestore || !authUser || !currentUserData) {
-       toast({ variant: "destructive", title: "Erro", description: "Você precisa estar logado para enviar uma mensagem." });
-      return;
-    }
-    setIsSendingMessage(true);
-    try {
-      const messageData = {
-        senderId: authUser.uid,
-        senderName: currentUserData.nome,
-        recipient: data.destinatario,
-        subject: data.assunto,
-        body: data.mensagem,
-      };
-      await addMessage(firestore, messageData);
-      toast({ title: "Sucesso!", description: "Sua mensagem foi enviada." });
-      messageForm.reset();
-    } catch (error) {
-      console.error("Send message error: ", error);
-      toast({ variant: "destructive", title: "Erro", description: "Não foi possível enviar sua mensagem." });
-    } finally {
-      setIsSendingMessage(false);
-    }
-  };
-
   const handleDelete = async () => {
     if (!memberId) return;
     
@@ -536,16 +445,6 @@ export default function MemberProfilePage() {
     }
   }
 
-
-  const selectRandomVerse = useCallback(() => {
-    const randomVerse = bibleVerses[Math.floor(Math.random() * bibleVerses.length)];
-    setVerse(randomVerse);
-  }, []);
-
-  useEffect(() => {
-    selectRandomVerse();
-  }, [selectRandomVerse]);
-
   const getAvatar = (avatarId?: string): { imageUrl: string } | undefined => {
     if (!avatarId) {
       return PlaceHolderImages.find((p) => p.id === 'member-avatar-1');
@@ -554,13 +453,6 @@ export default function MemberProfilePage() {
         return { imageUrl: avatarId };
     }
     return PlaceHolderImages.find((p) => p.id === avatarId);
-  }
-  
-  const getPostAvatar = (post: Post) => {
-    if (post.authorAvatar && post.authorAvatar.startsWith('http')) {
-        return { imageUrl: post.authorAvatar };
-    }
-    return PlaceHolderImages.find((p) => p.id === post.authorAvatar);
   }
 
   const onSelectFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -629,7 +521,7 @@ export default function MemberProfilePage() {
   }
 
 
-  const isLoading = isUserLoading || isCurrentUserLoading || memberLoading || isTemplateLoading || !permission.hasChecked || isChurchInfoLoading;
+  const isLoading = isUserLoading || isCurrentUserLoading || memberLoading || isTemplateLoading || !permission.hasChecked;
 
   // This function now explicitly depends on the member object
   const getMemberDataForField = (currentMember: Member, fieldId: string) => {
@@ -829,154 +721,95 @@ export default function MemberProfilePage() {
 
   const avatar = getAvatar(member.avatar);
 
-  const renderActiveView = () => {
-    switch (activeView) {
-      case 'mural':
-        return (
-          <Card className="mt-4">
-            <CardHeader>
-              <CardTitle>Mural de Avisos</CardTitle>
-              <CardDescription>Fique por dentro das últimas notícias da comunidade.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {isLoadingPosts ? (
-                <div className="flex justify-center items-center py-10">
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+  return (
+    <div className="flex-1 space-y-4 bg-secondary">
+       <Dialog open={isCropping} onOpenChange={setIsCropping}>
+            <DialogContent className="max-w-md">
+                <DialogHeader>
+                    <DialogTitle>Editar Foto de Perfil</DialogTitle>
+                </DialogHeader>
+                <div className='flex items-center justify-center p-4 bg-muted/20'>
+                    {!!imageToCrop && (
+                        <ReactCrop
+                            crop={crop}
+                            onChange={(_, percentCrop) => setCrop(percentCrop)}
+                            onComplete={(c) => setCompletedCrop(c)}
+                            aspect={1}
+                            className='max-w-full'
+                        >
+                            <Image
+                                ref={imgRef}
+                                alt="Recortar imagem"
+                                src={imageToCrop}
+                                onLoad={onImageLoad}
+                                width={400}
+                                height={400}
+                                className="max-h-[60vh] object-contain"
+                            />
+                        </ReactCrop>
+                    )}
                 </div>
-              ) : posts && posts.length > 0 ? (
-                  posts.map((post) => {
-                      const avatarMural = getPostAvatar(post);
-                      return (
-                          <Card key={post.id} className="shadow-none border">
-                          <CardHeader>
-                              <div className="flex items-start gap-4">
-                              <Avatar className="h-10 w-10 border">
-                                  {avatarMural && <AvatarImage src={avatarMural.imageUrl} alt={post.authorName} />}
-                                  <AvatarFallback>{post.authorName.charAt(0)}</AvatarFallback>
-                              </Avatar>
-                              <div className="grid gap-0.5 flex-1">
-                                  <CardTitle className="text-lg">{post.title}</CardTitle>
-                                  <CardDescription>
-                                  Por {post.authorName} em {post.createdAt?.toDate().toLocaleDateString('pt-BR')}
-                                  </CardDescription>
-                              </div>
-                              </div>
-                          </CardHeader>
-                          <CardContent>
-                              {post.imageUrl && (
-                                <div className="mb-4 relative aspect-video w-full rounded-md overflow-hidden">
-                                  <Image src={post.imageUrl} alt={post.title} layout="fill" objectFit="cover" />
-                                </div>
-                              )}
-                              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{post.content}</p>
-                          </CardContent>
-                          </Card>
-                      )
-                  })
-              ) : (
-                <div className="p-8 text-center text-muted-foreground border-dashed border-2 rounded-md">
-                  <p>Nenhuma postagem no mural ainda.</p>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsCropping(false)}>Cancelar</Button>
+                    <Button onClick={saveCroppedImage} disabled={isUploading}>
+                        {isUploading ? <Loader2 className="animate-spin mr-2"/> : <Save className="mr-2 h-4 w-4"/>}
+                        {isUploading ? 'Salvando...' : 'Salvar Foto'}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
+        <canvas ref={previewCanvasRef} style={{ display: 'none' }} />
+
+      <div className="bg-card p-4 shadow-sm border-b">
+        <div className="container mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <SidebarTrigger className="md:hidden" />
+            <h1 className="text-xl font-semibold text-primary">AD Kairós</h1>
+          </div>
+          <Avatar>
+             {avatar && <AvatarImage src={avatar.imageUrl} />}
+            <AvatarFallback>{member.nome.charAt(0)}</AvatarFallback>
+          </Avatar>
+        </div>
+      </div>
+
+      <div className="container mx-auto space-y-6 pb-8">
+            <div className="flex flex-col items-center pt-8 space-y-4">
+                <Avatar className="h-32 w-32 border-4 border-background shadow-lg">
+                    {avatar && <AvatarImage src={avatar.imageUrl} alt={member.nome} />}
+                    <AvatarFallback className="text-4xl">{member.nome.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div className="text-center">
+                    <h1 className="text-2xl font-bold">{member.nome}</h1>
+                    <Badge variant={member.status === "Ativo" ? "default" : member.status === "Pendente" ? "outline" : "destructive"}>
+                        {member.status}
+                    </Badge>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        );
-      case 'carteirinha':
-        return (
-          <Card className="mt-4">
-            <CardHeader>
-              <CardTitle>Minha Carteirinha Digital</CardTitle>
-              <CardDescription>Clique na carteirinha para visualizar o verso.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex justify-center items-center">
-              <div 
-                  className="max-w-lg mx-auto flip-card-container cursor-pointer aspect-[85.6/54]"
-                  onClick={() => setIsCardFlipped(!isCardFlipped)}
-              >
-                  <div className={cn("flip-card w-full h-full", { 'flipped': isCardFlipped })}>
-                      <div className="flip-card-front">
-                          <StudioCard isFront={true} currentMember={member} />
-                      </div>
-                      <div className="flip-card-back">
+            </div>
+
+            <Card>
+                <CardHeader>
+                <CardTitle>Minha Carteirinha Digital</CardTitle>
+                <CardDescription>Clique na carteirinha para visualizar o verso.</CardDescription>
+                </CardHeader>
+                <CardContent className="flex justify-center items-center">
+                <div 
+                    className="max-w-lg mx-auto flip-card-container cursor-pointer aspect-[85.6/54]"
+                    onClick={() => setIsCardFlipped(!isCardFlipped)}
+                >
+                    <div className={cn("flip-card w-full h-full", { 'flipped': isCardFlipped })}>
+                        <div className="flip-card-front">
+                            <StudioCard isFront={true} currentMember={member} />
+                        </div>
+                        <div className="flip-card-back">
                             <StudioCard isFront={false} currentMember={member} />
-                      </div>
-                  </div>
-              </div>
-            </CardContent>
-          </Card>
-        );
-      case 'contato':
-        return (
-          <Card className="mt-4">
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <MessageSquare className="h-5 w-5"/>
-                    Fale com a Administração
-                </CardTitle>
-                <CardDescription>Envie sua mensagem, dúvida, ou anexe um documento.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <Form {...messageForm}>
-                  <form onSubmit={messageForm.handleSubmit(onMessageSubmit)} className="space-y-4">
-                      <FormField
-                          control={messageForm.control}
-                          name="destinatario"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Enviar para</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value} disabled={loadingCongregacoes}>
-                                  <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder={loadingCongregacoes ? "Carregando..." : "Selecione o destinatário"} />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                      <SelectItem value="Administração Geral">Administração Geral</SelectItem>
-                                      {congregacoes?.map(c => <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>)}
-                                  </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      <FormField
-                          control={messageForm.control}
-                          name="assunto"
-                          render={({ field }) => (
-                              <FormItem>
-                                  <FormLabel>Assunto</FormLabel>
-                                  <FormControl>
-                                      <Input placeholder="Sobre o que você quer falar?" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                              </FormItem>
-                          )}
-                      />
-                      <FormField
-                          control={messageForm.control}
-                          name="mensagem"
-                          render={({ field }) => (
-                              <FormItem>
-                                  <FormLabel>Mensagem</FormLabel>
-                                  <FormControl>
-                                      <Textarea placeholder="Digite sua mensagem aqui..." {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                              </FormItem>
-                          )}
-                      />
-                      <Button type="submit" disabled={isSendingMessage}>
-                        {isSendingMessage ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
-                        {isSendingMessage ? 'Enviando...' : 'Enviar Mensagem'}
-                      </Button>
-                  </form>
-                </Form>
-            </CardContent>
-          </Card>
-        );
-      case 'perfil':
-      default:
-        return (
+                        </div>
+                    </div>
+                </div>
+                </CardContent>
+            </Card>
+
             <Card>
                 <CardHeader>
                     <CardTitle>Meus Dados</CardTitle>
@@ -1310,124 +1143,7 @@ export default function MemberProfilePage() {
                      </Form>
                 </CardContent>
             </Card>
-        );
-    }
-  };
-
-  return (
-    <div className="flex-1 space-y-4 bg-secondary">
-       <Dialog open={isCropping} onOpenChange={setIsCropping}>
-            <DialogContent className="max-w-md">
-                <DialogHeader>
-                    <DialogTitle>Editar Foto de Perfil</DialogTitle>
-                </DialogHeader>
-                <div className='flex items-center justify-center p-4 bg-muted/20'>
-                    {!!imageToCrop && (
-                        <ReactCrop
-                            crop={crop}
-                            onChange={(_, percentCrop) => setCrop(percentCrop)}
-                            onComplete={(c) => setCompletedCrop(c)}
-                            aspect={1}
-                            className='max-w-full'
-                        >
-                            <Image
-                                ref={imgRef}
-                                alt="Recortar imagem"
-                                src={imageToCrop}
-                                onLoad={onImageLoad}
-                                width={400}
-                                height={400}
-                                className="max-h-[60vh] object-contain"
-                            />
-                        </ReactCrop>
-                    )}
-                </div>
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsCropping(false)}>Cancelar</Button>
-                    <Button onClick={saveCroppedImage} disabled={isUploading}>
-                        {isUploading ? <Loader2 className="animate-spin mr-2"/> : <Save className="mr-2 h-4 w-4"/>}
-                        {isUploading ? 'Salvando...' : 'Salvar Foto'}
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-
-        <canvas ref={previewCanvasRef} style={{ display: 'none' }} />
-
-      <div className="bg-card p-4 shadow-sm border-b">
-        <div className="container mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <SidebarTrigger className="md:hidden" />
-            <h1 className="text-xl font-semibold text-primary">AD Kairós</h1>
-          </div>
-          <Avatar>
-             {avatar && <AvatarImage src={avatar.imageUrl} />}
-            <AvatarFallback>{member.nome.charAt(0)}</AvatarFallback>
-          </Avatar>
-        </div>
-      </div>
-
-      <div className="container mx-auto space-y-6 pb-8">
-        {!activeView ? (
-          <>
-            <Card>
-              <CardHeader>
-                <CardTitle>Bem-vindo(a), {member.nome.split(' ')[0]}!</CardTitle>
-                <CardDescription>
-                    Este é o seu espaço central para interagir com as funcionalidades da igreja. Use o menu de navegação para explorar.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-            
-            {verse && (
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center justify-between text-lg">
-                        <div className="flex items-center gap-2">
-                            <BookOpen className="h-5 w-5 text-primary" />
-                            Promessa do Dia
-                        </div>
-                        <Button variant="ghost" size="icon" onClick={selectRandomVerse} className="h-8 w-8">
-                            <RefreshCw className="h-4 w-4" />
-                            <span className="sr-only">Nova Promessa</span>
-                        </Button>
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <blockquote className="border-l-4 border-primary pl-4 italic">
-                        <p className="mb-2 text-xl md:text-2xl text-primary">"{verse.text}"</p>
-                        <footer className="text-sm font-semibold not-italic">
-                            - {verse.book} {verse.chapter}:{verse.verse}
-                        </footer>
-                        </blockquote>
-                    </CardContent>
-                </Card>
-            )}
-
-            <div className="space-y-4 pt-4">
-              {navItems.map((item) => (
-                  <div key={item.id} onClick={() => setActiveView(item.id)} className="flex items-center justify-between rounded-lg border bg-card text-card-foreground shadow-sm p-6 cursor-pointer hover:bg-accent transition-colors">
-                      <div className="space-y-1">
-                          <p className="text-xl font-semibold">{item.title}</p>
-                          <p className="text-sm text-muted-foreground">{item.description}</p>
-                      </div>
-                      <item.icon className="h-8 w-8 text-muted-foreground" />
-                  </div>
-              ))}
-            </div>
-
-          </>
-        ) : (
-          <div>
-            <Button variant="ghost" onClick={() => setActiveView(null)} className="mb-4">
-                <ArrowLeft className="mr-2 h-4 w-4" /> Voltar ao Painel
-            </Button>
-            {renderActiveView()}
-          </div>
-        )}
       </div>
     </div>
   );
 }
-
-    

@@ -5,7 +5,7 @@ import { useUser, useFirestore, useMemoFirebase, useDoc } from '@/firebase';
 import { doc, collection, query, where, orderBy, Timestamp, deleteDoc, getDocs } from 'firebase/firestore';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Loader2, ShieldAlert, Mail, Trash2, Inbox } from 'lucide-react';
+import { Loader2, ShieldAlert, Mail, Trash2, Inbox, Paperclip, Send } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -13,8 +13,17 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
+import { addReplyToMessage } from '@/firebase/firestore/mutations';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
-type UserData = { cargo?: string; congregacao?: string; };
+type UserData = { cargo?: string; congregacao?: string; nome?: string };
+type Reply = {
+    authorId: string;
+    authorName: string;
+    body: string;
+    createdAt: Timestamp;
+};
 type Message = {
     id: string;
     senderId: string;
@@ -22,7 +31,9 @@ type Message = {
     recipient: string;
     subject: string;
     body: string;
+    attachmentUrl?: string;
     createdAt: Timestamp;
+    replies?: Reply[];
 };
 
 export default function MessagesPage() {
@@ -36,6 +47,8 @@ export default function MessagesPage() {
 
     const [messages, setMessages] = useState<Message[] | null>(null);
     const [isLoadingMessages, setIsLoadingMessages] = useState(true);
+    const [replyText, setReplyText] = useState<Record<string, string>>({});
+    const [isReplying, setIsReplying] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchMessages = async () => {
@@ -91,7 +104,48 @@ export default function MessagesPage() {
         fetchMessages();
     }, [firestore, userData, toast]);
 
+    const handleReplyChange = (messageId: string, text: string) => {
+        setReplyText(prev => ({ ...prev, [messageId]: text }));
+    };
+
+    const handleReplySubmit = async (message: Message) => {
+        if (!firestore || !authUser || !userData) return;
+        
+        const replyBody = replyText[message.id];
+        if (!replyBody || !replyBody.trim()) {
+            toast({ variant: 'destructive', title: 'Erro', description: 'A resposta não pode estar vazia.' });
+            return;
+        }
     
+        setIsReplying(message.id);
+        try {
+            const replyData = {
+                authorId: authUser.uid,
+                authorName: userData.nome || 'Admin',
+                body: replyBody,
+            };
+
+            await addReplyToMessage(firestore, message.id, replyData);
+    
+            // Optimistic update
+            const newReplyForUI: Reply = {
+                ...replyData,
+                createdAt: Timestamp.now()
+            };
+
+            setMessages(prev => prev ? prev.map(m => m.id === message.id ? { ...m, replies: [...(m.replies || []), newReplyForUI] } : m) : null);
+    
+            handleReplyChange(message.id, ''); // Clear input
+            toast({ title: 'Sucesso', description: 'Sua resposta foi enviada.' });
+    
+        } catch (error) {
+            console.error('Error sending reply:', error);
+            toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível enviar a resposta.' });
+        } finally {
+            setIsReplying(null);
+        }
+    };
+
     const handleDeleteMessage = async (messageId: string) => {
         if (!firestore) return;
         try {
@@ -152,17 +206,71 @@ export default function MessagesPage() {
                                     </AccordionTrigger>
                                     <AccordionContent className="space-y-4 pt-4">
                                         <p className="text-muted-foreground whitespace-pre-wrap">{message.body}</p>
+
+                                        {message.attachmentUrl && (
+                                            <div className="pt-2">
+                                                <p className="text-sm font-semibold mb-1">Anexo:</p>
+                                                <Button asChild variant="link" className="p-0 h-auto text-left">
+                                                    <a href={message.attachmentUrl} target="_blank" rel="noopener noreferrer" className="truncate">
+                                                        <Paperclip className="mr-2 h-4 w-4 shrink-0" /> <span className="truncate">{message.attachmentUrl.split('/').pop()?.split('?')[0]}</span>
+                                                    </a>
+                                                </Button>
+                                            </div>
+                                        )}
+
+                                        {message.replies && message.replies.length > 0 && (
+                                            <div className="space-y-4 pt-4 border-t">
+                                                <h4 className="text-sm font-semibold">Respostas</h4>
+                                                {message.replies.map((reply, index) => (
+                                                    <div key={index} className="flex items-start gap-3">
+                                                        <Avatar className="h-8 w-8">
+                                                            <AvatarFallback>{reply.authorName.charAt(0)}</AvatarFallback>
+                                                        </Avatar>
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center justify-between">
+                                                                <p className="font-semibold text-sm">{reply.authorName}</p>
+                                                                <p className="text-xs text-muted-foreground">
+                                                                    {formatDistanceToNow(reply.createdAt.toDate(), { addSuffix: true, locale: ptBR })}
+                                                                </p>
+                                                            </div>
+                                                            <p className="text-sm text-muted-foreground whitespace-pre-wrap mt-1">{reply.body}</p>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        <div className="pt-4 border-t">
+                                            <Label htmlFor={`reply-${message.id}`} className="font-semibold">Responder</Label>
+                                            <Textarea
+                                                id={`reply-${message.id}`}
+                                                className="mt-2"
+                                                placeholder="Escreva sua resposta..."
+                                                value={replyText[message.id] || ''}
+                                                onChange={(e) => handleReplyChange(message.id, e.target.value)}
+                                            />
+                                            <Button 
+                                                size="sm" 
+                                                className="mt-2" 
+                                                onClick={() => handleReplySubmit(message)}
+                                                disabled={isReplying === message.id}
+                                            >
+                                                {isReplying === message.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Send className="mr-2 h-4 w-4"/>}
+                                                Enviar Resposta
+                                            </Button>
+                                        </div>
+
                                         {userData.cargo === 'Administrador' && (
                                             <AlertDialog>
                                                 <AlertDialogTrigger asChild>
-                                                    <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
-                                                        <Trash2 className="mr-2 h-4 w-4" /> Excluir
+                                                    <Button variant="outline" size="sm" className="text-destructive hover:text-destructive mt-4">
+                                                        <Trash2 className="mr-2 h-4 w-4" /> Excluir Conversa
                                                     </Button>
                                                 </AlertDialogTrigger>
                                                 <AlertDialogContent>
                                                     <AlertDialogHeader>
                                                         <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
-                                                        <AlertDialogDescription>Esta ação não pode ser desfeita. A mensagem será excluída permanentemente.</AlertDialogDescription>
+                                                        <AlertDialogDescription>Esta ação não pode ser desfeita. A mensagem e todas as suas respostas serão excluídas permanentemente.</AlertDialogDescription>
                                                     </AlertDialogHeader>
                                                     <AlertDialogFooter>
                                                         <AlertDialogCancel>Cancelar</AlertDialogCancel>

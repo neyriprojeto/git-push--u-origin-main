@@ -209,10 +209,6 @@ export default function MemberProfilePage() {
 
   // State for inner components
   const [isCardFlipped, setIsCardFlipped] = useState(false);
-  const [recipient, setRecipient] = useState('');
-  const [subject, setSubject] = useState('');
-  const [body, setBody] = useState('');
-  const [isSending, setIsSending] = useState(false);
 
   // Data
   const currentUserRef = useMemoFirebase(() => (firestore && authUser ? doc(firestore, 'users', authUser.uid) : null), [firestore, authUser]);
@@ -302,19 +298,6 @@ export default function MemberProfilePage() {
     try { const result = await deleteUser({ userId: memberId }); deletingToast.dismiss(); if (result.success) { toast({ title: "Sucesso!", description: "O membro foi excluído permanentemente." }); router.push('/dashboard/members'); } else { throw new Error(result.message); } }
     catch (error: any) { deletingToast.dismiss(); console.error("Delete error: ", error); toast({ variant: "destructive", title: "Erro ao Excluir", description: error.message || "Não foi possível excluir o membro.", duration: 9000 }); }
   }
-
-  const handleSendMessage = async (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!firestore || !authUser || !currentUserData) return;
-      if (!recipient || !subject.trim() || !body.trim()) { toast({ variant: 'destructive', title: 'Erro', description: 'Todos os campos são obrigatórios.' }); return; }
-      setIsSending(true);
-      try {
-        await addMessage(firestore, { senderId: authUser.uid, senderName: currentUserData.nome, recipient, subject, body });
-        toast({ title: 'Sucesso!', description: 'Sua mensagem foi enviada.' });
-        setRecipient(''); setSubject(''); setBody('');
-      } catch (error) { console.error("Error sending message:", error); toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível enviar a mensagem.' }); }
-      finally { setIsSending(false); }
-    }
 
   const getAvatar = useCallback((avatarId?: string): { imageUrl: string } | undefined => { if (!avatarId) { return PlaceHolderImages.find((p) => p.id === 'member-avatar-1'); } if(avatarId.startsWith('http')) { return { imageUrl: avatarId }; } return PlaceHolderImages.find((p) => p.id === avatarId); }, []);
 
@@ -561,6 +544,44 @@ export default function MemberProfilePage() {
   );
 
   const ContactView = () => {
+    const [recipient, setRecipient] = useState('');
+    const [subject, setSubject] = useState('');
+    const [body, setBody] = useState('');
+    const [attachment, setAttachment] = useState<File | null>(null);
+    const attachmentInputRef = useRef<HTMLInputElement>(null);
+    const [isSending, setIsSending] = useState(false);
+
+    const handleSendMessage = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!firestore || !authUser || !currentUserData) return;
+      if (!recipient || !subject.trim() || !body.trim()) { toast({ variant: 'destructive', title: 'Erro', description: 'Destinatário, assunto e mensagem são obrigatórios.' }); return; }
+      setIsSending(true);
+      try {
+        let attachmentUrl: string | undefined = undefined;
+        if (attachment) {
+            attachmentUrl = await uploadArquivo(attachment);
+        }
+
+        await addMessage(firestore, { 
+            senderId: authUser.uid, 
+            senderName: currentUserData.nome, 
+            recipient, 
+            subject, 
+            body,
+            attachmentUrl,
+        });
+        toast({ title: 'Sucesso!', description: 'Sua mensagem foi enviada.' });
+        setRecipient(''); 
+        setSubject(''); 
+        setBody('');
+        setAttachment(null);
+        if (attachmentInputRef.current) {
+            attachmentInputRef.current.value = '';
+        }
+      } catch (error) { console.error("Error sending message:", error); toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível enviar a mensagem.' }); }
+      finally { setIsSending(false); }
+    }
+
     return (
       <ViewContainer title="Fale Conosco">
         <form onSubmit={handleSendMessage} className="space-y-4">
@@ -582,6 +603,16 @@ export default function MemberProfilePage() {
             <Label htmlFor="body">Mensagem</Label>
             <Textarea id="body" value={body} onChange={(e) => setBody(e.target.value)} placeholder="Escreva sua mensagem aqui..." rows={5}/>
           </div>
+           <div className="space-y-2">
+              <Label htmlFor="attachment">Anexo (Opcional)</Label>
+              <Input 
+                  id="attachment" 
+                  type="file" 
+                  ref={attachmentInputRef}
+                  onChange={(e) => setAttachment(e.target.files ? e.target.files[0] : null)}
+              />
+              {attachment && <p className='text-sm text-muted-foreground pt-1'>Arquivo selecionado: {attachment.name}</p>}
+            </div>
           <Button type="submit" disabled={isSending}>{isSending ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null} Enviar Mensagem</Button>
         </form>
       </ViewContainer>
@@ -634,5 +665,3 @@ export default function MemberProfilePage() {
     </div>
   );
 }
-
-    

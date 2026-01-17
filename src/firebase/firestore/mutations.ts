@@ -1,6 +1,6 @@
 
 'use client';
-import { addDoc, collection, deleteDoc, doc, Firestore, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, Firestore, serverTimestamp, setDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
@@ -216,4 +216,27 @@ export const addMessage = async (firestore: Firestore, messageData: any) => {
                 requestResourceData: messageData,
             }));
         });
+};
+
+export const addReplyToMessage = async (firestore: Firestore, messageId: string, replyData: any) => {
+    if (!firestore) throw new Error('Firestore is not initialized');
+    const messageRef = doc(firestore, 'messages', messageId);
+    
+    const dataToUpdate = {
+        replies: arrayUnion({
+            ...replyData,
+            createdAt: serverTimestamp()
+        })
+    };
+    
+    try {
+        await updateDoc(messageRef, dataToUpdate);
+    } catch (error) {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+            path: messageRef.path,
+            operation: 'update',
+            requestResourceData: dataToUpdate,
+        }));
+        throw error;
+    }
 };

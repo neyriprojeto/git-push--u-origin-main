@@ -167,7 +167,22 @@
         "recipient": { "type": "string" },
         "subject": { "type": "string" },
         "body": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "attachmentUrl": { "type": "string", "format": "uri", "description": "URL for an optional attachment file." },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "replies": {
+          "type": "array",
+          "description": "A thread of replies to the message.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "authorId": { "type": "string" },
+              "authorName": { "type": "string" },
+              "body": { "type": "string" },
+              "createdAt": { "type": "string", "format": "date-time" }
+            },
+            "required": ["authorId", "authorName", "body", "createdAt"]
+          }
+        }
       },
       "required": ["senderId", "senderName", "recipient", "subject", "body", "createdAt"]
     }
@@ -218,5 +233,3 @@
     }
   }
 }
-
-    

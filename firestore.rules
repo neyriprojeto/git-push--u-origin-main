@@ -207,16 +207,16 @@ service cloud.firestore {
      *   - Any authenticated user can create a message.
      *   - Admins can read/list all messages.
      *   - Pastors can read/list messages sent to their congregation or to 'Administração Geral'.
-     *   - Only Admins can update or delete messages.
+     *   - Admins and Pastors can update messages (to add replies).
+     *   - Only Admins can delete messages.
      * @path /messages/{messageId}
      */
     match /messages/{messageId} {
       allow create: if isSignedIn();
-      allow get: if isAdmin() || 
-                   (isPastor() && 'congregacao' in getRequestingUserData() && resource.data.recipient == getRequestingUserData().congregacao) ||
-                   (isPastor() && resource.data.recipient == 'Administração Geral');
-      allow list: if isAdmin() || isPastor();
-      allow update, delete: if isAdmin();
+      allow get: if isAdmin() || (isPastor() && resource.data.recipient == 'Administração Geral') || (isPastor() && 'congregacao' in getRequestingUserData() && resource.data.recipient == getRequestingUserData().congregacao);
+      allow list: if isAdmin() || (isPastor() && 'congregacao' in getRequestingUserData());
+      allow update: if isAdmin() || isPastor();
+      allow delete: if isAdmin();
     }
   }
 }

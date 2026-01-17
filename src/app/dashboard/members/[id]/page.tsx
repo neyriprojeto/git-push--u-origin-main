@@ -17,13 +17,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Save, Upload, ShieldAlert, Trash2, ChevronRight, User, LayoutGrid, CreditCard, MessageSquare, ArrowLeft, LogOut } from "lucide-react";
+import { Loader2, Save, Upload, ShieldAlert, Trash2, ChevronRight, User, LayoutGrid, CreditCard, MessageSquare, ArrowLeft, LogOut, Mail, Paperclip, Inbox } from "lucide-react";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useDoc, useFirestore, useMemoFirebase, useCollection, useUser, useAuth } from "@/firebase";
-import { doc, collection, getDoc, serverTimestamp, query, orderBy, Timestamp } from "firebase/firestore";
+import { doc, collection, getDoc, serverTimestamp, query, orderBy, Timestamp, where } from "firebase/firestore";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -40,6 +40,7 @@ import { uploadArquivo } from "@/lib/cloudinary";
 import { bibleVerses } from "@/data/bible-verses";
 import { Textarea } from "@/components/ui/textarea";
 import { signOut } from "firebase/auth";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 // --- Types ---
 type ElementStyle = { position: { top: number; left: number }; size: { width?: number; height?: number; fontSize?: number }; text?: string; fontWeight?: 'normal' | 'bold'; src?: string; textAlign?: 'left' | 'center' | 'right'; };
@@ -49,6 +50,9 @@ interface Member { id: string; nome: string; email?: string; avatar?: string; re
 type Congregacao = { id: string; nome: string; };
 type Post = { id: string; title: string; content: string; authorId: string; authorName: string; authorAvatar?: string; imageUrl?: string; createdAt: Timestamp; };
 type ChurchInfo = { radioUrl?: string };
+type Reply = { authorId: string; authorName: string; body: string; createdAt: Timestamp; };
+type Message = { id: string; senderId: string; senderName: string; recipient: string; subject: string; body: string; attachmentUrl?: string; createdAt: Timestamp; replies?: Reply[]; };
+
 
 // --- Helper Functions (moved to top level) ---
 const formatDate = (dateValue?: string | { seconds: number; nanoseconds: number } | Date, outputFormat: string = 'yyyy-MM-dd') => {
@@ -194,9 +198,10 @@ export default function MemberProfilePage() {
   const router = useRouter();
   const { toast } = useToast();
   
-  const [activeView, setActiveView] = useState<'panel' | 'profile' | 'mural' | 'card' | 'contact'>('panel');
+  const [activeView, setActiveView] = useState<'panel' | 'profile' | 'mural' | 'card' | 'contact' | 'my-messages'>('panel');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [permission, setPermission] = useState<{ canView: boolean, canEdit: boolean, canManage: boolean, hasChecked: boolean }>({ canView: false, canEdit: false, canManage: false, hasChecked: false, });
+  const [permission, setPermission] = useState<{ canView: boolean, canEdit: boolean, canManage: boolean, hasChecked: boolean }>({ canView: false, canEdit: false, canManage: false, hasChecked: true, });
+  const isOwner = authUser?.uid === memberId;
 
   // State for image cropping
   const [crop, setCrop] = useState<Crop>();
@@ -228,7 +233,6 @@ export default function MemberProfilePage() {
   const [brazilianStates, setBrazilianStates] = useState<{ sigla: string; nome: string }[]>([]);
   const [cities, setCities] = useState<{ nome: string }[]>([]);
   const [selectedState, setSelectedState] = useState('');
-  const [selectedCity, setSelectedCity] = useState('');
   const [isLoadingStates, setIsLoadingStates] = useState(false);
   const [isLoadingCities, setIsLoadingCities] = useState(false);
   const [addressState, setAddressState] = useState('');
@@ -393,6 +397,12 @@ export default function MemberProfilePage() {
                   <div className="flex items-center gap-4"><CreditCard className="h-6 w-6 text-primary" /><p className="font-semibold">Minha Carteirinha</p></div>
                   <ChevronRight className="h-5 w-5 text-muted-foreground" />
               </div>
+              {isOwner && (
+                <div onClick={() => setActiveView('my-messages')} className="flex items-center justify-between rounded-lg border p-4 hover:bg-accent transition-colors cursor-pointer">
+                    <div className="flex items-center gap-4"><Mail className="h-6 w-6 text-primary" /><p className="font-semibold">Minhas Mensagens</p></div>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                </div>
+              )}
               <div onClick={() => setActiveView('contact')} className="flex items-center justify-between rounded-lg border p-4 hover:bg-accent transition-colors cursor-pointer">
                   <div className="flex items-center gap-4"><MessageSquare className="h-6 w-6 text-primary" /><p className="font-semibold">Fale Conosco</p></div>
                   <ChevronRight className="h-5 w-5 text-muted-foreground" />
@@ -408,6 +418,7 @@ export default function MemberProfilePage() {
       case 'mural': return <MuralView />;
       case 'card': return <CardView />;
       case 'contact': return <ContactView />;
+      case 'my-messages': return <MyMessagesView />;
       default: return renderPanel();
     }
   };
@@ -616,6 +627,86 @@ export default function MemberProfilePage() {
           <Button type="submit" disabled={isSending}>{isSending ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null} Enviar Mensagem</Button>
         </form>
       </ViewContainer>
+    );
+  };
+
+  const MyMessagesView = () => {
+    const messagesQuery = useMemoFirebase(
+      () => (firestore && authUser ? query(collection(firestore, 'messages'), where('senderId', '==', authUser.uid), orderBy('createdAt', 'desc')) : null),
+      [firestore, authUser]
+    );
+    const { data: messages, isLoading: isLoadingMessages } = useCollection<Message>(messagesQuery);
+
+    return (
+        <ViewContainer title="Minhas Mensagens">
+            <div className="space-y-4">
+                {isLoadingMessages ? (
+                    <div className="flex justify-center items-center py-10"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
+                ) : messages && messages.length > 0 ? (
+                    <Accordion type="single" collapsible className="w-full">
+                        {messages.map(message => (
+                            <AccordionItem value={message.id} key={message.id}>
+                                <AccordionTrigger>
+                                    <div className="flex items-center gap-4 text-left w-full">
+                                        <div className="grid gap-1 flex-1">
+                                            <p className="font-medium truncate">{message.subject}</p>
+                                            <p className="text-sm text-muted-foreground">
+                                                Para: <span className="font-semibold">{message.recipient}</span>
+                                            </p>
+                                        </div>
+                                        <div className="text-sm text-muted-foreground text-right ml-4">
+                                            <p>{formatDistanceToNow(message.createdAt.toDate(), { addSuffix: true, locale: ptBR })}</p>
+                                        </div>
+                                    </div>
+                                </AccordionTrigger>
+                                <AccordionContent className="space-y-4 pt-4">
+                                    <p className="text-muted-foreground whitespace-pre-wrap">{message.body}</p>
+                                    
+                                    {message.attachmentUrl && (
+                                        <div className="pt-2">
+                                            <p className="text-sm font-semibold mb-1">Anexo enviado:</p>
+                                            <Button asChild variant="link" className="p-0 h-auto text-left">
+                                                <a href={message.attachmentUrl} target="_blank" rel="noopener noreferrer" className="truncate">
+                                                    <Paperclip className="mr-2 h-4 w-4 shrink-0" /> <span className="truncate">{message.attachmentUrl.split('/').pop()?.split('?')[0]}</span>
+                                                </a>
+                                            </Button>
+                                        </div>
+                                    )}
+
+                                    {message.replies && message.replies.length > 0 ? (
+                                        <div className="space-y-4 pt-4 border-t">
+                                            <h4 className="text-sm font-semibold">Respostas</h4>
+                                            {message.replies.map((reply, index) => (
+                                                <div key={index} className="flex items-start gap-3">
+                                                    <Avatar className="h-8 w-8">
+                                                        <AvatarFallback>{reply.authorName.charAt(0)}</AvatarFallback>
+                                                    </Avatar>
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center justify-between">
+                                                            <p className="font-semibold text-sm">{reply.authorName}</p>
+                                                            <p className="text-xs text-muted-foreground">
+                                                                {formatDistanceToNow(reply.createdAt.toDate(), { addSuffix: true, locale: ptBR })}
+                                                            </p>
+                                                        </div>
+                                                        <p className="text-sm text-muted-foreground whitespace-pre-wrap mt-1">{reply.body}</p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center text-sm text-muted-foreground pt-4 border-t">
+                                            Nenhuma resposta ainda.
+                                        </div>
+                                    )}
+                                </AccordionContent>
+                            </AccordionItem>
+                        ))}
+                    </Accordion>
+                ) : (
+                    <Card><CardContent className="p-8 text-center text-muted-foreground"><Inbox className="mx-auto h-12 w-12" /><p className="mt-4">Você ainda não enviou nenhuma mensagem.</p></CardContent></Card>
+                )}
+            </div>
+        </ViewContainer>
     );
   };
 

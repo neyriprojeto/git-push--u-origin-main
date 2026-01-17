@@ -88,10 +88,11 @@ service cloud.firestore {
     /**
      * Checks if a user has permission to read or update a specific message.
      * Admins can access all. Pastors can access messages to 'Administração Geral'
-     * or to their own congregation.
+     * or to their own congregation. Members can access messages they sent.
      */
     function canAccessMessage(messageData) {
       return isAdmin() ||
+             (isSignedIn() && request.auth.uid == messageData.senderId) ||
              (isPastor() && 
                 (messageData.recipient == 'Administração Geral' ||
                  (getRequestingUserData().congregacao != null && messageData.recipient == getRequestingUserData().congregacao)));
@@ -218,16 +219,17 @@ service cloud.firestore {
      * @description
      *   Stores messages sent from users to administration or pastors.
      *   - Any authenticated user can create a message.
-     *   - `get`/`update`: Admins can read/update all messages. Pastors can read/update messages sent to
-     *     their congregation or to 'Administração Geral'.
-     *   - `list`: Admins and Pastors can initiate list queries (client-side filters apply).
+     *   - `get`: Admins can read all messages. Pastors can read messages sent to
+     *     their congregation or to 'Administração Geral'. Senders can read their own.
+     *   - `list`: Any signed-in user can initiate a constrained query (e.g., for their own messages).
+     *   - `update`: Admins and authorized pastors can update messages (e.g., to add replies).
      *   - `delete`: Only Admins can delete messages.
      * @path /messages/{messageId}
      */
     match /messages/{messageId} {
       allow create: if isSignedIn();
       allow get: if canAccessMessage(resource.data);
-      allow list: if isAdmin() || isPastor();
+      allow list: if isSignedIn();
       allow update: if canAccessMessage(get(/databases/$(database)/documents/messages/$(messageId)).data);
       allow delete: if isAdmin();
     }

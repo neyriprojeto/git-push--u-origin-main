@@ -265,13 +265,13 @@ export default function MemberCardPage() {
     const cardViewRef = useRef<{ getFrontCanvas: () => Promise<HTMLCanvasElement | null>, getBackCanvas: () => Promise<HTMLCanvasElement | null> }>(null);
     const [isSavingPdf, setIsSavingPdf] = useState(false);
 
-    const memberRef = useMemoFirebase(() => (firestore ? doc(firestore, 'users', memberId) : null), [firestore, memberId]);
+    const memberRef = useMemoFirebase(() => (firestore && authUser ? doc(firestore, 'users', memberId) : null), [firestore, authUser, memberId]);
     const { data: member, isLoading: memberLoading } = useDoc<Member>(memberRef);
 
     const currentUserRef = useMemoFirebase(() => (firestore && authUser ? doc(firestore, 'users', authUser.uid) : null), [firestore, authUser]);
     const { data: currentUser, isLoading: currentUserLoading } = useDoc<Member>(currentUserRef);
     
-    const templateRef = useMemoFirebase(() => firestore ? doc(firestore, 'cardTemplates', 'default') : null, [firestore]);
+    const templateRef = useMemoFirebase(() => (firestore && authUser ? doc(firestore, 'cardTemplates', 'default') : null), [firestore, authUser]);
     const { data: templateData, isLoading: isTemplateLoading } = useDoc<CardTemplateData>(templateRef);
 
     const [hasAccess, setHasAccess] = useState<boolean | null>(null);

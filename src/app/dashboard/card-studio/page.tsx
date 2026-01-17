@@ -105,8 +105,8 @@ export default function CardStudioPage() {
     const qrCodePlaceholder = PlaceHolderImages.find((p) => p.id === 'qr-code-placeholder');
 
     const templateRef = useMemoFirebase(
-        () => (firestore ? doc(firestore, 'cardTemplates', 'default') : null),
-        [firestore]
+        () => (firestore && authUser ? doc(firestore, 'cardTemplates', 'default') : null),
+        [firestore, authUser]
     );
 
     const { data: templateData, isLoading: isTemplateLoading } = useDoc(templateRef);

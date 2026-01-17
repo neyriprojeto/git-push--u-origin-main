@@ -17,12 +17,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Save, Upload, ShieldAlert, Trash2, ChevronRight, User, LayoutGrid, CreditCard, MessageSquare, ArrowLeft } from "lucide-react";
+import { Loader2, Save, Upload, ShieldAlert, Trash2, ChevronRight, User, LayoutGrid, CreditCard, MessageSquare, ArrowLeft, LogOut } from "lucide-react";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useDoc, useFirestore, useMemoFirebase, useCollection, useUser } from "@/firebase";
+import { useDoc, useFirestore, useMemoFirebase, useCollection, useUser, useAuth } from "@/firebase";
 import { doc, collection, getDoc, serverTimestamp, query, orderBy, Timestamp } from "firebase/firestore";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm, SubmitHandler } from "react-hook-form";
@@ -39,6 +39,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { uploadArquivo } from "@/lib/cloudinary";
 import { bibleVerses } from "@/data/bible-verses";
 import { Textarea } from "@/components/ui/textarea";
+import { signOut } from "firebase/auth";
 
 // --- Types ---
 type ElementStyle = { position: { top: number; left: number }; size: { width?: number; height?: number; fontSize?: number }; text?: string; fontWeight?: 'normal' | 'bold'; src?: string; textAlign?: 'left' | 'center' | 'right'; };
@@ -78,7 +79,6 @@ const getMemberDataForField = (currentMember: Member, fieldId: string): string |
         'Valor Nome': `Nome: ${currentMember.nome || ''}`,
         'Valor Nº Reg.': `Nº Reg.: ${currentMember.recordNumber || ''}`,
         'Valor CPF': `CPF: ${currentMember.cpf || ''}`,
-        'Valor Data de Batismo': `Data de Batismo: ${formatDate(currentMember.dataBatismo, 'dd/MM/yyyy') || ''}`,
         'Valor Cargo': `Cargo: ${currentMember.cargo || ''}`,
         'Membro Desde': `Membro desde: ${formatDate(currentMember.dataMembro, 'dd/MM/yyyy') || ''}`,
         'Congregação': currentMember.congregacao
@@ -117,7 +117,14 @@ const renderElement = (currentMember: Member, id: string, el: ElementStyle, text
         style.fontWeight = el.fontWeight;
         style.textAlign = el.textAlign;
         style.whiteSpace = 'pre-wrap';
-        const dynamicText = getMemberDataForField(currentMember, id);
+        
+        let dynamicText;
+        if (id.includes('Valor') || id.includes('Membro Desde') || id === 'Congregação') {
+            dynamicText = getMemberDataForField(currentMember, id);
+        } else {
+            dynamicText = el.text;
+        }
+
         if (id.includes('Título') || id.includes('Valor') || id.includes('Assinatura Pastor') || id.includes('Validade') || id.includes('Membro Desde')) { style.whiteSpace = 'nowrap'; }
         return <p key={id} style={style}>{dynamicText ?? el.text}</p>;
     }
@@ -181,6 +188,7 @@ export default function MemberProfilePage() {
   const params = useParams();
   const memberId = params.id as string;
   const firestore = useFirestore();
+  const auth = useAuth();
   const { user: authUser, isUserLoading } = useUser();
   const router = useRouter();
   const { toast } = useToast();
@@ -208,9 +216,9 @@ export default function MemberProfilePage() {
   // Data
   const currentUserRef = useMemoFirebase(() => (firestore && authUser ? doc(firestore, 'users', authUser.uid) : null), [firestore, authUser]);
   const { data: currentUserData, isLoading: isCurrentUserLoading } = useDoc<Member>(currentUserRef);
-  const memberRef = useMemoFirebase(() => (firestore ? doc(firestore, 'users', memberId) : null), [firestore, memberId]);
+  const memberRef = useMemoFirebase(() => (firestore && authUser ? doc(firestore, 'users', memberId) : null), [firestore, authUser, memberId]);
   const { data: member, isLoading: memberLoading } = useDoc<Member>(memberRef);
-  const templateRef = useMemoFirebase(() => firestore ? doc(firestore, 'cardTemplates', 'default') : null, [firestore]);
+  const templateRef = useMemoFirebase(() => (firestore && authUser ? doc(firestore, 'cardTemplates', 'default') : null), [firestore, authUser]);
   const { data: templateData, isLoading: isTemplateLoading } = useDoc<CardTemplateData>(templateRef);
   const congregacoesCollection = useMemoFirebase(() => (firestore ? collection(firestore, 'congregacoes') : null), [firestore]);
   const { data: congregacoes, isLoading: loadingCongregacoes } = useCollection<Congregacao>(congregacoesCollection);
@@ -223,7 +231,6 @@ export default function MemberProfilePage() {
   const [brazilianStates, setBrazilianStates] = useState<{ sigla: string; nome: string }[]>([]);
   const [cities, setCities] = useState<{ nome: string }[]>([]);
   const [selectedState, setSelectedState] = useState('');
-  const [selectedCity, setSelectedCity] = useState('');
   const [isLoadingStates, setIsLoadingStates] = useState(false);
   const [isLoadingCities, setIsLoadingCities] = useState(false);
   const [addressState, setAddressState] = useState('');
@@ -352,6 +359,22 @@ export default function MemberProfilePage() {
         setIsUploading(false);
       }
     }, 'image/jpeg');
+  };
+
+  const handleLogout = async () => {
+    if (!auth) return;
+    setPermission({ canView: false, canEdit: false, canManage: false, hasChecked: true });
+    try {
+      await signOut(auth);
+      router.push('/');
+    } catch (error) {
+      console.error("Error signing out: ", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao Sair",
+        description: "Não foi possível encerrar a sessão.",
+      });
+    }
   };
 
   // --- Loading and Permission ---
@@ -573,7 +596,10 @@ export default function MemberProfilePage() {
       <div className="bg-card p-4 shadow-sm border-b">
         <div className="container mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4"> <SidebarTrigger className="md:hidden" /> <h1 className="text-xl font-semibold text-primary">A.D.KAIROS CONNECT</h1> </div>
-          <Avatar>{avatar && <AvatarImage src={avatar.imageUrl} />}<AvatarFallback>{member.nome.charAt(0)}</AvatarFallback></Avatar>
+          <div className="flex items-center gap-4">
+            <Avatar>{avatar && <AvatarImage src={avatar.imageUrl} />}<AvatarFallback>{member.nome.charAt(0)}</AvatarFallback></Avatar>
+            <Button variant="ghost" size="icon" onClick={handleLogout}><LogOut className="h-5 w-5" /></Button>
+          </div>
         </div>
       </div>
 

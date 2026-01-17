@@ -134,7 +134,6 @@ export default function LoginPage() {
         });
       }
     } catch (error: any) {
-      console.error("Firebase Auth Error:", error.code, error.message);
       let description = "Verifique suas credenciais e tente novamente.";
       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
         description = "E-mail ou senha incorretos. Por favor, verifique e tente novamente.";
@@ -221,7 +220,6 @@ export default function LoginPage() {
         });
       }
     } catch (error: any) {
-      console.error("Google Sign-In Error:", error);
       let description = "Não foi possível autenticar com o Google. Tente novamente.";
       if (error.code === 'auth/operation-not-allowed') {
         description = "O login com Google não está ativado. Por favor, ative-o no seu painel do Firebase em Authentication > Sign-in method.";

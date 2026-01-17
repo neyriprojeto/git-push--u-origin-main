@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "User": {
@@ -178,6 +179,7 @@
               "authorId": { "type": "string" },
               "authorName": { "type": "string" },
               "body": { "type": "string" },
+              "attachmentUrl": { "type": "string", "format": "uri", "description": "URL for an optional attachment file in a reply." },
               "createdAt": { "type": "string", "format": "date-time" }
             },
             "required": ["authorId", "authorName", "body", "createdAt"]

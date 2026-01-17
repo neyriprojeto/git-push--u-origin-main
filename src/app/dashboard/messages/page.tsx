@@ -1,6 +1,7 @@
+
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useUser, useFirestore, useMemoFirebase, useDoc } from '@/firebase';
 import { doc, collection, query, where, orderBy, Timestamp, deleteDoc, getDocs } from 'firebase/firestore';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -16,12 +17,15 @@ import { useToast } from '@/hooks/use-toast';
 import { addReplyToMessage } from '@/firebase/firestore/mutations';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { uploadArquivo } from '@/lib/cloudinary';
 
 type UserData = { cargo?: string; congregacao?: string; nome?: string };
 type Reply = {
     authorId: string;
     authorName: string;
     body: string;
+    attachmentUrl?: string;
     createdAt: Timestamp;
 };
 type Message = {
@@ -41,7 +45,6 @@ export default function MessagesPage() {
     const { user: authUser, isUserLoading: isAuthUserLoading } = useUser();
     const { toast } = useToast();
 
-    // Fetch current user's data to determine their role and congregation
     const userRef = useMemoFirebase(() => (firestore && authUser ? doc(firestore, 'users', authUser.uid) : null), [firestore, authUser]);
     const { data: userData, isLoading: isUserDataLoading } = useDoc<UserData>(userRef);
 
@@ -49,6 +52,9 @@ export default function MessagesPage() {
     const [isLoadingMessages, setIsLoadingMessages] = useState(true);
     const [replyText, setReplyText] = useState<Record<string, string>>({});
     const [isReplying, setIsReplying] = useState<string | null>(null);
+    
+    const [replyAttachments, setReplyAttachments] = useState<Record<string, File | null>>({});
+    const replyAttachmentInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
     useEffect(() => {
         const fetchMessages = async () => {
@@ -67,26 +73,30 @@ export default function MessagesPage() {
                     const adminQuery = query(baseQuery, orderBy('createdAt', 'desc'));
                     const snapshot = await getDocs(adminQuery);
                     finalMessages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message));
-                } else if (userData.cargo === 'Pastor/dirigente' && userData.congregacao) {
-                    const congregationQuery = query(baseQuery, where('recipient', '==', userData.congregacao));
-                    const adminMessagesQuery = query(baseQuery, where('recipient', '==', 'Administração Geral'));
-                    
-                    const [congregationSnapshot, adminSnapshot] = await Promise.all([
-                        getDocs(congregationQuery),
-                        getDocs(adminMessagesQuery)
-                    ]);
+                } else if (userData.cargo === 'Pastor/dirigente') {
+                    const recipientQueries = [
+                        where('recipient', '==', userData.congregacao),
+                        where('recipient', '==', 'Administração Geral')
+                    ];
 
-                    const congregationMessages = congregationSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message));
-                    const adminMessages = adminSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message));
+                    const snapshots = await Promise.all(recipientQueries.map(q => getDocs(query(baseQuery, q))));
+                    const messagesSet = new Map<string, Message>();
                     
-                    finalMessages = [...congregationMessages, ...adminMessages];
+                    snapshots.forEach(snapshot => {
+                        snapshot.docs.forEach(doc => {
+                            if (!messagesSet.has(doc.id)) {
+                                messagesSet.set(doc.id, { id: doc.id, ...doc.data() } as Message);
+                            }
+                        });
+                    });
+
+                    finalMessages = Array.from(messagesSet.values());
                     finalMessages.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
                 }
 
                 setMessages(finalMessages);
             } catch (error: any) {
                  if (error.name === 'FirestoreError' && error.code === 'permission-denied') {
-                    // Error is already handled by global listener
                  } else {
                     console.error("Error fetching messages:", error);
                     toast({
@@ -108,10 +118,16 @@ export default function MessagesPage() {
         setReplyText(prev => ({ ...prev, [messageId]: text }));
     };
 
+    const handleReplyAttachmentChange = (messageId: string, file: File | null) => {
+        setReplyAttachments(prev => ({ ...prev, [messageId]: file }));
+    };
+
     const handleReplySubmit = async (message: Message) => {
         if (!firestore || !authUser || !userData) return;
         
         const replyBody = replyText[message.id];
+        const attachment = replyAttachments[message.id];
+
         if (!replyBody || !replyBody.trim()) {
             toast({ variant: 'destructive', title: 'Erro', description: 'A resposta não pode estar vazia.' });
             return;
@@ -119,15 +135,20 @@ export default function MessagesPage() {
     
         setIsReplying(message.id);
         try {
+            let attachmentUrl: string | undefined = undefined;
+            if (attachment) {
+                attachmentUrl = await uploadArquivo(attachment);
+            }
+
             const replyData = {
                 authorId: authUser.uid,
                 authorName: userData.nome || 'Admin',
                 body: replyBody,
+                attachmentUrl,
             };
 
             await addReplyToMessage(firestore, message.id, replyData);
     
-            // Optimistic update
             const newReplyForUI: Reply = {
                 ...replyData,
                 createdAt: Timestamp.now()
@@ -135,7 +156,11 @@ export default function MessagesPage() {
 
             setMessages(prev => prev ? prev.map(m => m.id === message.id ? { ...m, replies: [...(m.replies || []), newReplyForUI] } : m) : null);
     
-            handleReplyChange(message.id, ''); // Clear input
+            handleReplyChange(message.id, '');
+            setReplyAttachments(prev => ({ ...prev, [message.id]: null }));
+            if (replyAttachmentInputRefs.current && replyAttachmentInputRefs.current[message.id]) {
+                replyAttachmentInputRefs.current[message.id]!.value = '';
+            }
             toast({ title: 'Sucesso', description: 'Sua resposta foi enviada.' });
     
         } catch (error) {
@@ -234,13 +259,23 @@ export default function MessagesPage() {
                                                                 </p>
                                                             </div>
                                                             <p className="text-sm text-muted-foreground whitespace-pre-wrap mt-1">{reply.body}</p>
+                                                            {reply.attachmentUrl && (
+                                                                <div className="pt-2">
+                                                                    <Button asChild variant="link" className="p-0 h-auto text-left text-xs">
+                                                                        <a href={reply.attachmentUrl} target="_blank" rel="noopener noreferrer" className="truncate">
+                                                                            <Paperclip className="mr-2 h-3 w-3 shrink-0" /> 
+                                                                            <span className="truncate">{reply.attachmentUrl.split('/').pop()?.split('?')[0]}</span>
+                                                                        </a>
+                                                                    </Button>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 ))}
                                             </div>
                                         )}
 
-                                        <div className="pt-4 border-t">
+                                        <div className="pt-4 border-t space-y-2">
                                             <Label htmlFor={`reply-${message.id}`} className="font-semibold">Responder</Label>
                                             <Textarea
                                                 id={`reply-${message.id}`}
@@ -249,6 +284,19 @@ export default function MessagesPage() {
                                                 value={replyText[message.id] || ''}
                                                 onChange={(e) => handleReplyChange(message.id, e.target.value)}
                                             />
+                                             <div className="space-y-1">
+                                                <Label htmlFor={`reply-attachment-${message.id}`} className="text-xs font-medium text-muted-foreground">Anexo (Opcional)</Label>
+                                                <Input 
+                                                    id={`reply-attachment-${message.id}`}
+                                                    type="file"
+                                                    onChange={(e) => handleReplyAttachmentChange(message.id, e.target.files ? e.target.files[0] : null)}
+                                                    ref={(el) => {
+                                                        if (replyAttachmentInputRefs.current) {
+                                                            replyAttachmentInputRefs.current[message.id] = el;
+                                                        }
+                                                    }}
+                                                />
+                                            </div>
                                             <Button 
                                                 size="sm" 
                                                 className="mt-2" 

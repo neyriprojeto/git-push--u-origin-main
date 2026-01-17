@@ -192,6 +192,132 @@ function centerAspectCrop(
   )
 }
 
+
+// --- START: Standalone Card Components ---
+
+const getMemberDataForField = (currentMember: Member, fieldId: string): string | null => {
+    switch (fieldId) {
+        case 'Valor Nome': return `Nome: ${currentMember.nome || ''}`;
+        case 'Valor Nº Reg.': return `Nº Reg.: ${currentMember.recordNumber || ''}`;
+        case 'Valor CPF': return `CPF: ${currentMember.cpf || ''}`;
+        case 'Valor Data de Batismo': return `Data de Batismo: ${formatDate(currentMember.dataBatismo, 'dd/MM/yyyy') || ''}`;
+        case 'Valor Cargo': return `Cargo: ${currentMember.cargo || ''}`;
+        case 'Membro Desde': return `Membro desde: ${formatDate(currentMember.dataMembro, 'dd/MM/yyyy') || ''}`;
+        case 'Congregação': return currentMember.congregacao || null;
+        default: return null;
+    }
+};
+
+const renderElement = (
+    currentMember: Member, 
+    id: string, 
+    el: ElementStyle, 
+    textColors: CardTemplateData['textColors'], 
+    getAvatarFn: (avatarId?: string) => { imageUrl: string } | undefined
+): React.ReactNode => {
+    if (!el) return null;
+
+    const isImage = 'src' in el;
+    const isText = 'text' in el;
+
+    let color = '#000000';
+    if (isText && textColors) {
+        const isTitle = id.includes('Título') || id === 'Congregação' || id === 'Endereço';
+        const isBackText = id.includes('Assinatura') || id.includes('Validade') || id.includes('Membro Desde');
+        
+        if (isTitle) color = textColors.title;
+        else if (isBackText) color = textColors.backText;
+        else color = textColors.personalData;
+    }
+
+    const style: React.CSSProperties = {
+        position: 'absolute',
+        top: `${el.position.top}%`,
+        left: `${el.position.left}%`,
+    };
+    
+    if (el.textAlign === 'center') style.transform = 'translateX(-50%)';
+    else if (el.textAlign === 'right') style.transform = 'translateX(-100%)';
+    
+    if (isImage) {
+        style.width = el.size.width ? `${el.size.width}px` : 'auto';
+        style.height = el.size.height ? `${el.size.height}px` : 'auto';
+
+        let src = el.src;
+        if (id === 'Foto do Membro') {
+            const memberAvatar = getAvatarFn(currentMember.avatar);
+            if (memberAvatar?.imageUrl) src = memberAvatar.imageUrl;
+        }
+
+        if (!src) {
+             return <div key={id} style={{...style, border: '1px dashed #ccc'}} className="bg-gray-200/50 flex items-center justify-center text-xs text-gray-500">{id}</div>;
+        } else {
+             const objectFitStyle: React.CSSProperties = { objectFit: id === 'Foto do Membro' ? 'cover' : 'contain' };
+             return (
+                <div key={id} style={style} className="relative">
+                    <Image src={src} alt={id} fill style={objectFitStyle} className={cn({ 'rounded-md': id !== 'Assinatura'})} />
+                </div>
+            );
+        }
+    } 
+    
+    if (isText) {
+        style.fontSize = el.size.fontSize ? `${el.size.fontSize}px` : undefined;
+        style.color = color;
+        style.fontWeight = el.fontWeight;
+        style.textAlign = el.textAlign;
+        style.whiteSpace = 'pre-wrap';
+
+        const dynamicText = getMemberDataForField(currentMember, id);
+        
+        if (id.includes('Título') || id.includes('Valor') || id.includes('Assinatura Pastor') || id.includes('Validade') || id.includes('Membro Desde')) {
+            style.whiteSpace = 'nowrap';
+        }
+        
+        return <p key={id} style={style}>{dynamicText ?? el.text}</p>;
+    }
+
+    return null;
+};
+
+const StudioCard = ({ isFront, currentMember, templateData, getAvatarFn }: { isFront: boolean, currentMember: Member, templateData: CardTemplateData | null, getAvatarFn: (avatarId?: string) => { imageUrl: string } | undefined }) => {
+    if (!templateData || !currentMember) {
+        return <div className="flex items-center justify-center h-full"><Loader2 className="animate-spin" /></div>;
+    }
+
+    const { elements = {}, cardStyles = { frontBackground: '#F3F4F6', backBackground: '#F3F4F6', frontBackgroundImage: '', backBackgroundImage: '' }, textColors = { title: '#000000', personalData: '#333333', backText: '#333333' } } = templateData;
+
+    const backgroundStyle: React.CSSProperties = {
+        backgroundColor: isFront ? cardStyles.frontBackground : cardStyles.backBackground,
+        backgroundImage: `url(${isFront ? cardStyles.frontBackgroundImage : cardStyles.backBackgroundImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+    };
+
+    const frontElements = Object.keys(elements).filter(id => !id.includes('Convenção') && !id.includes('QR Code') && !id.includes('Assinatura') && !id.includes('Validade') && !id.includes('Membro Desde') && !id.includes('Assinatura Pastor'));
+    const backElements = Object.keys(elements).filter(id => id.includes('Convenção') || id.includes('QR Code') || id.includes('Assinatura') || id.includes('Validade') || id.includes('Membro Desde') || id.includes('Assinatura Pastor'));
+
+    const signatureLineElement = elements['Assinatura Pastor'];
+
+    return (
+        <Card className="h-full w-full overflow-hidden shadow-lg relative" style={backgroundStyle}>
+            {isFront ? (
+                frontElements.map(id => elements[id] ? renderElement(currentMember, id, elements[id], textColors, getAvatarFn) : null)
+            ) : (
+                <>
+                    {backElements.map(id => elements[id] ? renderElement(currentMember, id, elements[id], textColors, getAvatarFn) : null)}
+                    {signatureLineElement && (
+                        <div style={{ position: 'absolute', borderTop: '1px solid black', width: '40%', top: '85%', left: '50%', transform: 'translateX(-50%)' }} />
+                    )}
+                </>
+            )}
+        </Card>
+    );
+};
+
+// --- END: Standalone Card Components ---
+
+
 export default function MemberProfilePage() {
   const params = useParams();
   const memberId = params.id as string;
@@ -446,7 +572,7 @@ export default function MemberProfilePage() {
     }
   }
 
-  const getAvatar = (avatarId?: string): { imageUrl: string } | undefined => {
+  const getAvatar = useCallback((avatarId?: string): { imageUrl: string } | undefined => {
     if (!avatarId) {
       return PlaceHolderImages.find((p) => p.id === 'member-avatar-1');
     }
@@ -454,7 +580,8 @@ export default function MemberProfilePage() {
         return { imageUrl: avatarId };
     }
     return PlaceHolderImages.find((p) => p.id === avatarId);
-  }
+  }, []);
+
 
   const onSelectFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -524,153 +651,6 @@ export default function MemberProfilePage() {
 
   const isLoading = isUserLoading || isCurrentUserLoading || memberLoading || isTemplateLoading || !permission.hasChecked;
 
-  // This function now explicitly depends on the member object
-  const getMemberDataForField = (currentMember: Member, fieldId: string) => {
-    switch (fieldId) {
-      case 'Valor Nome':
-        return `Nome: ${currentMember.nome || ''}`;
-      case 'Valor Nº Reg.':
-        return `Nº Reg.: ${currentMember.recordNumber || ''}`;
-      case 'Valor CPF':
-        return `CPF: ${currentMember.cpf || ''}`;
-      case 'Valor Data de Batismo':
-        return `Data de Batismo: ${formatDate(currentMember.dataBatismo, 'dd/MM/yyyy') || ''}`;
-      case 'Valor Cargo':
-        return `Cargo: ${currentMember.cargo || ''}`;
-      case 'Membro Desde':
-        return `Membro desde: ${formatDate(currentMember.dataMembro, 'dd/MM/yyyy') || ''}`;
-      case 'Congregação':
-        return currentMember.congregacao;
-      default:
-        return null;
-    }
-  };
-
-  const renderElement = (currentMember: Member, id: string, el: ElementStyle, textColors: CardTemplateData['textColors']) => {
-    if (!el) return null;
-    
-    const isImage = 'src' in el;
-    const isText = 'text' in el;
-
-    let color = '#000000';
-    if (isText && textColors) {
-        const isTitle = id.includes('Título') || id === 'Congregação' || id === 'Endereço';
-        const isBackText = id.includes('Assinatura') || id.includes('Validade') || id.includes('Membro Desde');
-        
-        if (isTitle) color = textColors.title;
-        else if (isBackText) color = textColors.backText;
-        else color = textColors.personalData;
-    }
-
-    const style: React.CSSProperties = {
-        position: 'absolute',
-        top: `${el.position.top}%`,
-        left: `${el.position.left}%`,
-    };
-    
-    if (el.textAlign === 'center') style.transform = 'translateX(-50%)';
-    else if (el.textAlign === 'right') style.transform = 'translateX(-100%)';
-    
-    let elementContent: React.ReactNode;
-
-    if (isImage) {
-        style.width = el.size.width ? `${el.size.width}px` : 'auto';
-        style.height = el.size.height ? `${el.size.height}px` : 'auto';
-
-        let src = el.src;
-        if (id === 'Foto do Membro') {
-            const memberAvatar = getAvatar(currentMember.avatar);
-            if (memberAvatar?.imageUrl) src = memberAvatar.imageUrl;
-        }
-
-        if (!src) {
-             elementContent = <div style={{...style, border: '1px dashed #ccc'}} className="bg-gray-200/50 flex items-center justify-center text-xs text-gray-500">{id}</div>;
-        } else {
-             const objectFitStyle: React.CSSProperties = {
-                objectFit: id === 'Foto do Membro' ? 'cover' : 'contain'
-            };
-            elementContent = (
-                <div style={style} className="relative">
-                    <Image
-                        src={src}
-                        alt={id}
-                        fill
-                        style={objectFitStyle}
-                        className={cn({ 'rounded-md': id !== 'Assinatura'})}
-                    />
-                </div>
-            );
-        }
-    } else if (isText) {
-        style.fontSize = el.size.fontSize ? `${el.size.fontSize}px` : undefined;
-        style.color = color;
-        style.fontWeight = el.fontWeight;
-        style.textAlign = el.textAlign;
-        style.whiteSpace = 'pre-wrap';
-
-        const dynamicText = getMemberDataForField(currentMember, id);
-        
-        if (id.includes('Título') || id.includes('Valor') || id.includes('Assinatura Pastor') || id.includes('Validade') || id.includes('Membro Desde')) {
-            style.whiteSpace = 'nowrap';
-        }
-        
-        elementContent = <p style={style}>{dynamicText ?? el.text}</p>;
-    }
-
-    return <div key={id}>{elementContent}</div>;
-  };
-
-  const StudioCard = ({ isFront, currentMember }: { isFront: boolean, currentMember: Member }) => {
-    if (!templateData || !currentMember) {
-        return <div className="flex items-center justify-center h-full"><Loader2 className="animate-spin" /></div>;
-    }
-
-    const { elements = {}, cardStyles = { frontBackground: '#F3F4F6', backBackground: '#F3F4F6', frontBackgroundImage: '', backBackgroundImage: '' }, textColors = { title: '#000000', personalData: '#333333', backText: '#333333' } } = templateData || {};
-
-    const backgroundStyle: React.CSSProperties = {
-        backgroundColor: isFront ? cardStyles.frontBackground : cardStyles.backBackground,
-        backgroundImage: `url(${isFront ? cardStyles.frontBackgroundImage : cardStyles.backBackgroundImage})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-    };
-
-    const frontElements = Object.keys(elements)
-        .filter(id => !id.includes('Convenção') && !id.includes('QR Code') && !id.includes('Assinatura') && !id.includes('Validade') && !id.includes('Membro Desde') && !id.includes('Assinatura Pastor'));
-    
-    const backElements = Object.keys(elements)
-        .filter(id => id.includes('Convenção') || id.includes('QR Code') || id.includes('Assinatura') || id.includes('Validade') || id.includes('Membro Desde') || id.includes('Assinatura Pastor'));
-
-    const signatureLineElement = elements['Assinatura Pastor'];
-
-    return (
-        <Card 
-            className="h-full w-full overflow-hidden shadow-lg relative"
-            style={backgroundStyle}
-        >
-            {isFront ? (
-                frontElements.map(id => renderElement(currentMember, id, elements[id], textColors))
-            ) : (
-                <>
-                {backElements.map(id => renderElement(currentMember, id, elements[id], textColors))}
-                {signatureLineElement && (
-                     <div 
-                        style={{
-                            position: 'absolute', 
-                            borderTop: '1px solid black', 
-                            width: '40%', 
-                            top: '85%',
-                            left: '50%',
-                            transform: 'translateX(-50%)'
-                        }}
-                    />
-                )}
-                </>
-            )}
-        </Card>
-    );
-  };
-
-
   if (isLoading) {
       return (
           <div className="flex-1 h-screen flex items-center justify-center bg-secondary">
@@ -702,22 +682,6 @@ export default function MemberProfilePage() {
      return notFound();
   }
   
-  if (isTemplateLoading || !templateData) {
-        return (
-            <div className="flex-1 h-screen flex items-center justify-center bg-secondary">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Template Não Encontrado</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p>O template da carteirinha ainda não foi configurado.</p>
-                        <p>Por favor, vá para o <Link href="/dashboard/card-studio" className="underline text-primary">Estúdio de Carteirinha</Link> para criá-lo.</p>
-                    </CardContent>
-                </Card>
-            </div>
-        );
-    }
-
   const avatar = getAvatar(member.avatar);
 
   return (
@@ -793,19 +757,19 @@ export default function MemberProfilePage() {
                 <CardDescription>Clique na carteirinha para visualizar o verso.</CardDescription>
                 </CardHeader>
                 <CardContent className="flex justify-center items-center">
-                <div 
-                    className="max-w-lg mx-auto flip-card-container cursor-pointer aspect-[85.6/54]"
-                    onClick={() => setIsCardFlipped(!isCardFlipped)}
-                >
-                    <div className={cn("flip-card w-full h-full", { 'flipped': isCardFlipped })}>
-                        <div className="flip-card-front">
-                            <StudioCard isFront={true} currentMember={member} />
-                        </div>
-                        <div className="flip-card-back">
-                            <StudioCard isFront={false} currentMember={member} />
-                        </div>
-                    </div>
-                </div>
+                  <div 
+                      className="max-w-lg mx-auto flip-card-container cursor-pointer aspect-[85.6/54]"
+                      onClick={() => setIsCardFlipped(!isCardFlipped)}
+                  >
+                      <div className={cn("flip-card w-full h-full", { 'flipped': isCardFlipped })}>
+                          <div className="flip-card-front">
+                              <StudioCard isFront={true} currentMember={member} templateData={templateData} getAvatarFn={getAvatar} />
+                          </div>
+                          <div className="flip-card-back">
+                              <StudioCard isFront={false} currentMember={member} templateData={templateData} getAvatarFn={getAvatar} />
+                          </div>
+                      </div>
+                  </div>
                 </CardContent>
             </Card>
 

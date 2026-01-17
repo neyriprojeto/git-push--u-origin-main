@@ -81,7 +81,6 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
             top: `${el.position.top}%`,
             left: `${el.position.left}%`,
             transform: 'translateX(-50%)',
-            width: el.size.width ? `${el.size.width}px` : 'auto',
             height: el.size.height ? `${el.size.height}px` : 'auto',
             fontFamily: el.fontFamily,
             fontSize: `${el.size.fontSize}pt`,
@@ -90,7 +89,9 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
             color: el.color,
             letterSpacing: el.letterSpacing,
             lineHeight: el.lineHeight,
-            fontStyle: el.fontStyle
+            fontStyle: el.fontStyle,
+            // Only apply width for images and lines, not text
+            width: (el.src || id.includes('Linha')) && el.size.width ? `${el.size.width}px` : 'auto',
         };
         
         if (id.includes('Linha')) {
@@ -101,7 +102,17 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
             return <div key={id} style={style} onClick={(e) => { e.stopPropagation(); onElementClick(id); }} className={cn({ 'ring-2 ring-blue-500': selectedElementId === id })}><img src={el.src} alt={id} crossOrigin="anonymous" style={{ width: '100%', height: '100%', objectFit: 'contain' }}/></div>;
         }
 
-        return <p key={id} style={style} onClick={(e) => { e.stopPropagation(); onElementClick(id); }} className={cn('whitespace-pre-wrap', { 'ring-2 ring-blue-500 p-1': selectedElementId === id })}>{el.text}</p>;
+        return (
+             <p key={id} style={style} onClick={(e) => { e.stopPropagation(); onElementClick(id); }} 
+                className={cn(
+                    // Apply nowrap for the name to prevent line breaks
+                    id === 'NomeCrianca' ? 'whitespace-nowrap' : 'whitespace-pre-wrap', 
+                    { 'ring-2 ring-blue-500 p-1': selectedElementId === id }
+                )}
+            >
+                {el.text}
+            </p>
+        );
     };
     
     return (
@@ -161,8 +172,18 @@ export default function PresentationCertificatePage() {
         
         const initialElements = churchInfo?.presentationCertElements ? { ...defaultElements, ...churchInfo.presentationCertElements } : defaultElements;
         
+        // DYNAMIC FONT SIZE LOGIC
+        const name = childName || '________________';
+        let nameFontSize = 36;
+        if (name.length > 20) nameFontSize = 32;
+        if (name.length > 25) nameFontSize = 28;
+        if (name.length > 30) nameFontSize = 22;
+
+
         initialElements['Logo'].src = churchInfo?.presentationCertLogoUrl || churchInfo?.conventionLogo1Url || PlaceHolderImages.find(p => p.id === 'church-logo')?.imageUrl || '';
-        initialElements['NomeCrianca'].text = childName || '________________';
+        initialElements['NomeCrianca'].text = name;
+        initialElements['NomeCrianca'].size.fontSize = nameFontSize;
+
         initialElements['Detalhes'].text = `${childDetails || 'Nascida no dia ___ de ________ de _____, filha(o) de ______________ e ______________'}\nfoi apresentada oficialmente ao SENHOR JESUS CRISTO,\nna Igreja Evangélica Assembleia de Deus Ministério Kairós.\nNo dia ${formattedDate}`;
         initialElements['Versiculo'].text = "“E, cumprindo-se os dias da purificação dela, segundo a lei de Moisés, o levaram a Jerusalém,\npara o apresentarem ao Senhor.” (Lucas 2:22)";
         initialElements['AssinaturaPresidente'].src = churchInfo?.pastorSignatureUrl || '';
@@ -292,7 +313,7 @@ export default function PresentationCertificatePage() {
                                 <p className="text-sm font-medium">Posição do Elemento: <span className='font-bold text-primary'>{selectedElement || 'Nenhum'}</span></p>
                                 <div className='flex items-center gap-2'>
                                     <Button variant="outline" size="icon" onMouseDown={() => startMoving('position', 1, 'up')} onMouseUp={stopMoving} onMouseLeave={stopMoving} disabled={!selectedElement}><ArrowUp className="w-4 h-4" /></Button>
-                                    <Button variant="outline" size="icon" onMouseDown={() => startMoving('position', 1, 'down')} onMouseUp={stopMoving} onMouseLeave={stopMoving} disabled={!selectedElement}><ArrowDown className="w-4 h-4" /></Button>
+                                    <Button variant="outline" size="icon" onMouseDown={() => startMoving('position', 1, 'down')} onMouseUp={stopMoving} onMouseLeave={stopMoving} disabled={!selectedElement}><ArrowDown className="w-4 w-4" /></Button>
                                     <Button variant="outline" size="icon" onMouseDown={() => startMoving('position', 1, 'left')} onMouseUp={stopMoving} onMouseLeave={stopMoving} disabled={!selectedElement}><ArrowLeft className="w-4 h-4" /></Button>
                                     <Button variant="outline" size="icon" onMouseDown={() => startMoving('position', 1, 'right')} onMouseUp={stopMoving} onMouseLeave={stopMoving} disabled={!selectedElement}><ArrowRight className="w-4 h-4" /></Button>
                                 </div>
@@ -320,5 +341,3 @@ export default function PresentationCertificatePage() {
         </div>
     );
 }
-
-    

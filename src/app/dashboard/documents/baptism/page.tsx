@@ -86,7 +86,6 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
             top: `${el.position.top}%`,
             left: `${el.position.left}%`,
             transform: 'translateX(-50%)',
-            width: el.size.width ? `${el.size.width}px` : 'auto',
             height: el.size.height ? `${el.size.height}px` : 'auto',
             fontFamily: el.fontFamily,
             fontSize: `${el.size.fontSize}pt`,
@@ -95,6 +94,8 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
             color: el.color,
             letterSpacing: el.letterSpacing,
             lineHeight: el.lineHeight,
+             // Only apply width for images and lines, not text
+            width: (el.src || id.includes('Linha')) && el.size.width ? `${el.size.width}px` : 'auto',
         };
         
         if (id.includes('Linha')) {
@@ -116,7 +117,11 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
 
         return (
             <p key={id} style={style} onClick={(e) => {e.stopPropagation(); onElementClick(id); }}
-                className={cn('whitespace-pre-wrap', { 'ring-2 ring-blue-500 p-1': selectedElementId === id })}>
+                 className={cn(
+                    // Apply nowrap for the name to prevent line breaks
+                    id === 'NomeMembro' ? 'whitespace-nowrap' : 'whitespace-pre-wrap', 
+                    { 'ring-2 ring-blue-500 p-1': selectedElementId === id }
+                )}>
                 {el.text}
             </p>
         );
@@ -182,8 +187,17 @@ export default function BaptismCertificatePage() {
             const genderTerm = selectedMember?.gender === 'Feminino' ? 'batizada' : 'batizado';
             const baptismDate = selectedMember?.dataBatismo ? format(selectedMember.dataBatismo.toDate ? selectedMember.dataBatismo.toDate() : new Date(selectedMember.dataBatismo), "d 'de' MMMM 'de' yyyy", { locale: ptBR }) : '___/___/______';
 
+            // DYNAMIC FONT SIZE FOR NAME
+            const memberName = selectedMember?.nome.toUpperCase() || 'NOME DO MEMBRO';
+            let nameFontSize = 42; // Default size
+            if (memberName.length > 20) nameFontSize = 36;
+            if (memberName.length > 25) nameFontSize = 30;
+            if (memberName.length > 30) nameFontSize = 24;
+            if (memberName.length > 35) nameFontSize = 20;
+
             initialElements['Logo'].src = churchInfo.baptismCertLogoUrl || churchInfo.conventionLogo1Url || PlaceHolderImages.find(p => p.id === 'church-logo')?.imageUrl || '';
-            initialElements['NomeMembro'].text = selectedMember?.nome.toUpperCase() || 'NOME DO MEMBRO';
+            initialElements['NomeMembro'].text = memberName;
+            initialElements['NomeMembro'].size.fontSize = nameFontSize; // Apply dynamic size
             initialElements['TextoPrincipal'].text = `Crendo e obedecendo nas sagradas Escrituras e as doutrinas ensinadas por 
 Jesus Cristo, foi ${genderTerm} sob profissão de fé em nome do Pai, do Filho e do Espírito Santo,
 no dia ${baptismDate} na Assembleia de Deus Kairós congregação de ${selectedMember?.congregacao || '____________'}.`

@@ -38,7 +38,7 @@ type ElementStyle = {
     src?: string;
     fontWeight?: 'normal' | 'bold';
     fontFamily?: string;
-    textAlign?: 'left' | 'center' | 'right';
+    textAlign?: 'left' | 'center' | 'right' | 'justify';
     color?: string;
     letterSpacing?: string;
     lineHeight?: number;
@@ -58,8 +58,8 @@ type ChurchInfo = {
 
 const defaultElements: DocElements = {
     'Logo': { position: { top: 7, left: 10 }, size: { width: 150, height: 150, fontSize: 12 }, src: '' },
-    'NomeMembro': { position: { top: 45, left: 50 }, size: { fontSize: 42 }, text: 'Nome do Membro', fontFamily: "'Great Vibes', cursive", fontWeight: 'bold', textAlign: 'center', letterSpacing: '0.1em' },
-    'TextoPrincipal': { position: { top: 60, left: 50 }, size: { fontSize: 20, width: 850 }, text: 'Crendo e obedecendo...', textAlign: 'center', lineHeight: 1.8 },
+    'NomeMembro': { position: { top: 45, left: 50 }, size: { fontSize: 48 }, text: 'Nome do Membro', fontFamily: "'Great Vibes', cursive", fontWeight: 'bold', textAlign: 'center', letterSpacing: '0.1em' },
+    'TextoPrincipal': { position: { top: 60, left: 50 }, size: { fontSize: 20, width: 900 }, text: 'Crendo e obedecendo...', textAlign: 'justify', lineHeight: 1.8 },
     'AssinaturaPresidente': { position: { top: 78, left: 25 }, size: { width: 180, height: 50, fontSize: 12 }, src: '' },
     'LinhaPresidente': { position: { top: 90, left: 25}, size: { fontSize: 12, width: 250, height: 2 } },
     'NomePresidente': { position: { top: 92, left: 25 }, size: { fontSize: 10 }, text: 'Pastor Presidente', textAlign: 'center' },
@@ -200,11 +200,11 @@ export default function BaptismCertificatePage() {
             // DYNAMIC FONT SIZE FOR NAME
             const memberName = selectedMember?.nome || 'NOME DO MEMBRO';
             const formattedName = toTitleCase(memberName);
-            let nameFontSize = 42; // Default size
-            if (formattedName.length > 20) nameFontSize = 36;
-            if (formattedName.length > 25) nameFontSize = 30;
-            if (formattedName.length > 30) nameFontSize = 24;
-            if (formattedName.length > 35) nameFontSize = 20;
+            let nameFontSize = 48; // Default size
+            if (formattedName.length > 20) nameFontSize = 40;
+            if (formattedName.length > 25) nameFontSize = 34;
+            if (formattedName.length > 30) nameFontSize = 28;
+            if (formattedName.length > 35) nameFontSize = 24;
 
             initialElements['Logo'].src = churchInfo.baptismCertLogoUrl || churchInfo.conventionLogo1Url || PlaceHolderImages.find(p => p.id === 'church-logo')?.imageUrl || '';
             initialElements['NomeMembro'].text = formattedName;

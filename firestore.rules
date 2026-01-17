@@ -84,6 +84,19 @@ service cloud.firestore {
              'congregacao' in targetUserData &&
              requestingUserData.congregacao == targetUserData.congregacao;
     }
+    
+    /**
+     * Checks if a user has permission to read or update a specific message.
+     * Admins can access all. Pastors can access messages to 'Administração Geral'
+     * or to their own congregation.
+     */
+    function canAccessMessage(messageData) {
+      return isAdmin() ||
+             (isPastor() && 
+                (messageData.recipient == 'Administração Geral' ||
+                 (getRequestingUserData().congregacao != null && messageData.recipient == getRequestingUserData().congregacao)));
+    }
+
 
     // =================================
     // Collection Rules
@@ -205,17 +218,17 @@ service cloud.firestore {
      * @description
      *   Stores messages sent from users to administration or pastors.
      *   - Any authenticated user can create a message.
-     *   - Admins can read/list all messages.
-     *   - Pastors can read/list messages sent to their congregation or to 'Administração Geral'.
-     *   - Admins and Pastors can update messages (to add replies).
-     *   - Only Admins can delete messages.
+     *   - `get`/`update`: Admins can read/update all messages. Pastors can read/update messages sent to
+     *     their congregation or to 'Administração Geral'.
+     *   - `list`: Admins and Pastors can initiate list queries (client-side filters apply).
+     *   - `delete`: Only Admins can delete messages.
      * @path /messages/{messageId}
      */
     match /messages/{messageId} {
       allow create: if isSignedIn();
-      allow get: if isAdmin() || (isPastor() && resource.data.recipient == 'Administração Geral') || (isPastor() && 'congregacao' in getRequestingUserData() && resource.data.recipient == getRequestingUserData().congregacao);
-      allow list: if isAdmin() || (isPastor() && 'congregacao' in getRequestingUserData());
-      allow update: if isAdmin() || isPastor();
+      allow get: if canAccessMessage(resource.data);
+      allow list: if isAdmin() || isPastor();
+      allow update: if canAccessMessage(get(/databases/$(database)/documents/messages/$(messageId)).data);
       allow delete: if isAdmin();
     }
   }

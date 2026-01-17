@@ -233,7 +233,6 @@ export default function MemberProfilePage() {
   const [brazilianStates, setBrazilianStates] = useState<{ sigla: string; nome: string }[]>([]);
   const [cities, setCities] = useState<{ nome: string }[]>([]);
   const [selectedState, setSelectedState] = useState('');
-  const [selectedCity, setSelectedCity] = useState('');
   const [isLoadingStates, setIsLoadingStates] = useState(false);
   const [isLoadingCities, setIsLoadingCities] = useState(false);
   const [addressState, setAddressState] = useState('');
@@ -279,6 +278,7 @@ export default function MemberProfilePage() {
 
   }, [authUser, currentUserData, member, isUserLoading, isCurrentUserLoading, memberLoading]);
 
+  const [selectedCity, setSelectedCity] = useState('');
   useEffect(() => { if (member) { memberForm.reset({ nome: member.nome || '', email: member.email || '', phone: member.phone || '', whatsapp: member.whatsapp || '', cep: member.cep || '', logradouro: member.logradouro || '', numero: member.numero || '', complemento: member.complemento || '', bairro: member.bairro || '', cidade: member.cidade || '', estado: member.estado || '', avatar: member.avatar || '', dataNascimento: formatDate(member.dataNascimento) || '', rg: member.rg || '', cpf: member.cpf || '', gender: member.gender || 'Masculino', maritalStatus: member.maritalStatus || 'Solteiro(a)', naturalness: member.naturalness || '', nationality: member.nationality || '', cargo: member.cargo || '', status: member.status || 'Pendente', congregacao: member.congregacao || '', dataBatismo: formatDate(member.dataBatismo) || '', dataMembro: formatDate(member.dataMembro) || '', recordNumber: member.recordNumber || '', responsiblePastor: member.responsiblePastor || '', }); if (member.naturalness && member.naturalness.includes('/')) { const [city, state] = member.naturalness.split('/'); setSelectedState(state); setSelectedCity(city); } else { setSelectedState(''); setSelectedCity(''); } if (member.estado) { setAddressState(member.estado); } else { setAddressState(''); } } }, [member, memberForm]);
   useEffect(() => { if (member?.naturalness && cities.length > 0) { const [city] = member.naturalness.split('/'); const cityExists = cities.some(c => c.nome === city); if (cityExists) { setSelectedCity(city); } } }, [cities, member]);
 
@@ -657,6 +657,11 @@ export default function MemberProfilePage() {
                                         </div>
                                         <div className="text-sm text-muted-foreground text-right ml-4">
                                             <p>{formatDistanceToNow(message.createdAt.toDate(), { addSuffix: true, locale: ptBR })}</p>
+                                            {message.replies && message.replies.length > 0 && (
+                                                <Badge variant="secondary" className="mt-1">
+                                                    {message.replies.length} {message.replies.length === 1 ? 'Resposta' : 'Respostas'}
+                                                </Badge>
+                                            )}
                                         </div>
                                     </div>
                                 </AccordionTrigger>

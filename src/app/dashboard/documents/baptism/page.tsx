@@ -59,7 +59,7 @@ type ChurchInfo = {
 const defaultElements: DocElements = {
     'Logo': { position: { top: 7, left: 10 }, size: { width: 150, height: 150, fontSize: 12 }, src: '' },
     'NomeMembro': { position: { top: 45, left: 50 }, size: { fontSize: 48, width: 800 }, text: 'Nome do Membro', fontFamily: "'Great Vibes', cursive", fontWeight: 'bold', textAlign: 'center', letterSpacing: '0.1em' },
-    'TextoPrincipal': { position: { top: 58, left: 50 }, size: { fontSize: 24, width: 950 }, text: 'Crendo e obedecendo...', textAlign: 'center', lineHeight: 1.7 },
+    'TextoPrincipal': { position: { top: 58, left: 50 }, size: { fontSize: 24, width: 1050 }, text: 'Crendo e obedecendo...', textAlign: 'center', lineHeight: 1.7 },
     'AssinaturaPresidente': { position: { top: 85, left: 25 }, size: { width: 180, height: 50, fontSize: 12 }, src: '' },
     'LinhaPresidente': { position: { top: 95, left: 25}, size: { fontSize: 12, width: 250, height: 2 } },
     'NomePresidente': { position: { top: 97, left: 25 }, size: { fontSize: 10 }, text: 'Pastor Presidente', textAlign: 'center' },
@@ -210,7 +210,7 @@ export default function BaptismCertificatePage() {
             initialElements['Logo'].src = churchInfo.baptismCertLogoUrl || churchInfo.conventionLogo1Url || PlaceHolderImages.find(p => p.id === 'church-logo')?.imageUrl || '';
             initialElements['NomeMembro'].text = formattedName;
             initialElements['NomeMembro'].size.fontSize = nameFontSize; // Apply dynamic size
-            initialElements['TextoPrincipal'].text = `Crendo e obedecendo nas sagradas Escrituras e as doutrinas ensinadas por Jesus Cristo, foi ${genderTerm} sob profissão de fé em nome do Pai, do Filho e do Espírito Santo, no dia ${baptismDate} na Assembleia de Deus Kairós congregação de ${selectedMember?.congregacao || '____________'}.`;
+            initialElements['TextoPrincipal'].text = `Crendo e obedecendo as sagradas Escrituras e as doutrinas ensinadas por Jesus Cristo, foi ${genderTerm} sob profissão de fé em nome do Pai, do Filho e do Espírito Santo, no dia ${baptismDate} na Assembleia de Deus Kairós congregação de ${selectedMember?.congregacao || '____________'}.`;
             initialElements['AssinaturaPresidente'].src = churchInfo.pastorSignatureUrl || '';
             initialElements['NomePresidente'].text = churchInfo.pastorSignatureName || '____________________';
             initialElements['NomePastorLocal'].text = localPastorName;

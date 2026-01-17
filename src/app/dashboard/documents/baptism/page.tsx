@@ -58,15 +58,15 @@ type ChurchInfo = {
 
 const defaultElements: DocElements = {
     'Logo': { position: { top: 7, left: 10 }, size: { width: 150, height: 150, fontSize: 12 }, src: '' },
-    'NomeMembro': { position: { top: 45, left: 50 }, size: { fontSize: 48 }, text: 'Nome do Membro', fontFamily: "'Great Vibes', cursive", fontWeight: 'bold', textAlign: 'center', letterSpacing: '0.1em' },
-    'TextoPrincipal': { position: { top: 60, left: 50 }, size: { fontSize: 20, width: 1000 }, text: 'Crendo e obedecendo...', textAlign: 'justify', lineHeight: 1.8 },
-    'AssinaturaPresidente': { position: { top: 78, left: 25 }, size: { width: 180, height: 50, fontSize: 12 }, src: '' },
-    'LinhaPresidente': { position: { top: 90, left: 25}, size: { fontSize: 12, width: 250, height: 2 } },
-    'NomePresidente': { position: { top: 92, left: 25 }, size: { fontSize: 10 }, text: 'Pastor Presidente', textAlign: 'center' },
-    'CargoPresidente': { position: { top: 95, left: 25 }, size: { fontSize: 8 }, text: 'Pastor Presidente', textAlign: 'center', fontStyle: 'italic' },
-    'LinhaPastorLocal': { position: { top: 90, left: 75}, size: { fontSize: 12, width: 250, height: 2 } },
-    'NomePastorLocal': { position: { top: 92, left: 75 }, size: { fontSize: 10 }, text: 'Pastor Local', textAlign: 'center' },
-    'CargoPastorLocal': { position: { top: 95, left: 75 }, size: { fontSize: 8 }, text: 'Pastor Local', textAlign: 'center', fontStyle: 'italic' },
+    'NomeMembro': { position: { top: 45, left: 50 }, size: { fontSize: 48, width: 800 }, text: 'Nome do Membro', fontFamily: "'Great Vibes', cursive", fontWeight: 'bold', textAlign: 'center', letterSpacing: '0.1em' },
+    'TextoPrincipal': { position: { top: 60, left: 50 }, size: { fontSize: 24, width: 1000 }, text: 'Crendo e obedecendo...', textAlign: 'justify', lineHeight: 1.5 },
+    'AssinaturaPresidente': { position: { top: 82, left: 25 }, size: { width: 180, height: 50, fontSize: 12 }, src: '' },
+    'LinhaPresidente': { position: { top: 92, left: 25}, size: { fontSize: 12, width: 250, height: 2 } },
+    'NomePresidente': { position: { top: 94, left: 25 }, size: { fontSize: 10 }, text: 'Pastor Presidente', textAlign: 'center' },
+    'CargoPresidente': { position: { top: 96, left: 25 }, size: { fontSize: 8 }, text: 'Pastor Presidente', textAlign: 'center', fontStyle: 'italic' },
+    'LinhaPastorLocal': { position: { top: 92, left: 75}, size: { fontSize: 12, width: 250, height: 2 } },
+    'NomePastorLocal': { position: { top: 94, left: 75 }, size: { fontSize: 10 }, text: 'Pastor Local', textAlign: 'center' },
+    'CargoPastorLocal': { position: { top: 96, left: 75 }, size: { fontSize: 8 }, text: 'Pastor Local', textAlign: 'center', fontStyle: 'italic' },
 };
 
 const toTitleCase = (str: string) => {
@@ -128,8 +128,9 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
         return (
             <p key={id} style={style} onClick={(e) => { e.stopPropagation(); onElementClick(id); }} 
                 className={cn(
-                    id === 'NomeMembro' ? 'whitespace-nowrap' : 'whitespace-pre-wrap', 
-                    { 'ring-2 ring-blue-500 p-1': selectedElementId === id }
+                    'whitespace-pre-wrap', 
+                    { 'ring-2 ring-blue-500 p-1': selectedElementId === id },
+                    { 'whitespace-nowrap': id === 'NomeMembro' && (el.text?.length || 0) <= 30 }
                 )}
             >
                 {el.text}

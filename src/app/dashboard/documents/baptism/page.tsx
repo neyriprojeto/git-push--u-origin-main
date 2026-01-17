@@ -59,7 +59,7 @@ type ChurchInfo = {
 const defaultElements: DocElements = {
     'Logo': { position: { top: 7, left: 10 }, size: { width: 150, height: 150, fontSize: 12 }, src: '' },
     'NomeMembro': { position: { top: 45, left: 50 }, size: { fontSize: 42 }, text: 'Nome do Membro', fontFamily: "'Great Vibes', cursive", fontWeight: 'bold', textAlign: 'center', letterSpacing: '0.1em' },
-    'TextoPrincipal': { position: { top: 60, left: 50 }, size: { fontSize: 12, width: 700 }, text: 'Crendo e obedecendo...', textAlign: 'center', lineHeight: 2.2 },
+    'TextoPrincipal': { position: { top: 60, left: 50 }, size: { fontSize: 20, width: 850 }, text: 'Crendo e obedecendo...', textAlign: 'center', lineHeight: 1.8 },
     'AssinaturaPresidente': { position: { top: 78, left: 25 }, size: { width: 180, height: 50, fontSize: 12 }, src: '' },
     'LinhaPresidente': { position: { top: 90, left: 25}, size: { fontSize: 12, width: 250, height: 2 } },
     'NomePresidente': { position: { top: 92, left: 25 }, size: { fontSize: 10 }, text: 'Pastor Presidente', textAlign: 'center' },
@@ -71,7 +71,12 @@ const defaultElements: DocElements = {
 
 const toTitleCase = (str: string) => {
     if (!str) return '';
-    return str.toLowerCase().replace(/(^|\s)\S/g, (char) => char.toUpperCase());
+    // If the string is all uppercase, convert it to title case.
+    if (str === str.toUpperCase()) {
+        return str.toLowerCase().replace(/(^|\s)\S/g, (char) => char.toUpperCase());
+    }
+    // Otherwise, return it as is.
+    return str;
 };
 
 

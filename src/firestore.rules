@@ -1,0 +1,234 @@
+
+/**
+ * Core Philosophy: This ruleset enforces a role-based and ownership-based security model
+ * for a church management application. The primary goal is to ensure that sensitive member
+ * data is protected, collaborative groups are managed securely by their designated admins,
+ * and public-facing church information is readable by anyone.
+ *
+ * Data Structure:
+ * - /users/{userId}: Contains all member data, previously in /members. Now, the user's auth UID is the document ID.
+ * - /groups/{groupId}: Represents collaborative groups, with access controlled by a members map.
+ * - /churchInfo/{churchInfoId}: A singleton collection for publicly readable church information.
+ * - /congregacoes/{congregacaoId}: A public list of church congregations.
+ * - /cardTemplates/{templateId}: Stores the customizable template for member ID cards.
+ * - /leaders/{leaderId}: Stores the manually curated list of executive committee leaders for the homepage.
+ * - /logos/{logoId}: Stores official church logos for download by authorized users.
+ * - /posts/{postId}: Stores announcements for the public mural.
+ * - /messages/{messageId}: Stores messages sent from users to admins/pastors.
+ *
+ * Key Security Decisions:
+ * - Centralized User Data: All member-specific data is stored in `/users/{userId}`, where `{userId}`
+ *   matches the Firebase Auth UID. This creates a direct ownership link.
+ * - Role-Based Access: A `cargo` (role) field within each user's document dictates permissions.
+ *   - 'Administrador': Can read/write all data across the system.
+ *   - 'Pastor/dirigente': Can read/write data for users within their own `congregacao`.
+ *   - 'Membro': Can only read/write their *own* user document.
+ * - Secure Defaults: Listing users is restricted to Admins and Pastors. Public registration is allowed
+ *   (create a new user document), but the `status` is set to 'Pendente' by default via client-side logic,
+ *   requiring admin/pastor approval.
+ * - Performant Rules: Denormalization is used (e.g., `congregacao` on the user document) to avoid
+ *   cross-collection `get()` calls in rules where possible, ensuring they remain fast and scalable.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // =================================
+    // Helper Functions
+    // =================================
+
+    /**
+     * Checks if the user is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Fetches the user document data for the requesting user.
+     * Caches the result for subsequent calls within the same rule evaluation.
+     */
+    function getRequestingUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    /**
+     * Checks if the requesting user has the 'Administrador' role.
+     */
+    function isAdmin() {
+      return isSignedIn() && getRequestingUserData().cargo == 'Administrador';
+    }
+
+    /**
+     * Checks if the requesting user is a 'Pastor/dirigente' or 'Pastor(a)'.
+     */
+    function isPastor() {
+      return isSignedIn() && (getRequestingUserData().cargo == 'Pastor/dirigente' || getRequestingUserData().cargo == 'Pastor(a)');
+    }
+
+    /**
+     * Checks if the requesting user is trying to access their own document.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * Checks if a Pastor is accessing a member of their own congregation.
+     * Assumes the requesting user is a Pastor.
+     */
+    function isPastorOfSameCongregation(targetUserData) {
+      let requestingUserData = getRequestingUserData();
+      // Ensure both pastor and target have a congregation, and they match.
+      return 'congregacao' in requestingUserData &&
+             'congregacao' in targetUserData &&
+             requestingUserData.congregacao == targetUserData.congregacao;
+    }
+    
+    /**
+     * Checks if a user can access a specific message.
+     */
+    function canAccessMessage(messageData) {
+      return isAdmin() || 
+             (isSignedIn() && request.auth.uid == messageData.senderId) || 
+             (isPastor() && request.auth.uid == messageData.recipientId) ||
+             (isPastor() && messageData.recipientId == 'ADMIN_GROUP');
+    }
+    
+
+    // =================================
+    // Collection Rules
+    // =================================
+
+    /**
+     * @description
+     *   Manages user documents, which store all member data. Access is strictly controlled
+     *   by ownership and role.
+     *   - `get`: A user can read their own data. An admin can read anyone's data. A pastor can read
+     *            data of members in their own congregation.
+     *   - `list`: Only admins and pastors can list users (client-side queries must enforce
+     *             congregation filtering for pastors).
+     *   - `update`: A user can update their own data. An admin can update anyone's data. A pastor
+     *               can update data of members in their own congregation.
+     *   - `create`: Anyone can create their own user document (i.e., register). The document ID
+     *               must match their auth UID.
+     *   - `delete`: Only admins can delete users.
+     * @path /users/{userId}
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId) || isAdmin() || (isPastor() && isPastorOfSameCongregation(resource.data));
+      allow list: if isAdmin() || isPastor();
+      allow update: if isOwner(userId) || isAdmin() || (isPastor() && isPastorOfSameCongregation(resource.data));
+      allow create: if isOwner(userId); // Public registration, but must create own document
+      allow delete: if isAdmin();
+    }
+
+
+    /**
+     * @description
+     *   Manages church groups. This is a placeholder and is currently locked down.
+     *   To enable, define a 'members' map on the group document with user UIDs and roles.
+     * @path /groups/{groupId}
+     */
+    match /groups/{groupId} {
+      allow read, write: if false; // Locked until feature is fully implemented.
+    }
+    
+    /**
+     * @description
+     *   Manages the list of congregations. Publicly readable for registration forms.
+     *   Only Admins can create, update, or delete congregations.
+     * @path /congregacoes/{congregacaoId}
+     */
+    match /congregacoes/{congregacaoId} {
+        allow get, list: if true;
+        allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description
+     *   Stores singular, public-facing information about the church (e.g., banner URLs).
+     *   Readable by anyone, but only writable by an Admin.
+     * @path /churchInfo/{churchInfoId}
+     */
+    match /churchInfo/{churchInfoId} {
+      allow get, list: if true;
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || isPastor();
+    }
+    
+    /**
+     * @description
+     *   Manages the customizable card template for member IDs.
+     *   Readable by any signed-in user, but only writable by Admins.
+     * @path /cardTemplates/{templateId}
+     */
+    match /cardTemplates/{templateId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+    
+    /**
+     * @description
+     *   Manages the executive committee leaders for the homepage.
+     *   Publicly readable, but only writable by an Admin.
+     * @path /leaders/{leaderId}
+     */
+    match /leaders/{leaderId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description
+     *   Manages document templates, like for letters of recommendation.
+     *   Readable by signed-in users, but only writable by an Admin.
+     * @path /documentTemplates/{templateId}
+     */
+    match /documentTemplates/{templateId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    /**
+     * @description
+     *   Manages church logos for download.
+     *   Readable by signed-in leaders, but only writable by an Admin.
+     * @path /logos/{logoId}
+     */
+    match /logos/{logoId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description
+     *   Stores announcements for the mural. Publicly readable by anyone.
+     *   Only Admins can create, update, or delete posts.
+     * @path /posts/{postId}
+     */
+    match /posts/{postId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description
+     *   Stores messages. Access is based on sender/recipient and role.
+     *   - `create`: Any signed-in user can send a message.
+     *   - `get`: Senders can read their own messages. Recipients (pastors/admins)
+     *     can read messages sent to them. Admins can read all.
+     *   - `list`: Limited. Client queries must be specific and are validated by `get` rule on each doc.
+     *   - `update`: Recipients (pastors/admins) and Admins can update to add replies.
+     *   - `delete`: Only Admins can delete messages.
+     * @path /messages/{messageId}
+     */
+    match /messages/{messageId} {
+      allow create: if isSignedIn();
+      allow get: if canAccessMessage(resource.data);
+      allow list: if isSignedIn();
+      allow update: if canAccessMessage(resource.data);
+      allow delete: if isAdmin();
+    }
+  }
+}

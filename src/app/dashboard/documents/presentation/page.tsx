@@ -52,8 +52,8 @@ const defaultElements: DocElements = {
     'Titulo2': { position: { top: 20, left: 50 }, size: { fontSize: 16 }, text: 'DE APRESENTAÇÃO', letterSpacing: '0.2em', fontWeight: 'bold', textAlign: 'center', color: '#333' },
     'Certificamos': { position: { top: 30, left: 50 }, size: { fontSize: 12 }, text: 'CERTIFICAMOS QUE', textAlign: 'center', color: '#333' },
     'NomeCrianca': { position: { top: 40, left: 50 }, size: { fontSize: 36 }, text: 'Nome da Criança', fontFamily: "'Great Vibes', cursive", textAlign: 'center', color: 'black' },
-    'Detalhes': { position: { top: 55, left: 50 }, size: { fontSize: 11 }, text: 'Detalhes da criança...', textAlign: 'center', color: '#333', lineHeight: 1.5, width: 600 },
-    'Versiculo': { position: { top: 70, left: 50 }, size: { fontSize: 9 }, text: '“E, cumprindo-se os dias da purificação dela, segundo a lei de Moisés, o levaram a Jerusalém,\npara o apresentarem ao Senhor.” (Lucas 2:22)', textAlign: 'center', color: '#333', fontStyle: 'italic', width: 500 },
+    'Detalhes': { position: { top: 55, left: 50 }, size: { fontSize: 11, width: 600 }, text: 'Detalhes da criança...', textAlign: 'center', color: '#333', lineHeight: 1.5 },
+    'Versiculo': { position: { top: 70, left: 50 }, size: { fontSize: 9, width: 500 }, text: '“E, cumprindo-se os dias da purificação dela, segundo a lei de Moisés, o levaram a Jerusalém,\npara o apresentarem ao Senhor.” (Lucas 2:22)', textAlign: 'center', color: '#333', fontStyle: 'italic' },
     'AssinaturaPresidente': { position: { top: 82, left: 25 }, size: { width: 180, height: 50, fontSize: 12 }, src: '' },
     'LinhaPresidente': { position: { top: 90, left: 25 }, size: { fontSize: 12, width: 250, height: 2 } },
     'NomePresidente': { position: { top: 92, left: 25 }, size: { fontSize: 9 }, text: 'Pastor Presidente', textAlign: 'center' },
@@ -61,6 +61,11 @@ const defaultElements: DocElements = {
     'LinhaPastorDirigente': { position: { top: 90, left: 75 }, size: { fontSize: 12, width: 250, height: 2 } },
     'NomePastorDirigente': { position: { top: 92, left: 75 }, size: { fontSize: 9 }, text: 'Pastor Dirigente', textAlign: 'center' },
     'CargoPastorDirigente': { position: { top: 95, left: 75 }, size: { fontSize: 7 }, text: 'Pastor Dirigente', textAlign: 'center', fontStyle: 'italic' },
+};
+
+const toTitleCase = (str: string) => {
+    if (!str) return '';
+    return str.toLowerCase().replace(/(^|\s)\S/g, (char) => char.toUpperCase());
 };
 
 
@@ -90,8 +95,7 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
             letterSpacing: el.letterSpacing,
             lineHeight: el.lineHeight,
             fontStyle: el.fontStyle,
-            // Only apply width for images and lines, not text
-            width: (el.src || id.includes('Linha')) && el.size.width ? `${el.size.width}px` : 'auto',
+            width: el.size.width ? `${el.size.width}px` : 'auto',
         };
         
         if (id.includes('Linha')) {
@@ -105,7 +109,6 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
         return (
              <p key={id} style={style} onClick={(e) => { e.stopPropagation(); onElementClick(id); }} 
                 className={cn(
-                    // Apply nowrap for the name to prevent line breaks
                     id === 'NomeCrianca' ? 'whitespace-nowrap' : 'whitespace-pre-wrap', 
                     { 'ring-2 ring-blue-500 p-1': selectedElementId === id }
                 )}
@@ -174,14 +177,15 @@ export default function PresentationCertificatePage() {
         
         // DYNAMIC FONT SIZE LOGIC
         const name = childName || '________________';
+        const formattedName = toTitleCase(name);
         let nameFontSize = 36;
-        if (name.length > 20) nameFontSize = 32;
-        if (name.length > 25) nameFontSize = 28;
-        if (name.length > 30) nameFontSize = 22;
+        if (formattedName.length > 20) nameFontSize = 32;
+        if (formattedName.length > 25) nameFontSize = 28;
+        if (formattedName.length > 30) nameFontSize = 22;
 
 
         initialElements['Logo'].src = churchInfo?.presentationCertLogoUrl || churchInfo?.conventionLogo1Url || PlaceHolderImages.find(p => p.id === 'church-logo')?.imageUrl || '';
-        initialElements['NomeCrianca'].text = name;
+        initialElements['NomeCrianca'].text = formattedName;
         initialElements['NomeCrianca'].size.fontSize = nameFontSize;
 
         initialElements['Detalhes'].text = `${childDetails || 'Nascida no dia ___ de ________ de _____, filha(o) de ______________ e ______________'}\nfoi apresentada oficialmente ao SENHOR JESUS CRISTO,\nna Igreja Evangélica Assembleia de Deus Ministério Kairós.\nNo dia ${formattedDate}`;

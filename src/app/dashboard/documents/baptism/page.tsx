@@ -59,7 +59,7 @@ type ChurchInfo = {
 const defaultElements: DocElements = {
     'Logo': { position: { top: 7, left: 10 }, size: { width: 150, height: 150, fontSize: 12 }, src: '' },
     'NomeMembro': { position: { top: 45, left: 50 }, size: { fontSize: 42 }, text: 'Nome do Membro', fontFamily: "'Great Vibes', cursive", fontWeight: 'bold', textAlign: 'center', letterSpacing: '0.1em' },
-    'TextoPrincipal': { position: { top: 60, left: 50 }, size: { fontSize: 12 }, text: 'Crendo e obedecendo...', textAlign: 'center', lineHeight: 2.2 },
+    'TextoPrincipal': { position: { top: 60, left: 50 }, size: { fontSize: 12, width: 700 }, text: 'Crendo e obedecendo...', textAlign: 'center', lineHeight: 2.2 },
     'AssinaturaPresidente': { position: { top: 78, left: 25 }, size: { width: 180, height: 50, fontSize: 12 }, src: '' },
     'LinhaPresidente': { position: { top: 90, left: 25}, size: { fontSize: 12, width: 250, height: 2 } },
     'NomePresidente': { position: { top: 92, left: 25 }, size: { fontSize: 10 }, text: 'Pastor Presidente', textAlign: 'center' },
@@ -67,6 +67,11 @@ const defaultElements: DocElements = {
     'LinhaPastorLocal': { position: { top: 90, left: 75}, size: { fontSize: 12, width: 250, height: 2 } },
     'NomePastorLocal': { position: { top: 92, left: 75 }, size: { fontSize: 10 }, text: 'Pastor Local', textAlign: 'center' },
     'CargoPastorLocal': { position: { top: 95, left: 75 }, size: { fontSize: 8 }, text: 'Pastor Local', textAlign: 'center', fontStyle: 'italic' },
+};
+
+const toTitleCase = (str: string) => {
+    if (!str) return '';
+    return str.toLowerCase().replace(/(^|\s)\S/g, (char) => char.toUpperCase());
 };
 
 
@@ -95,8 +100,7 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
             color: el.color,
             letterSpacing: el.letterSpacing,
             lineHeight: el.lineHeight,
-             // Only apply width for images and lines, not text
-            width: (el.src || id.includes('Linha')) && el.size.width ? `${el.size.width}px` : 'auto',
+            width: el.size.width ? `${el.size.width}px` : 'auto',
         };
         
         if (id.includes('Linha')) {
@@ -119,7 +123,6 @@ const DocumentRenderer = React.forwardRef<HTMLDivElement, {
         return (
             <p key={id} style={style} onClick={(e) => { e.stopPropagation(); onElementClick(id); }} 
                 className={cn(
-                    // Apply nowrap for the name to prevent line breaks
                     id === 'NomeMembro' ? 'whitespace-nowrap' : 'whitespace-pre-wrap', 
                     { 'ring-2 ring-blue-500 p-1': selectedElementId === id }
                 )}
@@ -191,14 +194,15 @@ export default function BaptismCertificatePage() {
 
             // DYNAMIC FONT SIZE FOR NAME
             const memberName = selectedMember?.nome || 'NOME DO MEMBRO';
+            const formattedName = toTitleCase(memberName);
             let nameFontSize = 42; // Default size
-            if (memberName.length > 20) nameFontSize = 36;
-            if (memberName.length > 25) nameFontSize = 30;
-            if (memberName.length > 30) nameFontSize = 24;
-            if (memberName.length > 35) nameFontSize = 20;
+            if (formattedName.length > 20) nameFontSize = 36;
+            if (formattedName.length > 25) nameFontSize = 30;
+            if (formattedName.length > 30) nameFontSize = 24;
+            if (formattedName.length > 35) nameFontSize = 20;
 
             initialElements['Logo'].src = churchInfo.baptismCertLogoUrl || churchInfo.conventionLogo1Url || PlaceHolderImages.find(p => p.id === 'church-logo')?.imageUrl || '';
-            initialElements['NomeMembro'].text = memberName;
+            initialElements['NomeMembro'].text = formattedName;
             initialElements['NomeMembro'].size.fontSize = nameFontSize; // Apply dynamic size
             initialElements['TextoPrincipal'].text = `Crendo e obedecendo nas sagradas Escrituras e as doutrinas ensinadas por 
 Jesus Cristo, foi ${genderTerm} sob profissão de fé em nome do Pai, do Filho e do Espírito Santo,

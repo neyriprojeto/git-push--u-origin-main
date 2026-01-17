@@ -276,7 +276,7 @@ export default function PresentationCertificatePage() {
                 </CardContent>
             </Card>
 
-            {userData.cargo === 'Administrador' && (
+            {userData?.cargo && ['Administrador', 'Pastor/dirigente'].includes(userData.cargo) && (
                  <Card>
                     <CardHeader><CardTitle>Ajustar Layout</CardTitle><CardDescription>Selecione um elemento e use os botões para ajustar sua posição.</CardDescription></CardHeader>
                     <CardContent className="space-y-4">

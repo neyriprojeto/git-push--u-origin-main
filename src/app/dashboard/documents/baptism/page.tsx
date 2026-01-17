@@ -322,7 +322,7 @@ no dia ${baptismDate} na Assembleia de Deus Kairós congregação de ${selectedM
                 </CardContent>
             </Card>
 
-            {userData?.cargo === 'Administrador' && (
+            {userData?.cargo && ['Administrador', 'Pastor/dirigente'].includes(userData.cargo) && (
                 <Card>
                     <CardHeader><CardTitle>Ajustar Layout</CardTitle><CardDescription>Selecione um elemento e use os botões para ajustar sua posição.</CardDescription></CardHeader>
                     <CardContent className="space-y-4">
@@ -366,5 +366,3 @@ no dia ${baptismDate} na Assembleia de Deus Kairós congregação de ${selectedM
         </div>
     );
 }
-
-    

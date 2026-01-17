@@ -21,6 +21,7 @@ import { Loader2, Save, Upload, ShieldAlert, Trash2, ChevronRight, User, LayoutG
 import { useState, useEffect, useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { useDoc, useFirestore, useMemoFirebase, useCollection, useUser } from "@/firebase";
 import { doc, collection, getDoc, serverTimestamp, query, orderBy, Timestamp } from "firebase/firestore";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -48,65 +49,44 @@ type Congregacao = { id: string; nome: string; };
 type Post = { id: string; title: string; content: string; authorId: string; authorName: string; authorAvatar?: string; imageUrl?: string; createdAt: Timestamp; };
 type ChurchInfo = { radioUrl?: string };
 
-
-const memberFormSchema = z.object({
-  nome: z.string().min(2, "Nome é obrigatório"),
-  email: z.string().email("E-mail inválido").optional(),
-  phone: z.string().optional(),
-  whatsapp: z.string().optional(),
-  cep: z.string().optional(),
-  logradouro: z.string().optional(),
-  numero: z.string().optional(),
-  complemento: z.string().optional(),
-  bairro: z.string().optional(),
-  cidade: z.string().optional(),
-  estado: z.string().optional(),
-  avatar: z.string().optional(),
-  dataNascimento: z.string().optional(),
-  rg: z.string().optional(),
-  cpf: z.string().optional(),
-  gender: z.enum(['Masculino', 'Feminino']).optional(),
-  maritalStatus: z.enum(['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)']).optional(),
-  naturalness: z.string().optional(),
-  nationality: z.string().optional(),
-  cargo: z.string().optional(),
-  status: z.enum(['Ativo', 'Inativo', 'Pendente']).optional(),
-  congregacao: z.string().optional(),
-  dataBatismo: z.string().optional(),
-  dataMembro: z.string().optional(),
-  recordNumber: z.string().optional(),
-  responsiblePastor: z.string().optional(),
-});
-type MemberFormData = z.infer<typeof memberFormSchema>;
-
-
+// --- Helper Functions (moved to top level) ---
 const formatDate = (dateValue?: string | { seconds: number; nanoseconds: number } | Date, outputFormat: string = 'yyyy-MM-dd') => {
     if (!dateValue) return '';
     try {
-        let date;
-        if (typeof dateValue === 'string') { date = new Date(dateValue); } 
-        else if (dateValue instanceof Date) { date = dateValue; } 
-        else if (typeof dateValue === 'object' && 'seconds' in dateValue) { date = new Date(dateValue.seconds * 1000); } 
-        else { return ''; }
-        date.setDate(date.getDate() + 1);
-        return format(date, outputFormat);
-    } catch { return ''; }
-}
-
-function centerAspectCrop(mediaWidth: number, mediaHeight: number, aspect: number) { return centerCrop(makeAspectCrop({ unit: '%', width: 90, }, aspect, mediaWidth, mediaHeight), mediaWidth, mediaHeight); }
-
-const getMemberDataForField = (currentMember: Member, fieldId: string): string | null => {
-    switch (fieldId) {
-        case 'Valor Nome': return `Nome: ${currentMember.nome || ''}`;
-        case 'Valor Nº Reg.': return `Nº Reg.: ${currentMember.recordNumber || ''}`;
-        case 'Valor CPF': return `CPF: ${currentMember.cpf || ''}`;
-        // case 'Valor Data de Batismo': return `Data de Batismo: ${formatDate(currentMember.dataBatismo, 'dd/MM/yyyy') || ''}`;
-        case 'Valor Cargo': return `Cargo: ${currentMember.cargo || ''}`;
-        case 'Membro Desde': return `Membro desde: ${formatDate(currentMember.dataMembro, 'dd/MM/yyyy') || ''}`;
-        case 'Congregação': return currentMember.congregacao || null;
-        default: return null;
+        let date: Date;
+        if (typeof dateValue === 'object' && dateValue !== null && 'seconds' in dateValue) {
+            date = new Date(dateValue.seconds * 1000);
+        } else if (dateValue instanceof Date) {
+            date = dateValue;
+        } else if (typeof dateValue === 'string') {
+            const dateString = dateValue.includes('T') ? dateValue : dateValue.replace(/-/g, '/');
+            date = new Date(dateString);
+        } else {
+           return '';
+        }
+        
+        if (isNaN(date.getTime())) return '';
+        
+        return format(date, outputFormat, { locale: ptBR });
+    } catch {
+        return '';
     }
 };
+
+const getMemberDataForField = (currentMember: Member, fieldId: string): string | null => {
+    const dataMap: Record<string, string | undefined> = {
+        'Valor Nome': `Nome: ${currentMember.nome || ''}`,
+        'Valor Nº Reg.': `Nº Reg.: ${currentMember.recordNumber || ''}`,
+        'Valor CPF': `CPF: ${currentMember.cpf || ''}`,
+        'Valor Data de Batismo': `Data de Batismo: ${formatDate(currentMember.dataBatismo, 'dd/MM/yyyy') || 'Não informado'}`,
+        'Valor Cargo': `Cargo: ${currentMember.cargo || ''}`,
+        'Membro Desde': `Membro desde: ${formatDate(currentMember.dataMembro, 'dd/MM/yyyy') || 'Não informado'}`,
+        'Congregação': currentMember.congregacao
+    };
+
+    return dataMap[fieldId] ?? null;
+};
+
 
 const renderElement = (currentMember: Member, id: string, el: ElementStyle, textColors: CardTemplateData['textColors'], getAvatarFn: (avatarId?: string) => { imageUrl: string } | undefined): React.ReactNode => {
     if (!el) return null;
@@ -144,7 +124,7 @@ const renderElement = (currentMember: Member, id: string, el: ElementStyle, text
     return null;
 };
 
-const StudioCard = ({ isFront, currentMember, templateData, getAvatarFn }: { isFront: boolean, currentMember: Member, templateData: CardTemplateData | null, getAvatarFn: (avatarId?: string) => { imageUrl: string } | undefined }) => {
+const StudioCard = ({ isFront, currentMember, templateData, getAvatarFn }: { isFront: boolean, currentMember: Member | null, templateData: CardTemplateData | null, getAvatarFn: (avatarId?: string) => { imageUrl: string } | undefined }) => {
     if (!templateData || !currentMember) { return <div className="flex items-center justify-center h-full"><Loader2 className="animate-spin" /></div>; }
     const { elements = {}, cardStyles = { frontBackground: '#F3F4F6', backBackground: '#F3F4F6', frontBackgroundImage: '', backBackgroundImage: '' }, textColors = { title: '#000000', personalData: '#333333', backText: '#333333' } } = templateData;
     const backgroundStyle: React.CSSProperties = { backgroundColor: isFront ? cardStyles.frontBackground : cardStyles.backBackground, backgroundImage: `url(${isFront ? cardStyles.frontBackgroundImage : cardStyles.backBackgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center', };
@@ -163,6 +143,39 @@ const StudioCard = ({ isFront, currentMember, templateData, getAvatarFn }: { isF
     );
 };
 
+const memberFormSchema = z.object({
+  nome: z.string().min(2, "Nome é obrigatório"),
+  email: z.string().email("E-mail inválido").optional(),
+  phone: z.string().optional(),
+  whatsapp: z.string().optional(),
+  cep: z.string().optional(),
+  logradouro: z.string().optional(),
+  numero: z.string().optional(),
+  complemento: z.string().optional(),
+  bairro: z.string().optional(),
+  cidade: z.string().optional(),
+  estado: z.string().optional(),
+  avatar: z.string().optional(),
+  dataNascimento: z.string().optional(),
+  rg: z.string().optional(),
+  cpf: z.string().optional(),
+  gender: z.enum(['Masculino', 'Feminino']).optional(),
+  maritalStatus: z.enum(['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)']).optional(),
+  naturalness: z.string().optional(),
+  nationality: z.string().optional(),
+  cargo: z.string().optional(),
+  status: z.enum(['Ativo', 'Inativo', 'Pendente']).optional(),
+  congregacao: z.string().optional(),
+  dataBatismo: z.string().optional(),
+  dataMembro: z.string().optional(),
+  recordNumber: z.string().optional(),
+  responsiblePastor: z.string().optional(),
+});
+type MemberFormData = z.infer<typeof memberFormSchema>;
+
+
+function centerAspectCrop(mediaWidth: number, mediaHeight: number, aspect: number) { return centerCrop(makeAspectCrop({ unit: '%', width: 90, }, aspect, mediaWidth, mediaHeight), mediaWidth, mediaHeight); }
+
 
 export default function MemberProfilePage() {
   const params = useParams();
@@ -177,13 +190,13 @@ export default function MemberProfilePage() {
   const [permission, setPermission] = useState<{ canView: boolean, canEdit: boolean, canManage: boolean, hasChecked: boolean }>({ canView: false, canEdit: false, canManage: false, hasChecked: false, });
 
   // State for image cropping
-    const [crop, setCrop] = useState<Crop>();
-    const [imageToCrop, setImageToCrop] = useState('');
-    const [isCropping, setIsCropping] = useState(false);
-    const [isUploading, setIsUploading] = useState(false);
-    const imgRef = useRef<HTMLImageElement>(null);
-    const previewCanvasRef = useRef<HTMLCanvasElement>(null);
-    const [currentFile, setCurrentFile] = useState<File | null>(null);
+  const [crop, setCrop] = useState<Crop>();
+  const [imageToCrop, setImageToCrop] = useState('');
+  const [isCropping, setIsCropping] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
+  const previewCanvasRef = useRef<HTMLCanvasElement>(null);
+  const [currentFile, setCurrentFile] = useState<File | null>(null);
 
   // State for inner components
   const [isCardFlipped, setIsCardFlipped] = useState(false);
@@ -232,8 +245,14 @@ export default function MemberProfilePage() {
   const onMemberSubmit: SubmitHandler<MemberFormData> = async (data) => {
     if (!firestore || !memberId) return;
     setIsSubmitting(true);
-    try { await updateMember(firestore, memberId, data); toast({ title: "Sucesso!", description: "Os dados do membro foram atualizados." }); } 
-    catch (error) { console.error("Update error: ", error); toast({ variant: "destructive", title: "Erro", description: "Não foi possível atualizar os dados do membro." }); } 
+    try { 
+        await updateMember(firestore, memberId, data); 
+        toast({ title: "Sucesso!", description: "Os dados do membro foram atualizados." }); 
+    } 
+    catch (error) { 
+        console.error("Update error: ", error); 
+        toast({ variant: "destructive", title: "Erro", description: "Não foi possível atualizar os dados do membro." }); 
+    } 
     finally { setIsSubmitting(false); }
   };
   
@@ -261,7 +280,48 @@ export default function MemberProfilePage() {
 
   const onSelectFile = (e: React.ChangeEvent<HTMLInputElement>) => { const file = e.target.files?.[0]; if (file) { setCrop(undefined); setCurrentFile(file); const reader = new FileReader(); reader.addEventListener('load', () => { setImageToCrop(reader.result?.toString() || ''); setIsCropping(true); }); reader.readAsDataURL(file) } }
   function onImageLoad(e: React.SyntheticEvent<HTMLImageElement>) { const aspect = 1; const { width, height } = e.currentTarget; setCrop(centerAspectCrop(width, height, aspect)) }
-  const saveCroppedImage = async () => { const image = imgRef.current; const canvas = previewCanvasRef.current; if (!image || !canvas || !crop || !firestore) { toast({ variant: 'destructive', title: 'Erro de Corte', description: 'Não foi possível processar a imagem.' }); return; } setIsUploading(true); const scaleX = image.naturalWidth / image.width; const scaleY = image.naturalHeight / image.height; canvas.width = Math.floor(crop.width * scaleX); canvas.height = Math.floor(crop.height * scaleY); const ctx = canvas.getContext('2d'); if (!ctx) { toast({ variant: 'destructive', title: 'Erro', description: 'Could not get 2d context' }); setIsUploading(false); return; } ctx.drawImage(image, crop.x * scaleX, crop.y * scaleY, crop.width * scaleX, crop.height * scaleY, 0, 0, canvas.width, canvas.height); canvas.toBlob(async (blob) => { if (!blob || !currentFile) { toast({ variant: 'destructive', title: 'Erro', description: 'Could not create blob' }); setIsUploading(false); return; } try { const croppedFile = new File([blob], currentFile.name, { type: blob.type }); const src = await uploadArquivo(croppedFile); memberForm.setValue('avatar', src); await onMemberSubmit(memberForm.getValues()); toast({ title: 'Sucesso', description: 'Foto de perfil atualizada!' }); setIsCropping(false); setImageToCrop(''); setCurrentFile(null); } catch (error: any) { console.error(error); toast({ variant: 'destructive', title: 'Erro de Upload', description: `Não foi possível enviar a imagem. Erro: ${error.message}` }); } finally { setIsUploading(false); } }, 'image/jpeg'); }
+  const saveCroppedImage = async () => {
+    const image = imgRef.current;
+    const canvas = previewCanvasRef.current;
+    if (!image || !canvas || !crop || !firestore) {
+      toast({ variant: 'destructive', title: 'Erro de Corte', description: 'Não foi possível processar a imagem.' });
+      return;
+    }
+    setIsUploading(true);
+    const scaleX = image.naturalWidth / image.width;
+    const scaleY = image.naturalHeight / image.height;
+    canvas.width = Math.floor(crop.width * scaleX);
+    canvas.height = Math.floor(crop.height * scaleY);
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      toast({ variant: 'destructive', title: 'Erro', description: 'Could not get 2d context' });
+      setIsUploading(false);
+      return;
+    }
+    ctx.drawImage(image, crop.x * scaleX, crop.y * scaleY, crop.width * scaleX, crop.height * scaleY, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob(async (blob) => {
+      if (!blob || !currentFile) {
+        toast({ variant: 'destructive', title: 'Erro', description: 'Could not create blob' });
+        setIsUploading(false);
+        return;
+      }
+      try {
+        const croppedFile = new File([blob], currentFile.name, { type: blob.type });
+        const src = await uploadArquivo(croppedFile);
+        memberForm.setValue('avatar', src);
+        await onMemberSubmit(memberForm.getValues());
+        toast({ title: 'Sucesso', description: 'Foto de perfil atualizada!' });
+        setIsCropping(false);
+        setImageToCrop('');
+        setCurrentFile(null);
+      } catch (error: any) {
+        console.error(error);
+        toast({ variant: 'destructive', title: 'Erro de Upload', description: `Não foi possível enviar a imagem. Erro: ${error.message}` });
+      } finally {
+        setIsUploading(false);
+      }
+    }, 'image/jpeg');
+  };
 
   // --- Loading and Permission ---
   const isLoading = isUserLoading || isCurrentUserLoading || memberLoading || !permission.hasChecked;

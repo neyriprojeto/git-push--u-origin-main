@@ -16,10 +16,13 @@ import {
   SidebarGroupLabel,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { Home, LayoutGrid, CreditCard, Users, UserPlus, UserCog, Settings, Mail, Instagram, Youtube, Globe, Radio, FileText } from "lucide-react";
+import { Home, LayoutGrid, CreditCard, Users, UserPlus, UserCog, Settings, Mail, Instagram, Youtube, Globe, Radio, FileText, LogOut } from "lucide-react";
 import { AppLogo } from "@/components/icons";
-import { useUser, useDoc, useFirestore, useMemoFirebase } from "@/firebase";
+import { useUser, useDoc, useFirestore, useMemoFirebase, useAuth } from "@/firebase";
 import { doc } from "firebase/firestore";
+import { signOut } from "firebase/auth";
+import { useRouter } from "next/navigation";
+
 
 interface UserData {
   cargo?: string;
@@ -40,6 +43,9 @@ export default function DashboardLayout({
 }) {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
+  const auth = useAuth();
+  const router = useRouter();
+
 
   const userRef = useMemoFirebase(
     () => (firestore && user ? doc(firestore, 'users', user.uid) : null),
@@ -65,6 +71,18 @@ export default function DashboardLayout({
     : userRole === 'Pastor/dirigente' && userData?.congregacao
     ? `/dashboard/settings/congregations/${encodeURIComponent(userData.congregacao)}`
     : "#";
+
+  const handleLogout = async () => {
+    if (auth) {
+      try {
+        await signOut(auth);
+        router.push('/login');
+      } catch (error) {
+        console.error("Error signing out: ", error);
+        // Optionally, show a toast message on error
+      }
+    }
+  };
 
   return (
     <SidebarProvider>
@@ -255,6 +273,12 @@ export default function DashboardLayout({
                 </SidebarMenuButton>
               </SidebarMenuItem>
             )}
+             <SidebarMenuItem>
+              <SidebarMenuButton onClick={handleLogout} tooltip={{ children: "Sair" }}>
+                <LogOut />
+                <span>Sair</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarFooter>
       </Sidebar>

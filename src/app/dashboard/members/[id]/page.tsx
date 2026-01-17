@@ -37,6 +37,7 @@ import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-cr
 import 'react-image-crop/dist/ReactCrop.css';
 import Link from "next/link";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { uploadArquivo } from "@/lib/cloudinary";
 
 
 // --- Tipos para a Carteirinha do Studio ---
@@ -369,7 +370,7 @@ export default function MemberProfilePage() {
       if (member.naturalness && member.naturalness.includes('/')) {
         const [city, state] = member.naturalness.split('/');
         setSelectedState(state);
-        // The city will be set by the next useEffect once cities are loaded
+        setSelectedCity(city);
       } else {
         setSelectedState('');
         setSelectedCity('');

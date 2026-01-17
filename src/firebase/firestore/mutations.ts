@@ -51,14 +51,17 @@ export const updateMember = async (firestore: Firestore, uid: string, memberData
         atualizadoEm: serverTimestamp(),
     };
 
-    updateDoc(memberRef, dataToUpdate)
-        .catch(error => {
-            errorEmitter.emit('permission-error', new FirestorePermissionError({
-                path: memberRef.path,
-                operation: 'update',
-                requestResourceData: dataToUpdate,
-            }));
-        });
+    try {
+        await updateDoc(memberRef, dataToUpdate);
+    } catch(error) {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+            path: memberRef.path,
+            operation: 'update',
+            requestResourceData: dataToUpdate,
+        }));
+        // Re-throw error to be handled by the calling function
+        throw error;
+    }
 };
 
 export const addCongregacao = async (firestore: Firestore, nome: string) => {

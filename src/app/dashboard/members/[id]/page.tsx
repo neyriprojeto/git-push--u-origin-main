@@ -80,6 +80,7 @@ const getMemberDataForField = (currentMember: Member, fieldId: string): string |
         'Valor Nº Reg.': `Nº Reg.: ${currentMember.recordNumber || ''}`,
         'Valor CPF': `CPF: ${currentMember.cpf || ''}`,
         'Valor Cargo': `Cargo: ${currentMember.cargo || ''}`,
+        'Valor Data de Batismo': `Data de Batismo: ${formatDate(currentMember.dataBatismo, 'dd/MM/yyyy') || ''}`,
         'Membro Desde': `Membro desde: ${formatDate(currentMember.dataMembro, 'dd/MM/yyyy') || ''}`,
         'Congregação': currentMember.congregacao
     };
@@ -231,6 +232,7 @@ export default function MemberProfilePage() {
   const [brazilianStates, setBrazilianStates] = useState<{ sigla: string; nome: string }[]>([]);
   const [cities, setCities] = useState<{ nome: string }[]>([]);
   const [selectedState, setSelectedState] = useState('');
+  const [selectedCity, setSelectedCity] = useState('');
   const [isLoadingStates, setIsLoadingStates] = useState(false);
   const [isLoadingCities, setIsLoadingCities] = useState(false);
   const [addressState, setAddressState] = useState('');
@@ -363,6 +365,7 @@ export default function MemberProfilePage() {
 
   const handleLogout = async () => {
     if (!auth) return;
+    // Set permission to false immediately to prevent data fetching on re-render during logout
     setPermission({ canView: false, canEdit: false, canManage: false, hasChecked: true });
     try {
       await signOut(auth);
@@ -631,3 +634,5 @@ export default function MemberProfilePage() {
     </div>
   );
 }
+
+    

@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useEffect, useState, useRef } from 'react';
-import { useUser, useFirestore, useMemoFirebase, useDoc } from '@/firebase';
+import { useUser, useFirestore, useMemoFirebase, useDoc, useCollection } from '@/firebase';
 import { doc, collection, query, where, orderBy, Timestamp, deleteDoc, getDocs } from 'firebase/firestore';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -32,7 +32,8 @@ type Message = {
     id: string;
     senderId: string;
     senderName: string;
-    recipient: string;
+    recipientId: string;
+    recipientName: string;
     subject: string;
     body: string;
     attachmentUrl?: string;
@@ -46,7 +47,7 @@ export default function MessagesPage() {
     const { toast } = useToast();
 
     const userRef = useMemoFirebase(() => (firestore && authUser ? doc(firestore, 'users', authUser.uid) : null), [firestore, authUser]);
-    const { data: userData, isLoading: isUserDataLoading } = useDoc<UserData>(userRef);
+    const { data: userData, isLoading: isUserDataLoading } = useDoc<UserData>(userData);
 
     const [messages, setMessages] = useState<Message[] | null>(null);
     const [isLoadingMessages, setIsLoadingMessages] = useState(true);
@@ -56,63 +57,35 @@ export default function MessagesPage() {
     const [replyAttachments, setReplyAttachments] = useState<Record<string, File | null>>({});
     const replyAttachmentInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
+    const messagesQuery = useMemoFirebase(() => {
+        if (!firestore || !authUser || !userData) return null;
+
+        if (userData.cargo === 'Administrador') {
+            return query(collection(firestore, 'messages'), orderBy('createdAt', 'desc'));
+        }
+        if (userData.cargo === 'Pastor/dirigente') {
+            return query(collection(firestore, 'messages'), where('recipientId', '==', authUser.uid), orderBy('createdAt', 'desc'));
+        }
+        return null; // Return null for other roles as this page is for admins/pastors
+    }, [firestore, authUser, userData]);
+
+    const { data: fetchedMessages, isLoading: loadingFetchedMessages, error } = useCollection<Message>(messagesQuery);
+
     useEffect(() => {
-        const fetchMessages = async () => {
-            if (!firestore || !userData || !['Administrador', 'Pastor/dirigente'].includes(userData.cargo || '')) {
-                setMessages([]);
-                setIsLoadingMessages(false);
-                return;
-            }
+        setIsLoadingMessages(loadingFetchedMessages);
+        if (fetchedMessages) {
+            setMessages(fetchedMessages);
+        }
+        if (error) {
+            console.error("Error fetching messages:", error);
+            toast({
+                variant: 'destructive',
+                title: 'Erro ao carregar mensagens',
+                description: 'Não foi possível buscar as mensagens. Verifique suas permissões e tente novamente.',
+            });
+        }
+    }, [fetchedMessages, loadingFetchedMessages, error, toast]);
 
-            setIsLoadingMessages(true);
-            try {
-                const baseQuery = collection(firestore, 'messages');
-                let finalMessages: Message[] = [];
-
-                if (userData.cargo === 'Administrador') {
-                    const adminQuery = query(baseQuery, orderBy('createdAt', 'desc'));
-                    const snapshot = await getDocs(adminQuery);
-                    finalMessages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message));
-                } else if (userData.cargo === 'Pastor/dirigente') {
-                    const recipientQueries = [
-                        where('recipient', '==', userData.congregacao),
-                        where('recipient', '==', 'Administração Geral')
-                    ];
-
-                    const snapshots = await Promise.all(recipientQueries.map(q => getDocs(query(baseQuery, q))));
-                    const messagesSet = new Map<string, Message>();
-                    
-                    snapshots.forEach(snapshot => {
-                        snapshot.docs.forEach(doc => {
-                            if (!messagesSet.has(doc.id)) {
-                                messagesSet.set(doc.id, { id: doc.id, ...doc.data() } as Message);
-                            }
-                        });
-                    });
-
-                    finalMessages = Array.from(messagesSet.values());
-                    finalMessages.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
-                }
-
-                setMessages(finalMessages);
-            } catch (error: any) {
-                 if (error.name === 'FirestoreError' && error.code === 'permission-denied') {
-                 } else {
-                    console.error("Error fetching messages:", error);
-                    toast({
-                        variant: 'destructive',
-                        title: 'Erro ao carregar mensagens',
-                        description: 'Não foi possível buscar as mensagens. Tente novamente mais tarde.',
-                    });
-                 }
-                 setMessages(null);
-            } finally {
-                setIsLoadingMessages(false);
-            }
-        };
-
-        fetchMessages();
-    }, [firestore, userData, toast]);
 
     const handleReplyChange = (messageId: string, text: string) => {
         setReplyText(prev => ({ ...prev, [messageId]: text }));
@@ -149,12 +122,7 @@ export default function MessagesPage() {
 
             await addReplyToMessage(firestore, message.id, replyData);
     
-            const newReplyForUI: Reply = {
-                ...replyData,
-                createdAt: Timestamp.now()
-            };
-
-            setMessages(prev => prev ? prev.map(m => m.id === message.id ? { ...m, replies: [...(m.replies || []), newReplyForUI] } : m) : null);
+            // The real-time listener from useCollection will handle UI updates automatically.
     
             handleReplyChange(message.id, '');
             setReplyAttachments(prev => ({ ...prev, [message.id]: null }));
@@ -175,7 +143,7 @@ export default function MessagesPage() {
         if (!firestore) return;
         try {
             await deleteDoc(doc(firestore, 'messages', messageId));
-            setMessages(prev => prev ? prev.filter(m => m.id !== messageId) : null);
+            // Real-time listener will update the UI
             toast({ title: 'Sucesso', description: 'Mensagem removida.' });
         } catch (error) {
             console.error("Error deleting message:", error);
@@ -225,7 +193,7 @@ export default function MessagesPage() {
                                             </div>
                                             <div className="text-sm text-muted-foreground text-right ml-4">
                                                 <p>{formatDistanceToNow(message.createdAt.toDate(), { addSuffix: true, locale: ptBR })}</p>
-                                                <Badge variant="secondary" className='mt-1'>{message.recipient}</Badge>
+                                                <Badge variant="secondary" className='mt-1'>{message.recipientName}</Badge>
                                             </div>
                                         </div>
                                     </AccordionTrigger>
@@ -344,3 +312,5 @@ export default function MessagesPage() {
         </div>
     );
 }
+
+    

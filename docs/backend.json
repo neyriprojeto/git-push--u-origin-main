@@ -115,7 +115,9 @@
         "properties": {
             "id": { "type": "string" },
             "nome": { "type": "string" },
-            "endereco": { "type": "string" }
+            "endereco": { "type": "string" },
+            "pastorId": { "type": "string", "description": "The UID of the pastor leading this congregation." },
+            "pastorName": { "type": "string", "description": "The name of the pastor leading this congregation." }
         },
         "required": ["nome"]
     },
@@ -165,7 +167,8 @@
         "id": { "type": "string" },
         "senderId": { "type": "string" },
         "senderName": { "type": "string" },
-        "recipient": { "type": "string" },
+        "recipientId": { "type": "string", "description": "UID of the recipient pastor, or a group ID like 'ADMIN_GROUP'." },
+        "recipientName": { "type": "string", "description": "Display name of the recipient (e.g., 'Pr. João' or 'Administração Geral')." },
         "subject": { "type": "string" },
         "body": { "type": "string" },
         "attachmentUrl": { "type": "string", "format": "uri", "description": "URL for an optional attachment file." },
@@ -186,7 +189,7 @@
           }
         }
       },
-      "required": ["senderId", "senderName", "recipient", "subject", "body", "createdAt"]
+      "required": ["senderId", "senderName", "recipientId", "recipientName", "subject", "body", "createdAt"]
     }
   },
   "auth": {
@@ -235,3 +238,5 @@
     }
   }
 }
+
+    

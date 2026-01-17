@@ -85,19 +85,6 @@ service cloud.firestore {
              requestingUserData.congregacao == targetUserData.congregacao;
     }
     
-    /**
-     * Checks if a user has permission to read or update a specific message.
-     * Admins can access all. Pastors can access messages to 'Administração Geral'
-     * or to their own congregation. Members can access messages they sent.
-     */
-    function canAccessMessage(messageData) {
-      return isAdmin() ||
-             (isSignedIn() && request.auth.uid == messageData.senderId) ||
-             (isPastor() && 
-                (messageData.recipient == 'Administração Geral' ||
-                 (getRequestingUserData().congregacao != null && messageData.recipient == getRequestingUserData().congregacao)));
-    }
-
 
     // =================================
     // Collection Rules
@@ -217,21 +204,22 @@ service cloud.firestore {
 
     /**
      * @description
-     *   Stores messages sent from users to administration or pastors.
-     *   - Any authenticated user can create a message.
-     *   - `get`: Admins can read all messages. Pastors can read messages sent to
-     *     their congregation or to 'Administração Geral'. Senders can read their own.
-     *   - `list`: Any signed-in user can initiate a constrained query (e.g., for their own messages).
-     *   - `update`: Admins and authorized pastors can update messages (e.g., to add replies).
+     *   Stores messages. Access is based on sender/recipient and role.
+     *   - `create`: Any signed-in user can send a message.
+     *   - `read`: Senders can read their own messages. Recipients (pastors)
+     *     can read messages sent to them. Admins can read all.
+     *   - `update`: Recipients (pastors) and Admins can update to add replies.
      *   - `delete`: Only Admins can delete messages.
+     *   - `list`: Client queries MUST constrain by senderId or recipientId.
      * @path /messages/{messageId}
      */
     match /messages/{messageId} {
       allow create: if isSignedIn();
-      allow get: if canAccessMessage(resource.data);
-      allow list: if isSignedIn();
-      allow update: if canAccessMessage(get(/databases/$(database)/documents/messages/$(messageId)).data);
+      allow read: if isAdmin() || (isSignedIn() && (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.recipientId));
+      allow update: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.recipientId);
       allow delete: if isAdmin();
     }
   }
 }
+
+    

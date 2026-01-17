@@ -47,11 +47,11 @@ type ElementStyle = { position: { top: number; left: number }; size: { width?: n
 type CardElements = { [key: string]: ElementStyle };
 type CardTemplateData = { elements: CardElements; cardStyles: { frontBackground: string; backBackground: string; frontBackgroundImage: string; backBackgroundImage: string; }; textColors: { title: string; personalData: string; backText: string; }; };
 interface Member { id: string; nome: string; email?: string; avatar?: string; recordNumber?: string; status: 'Ativo' | 'Inativo' | 'Pendente'; gender?: 'Masculino' | 'Feminino'; dataNascimento?: string | { seconds: number; nanoseconds: number }; dataBatismo?: string | { seconds: number; nanoseconds: number }; maritalStatus?: 'Solteiro(a)' | 'Casado(a)' | 'Divorciado(a)' | 'Viúvo(a)'; cpf?: string; rg?: string; naturalness?: string; nationality?: string; phone?: string; whatsapp?: string; cargo: string; dataMembro?: string | { seconds: number; nanoseconds: number }; cep?: string; logradouro?: string; numero?: string; bairro?: string; cidade?: string; estado?: string; complemento?: string; congregacao?: string; responsiblePastor?: string; }
-type Congregacao = { id: string; nome: string; };
+type Congregacao = { id: string; nome: string; pastorId?: string; pastorName?: string; };
 type Post = { id: string; title: string; content: string; authorId: string; authorName: string; authorAvatar?: string; imageUrl?: string; createdAt: Timestamp; };
 type ChurchInfo = { radioUrl?: string };
 type Reply = { authorId: string; authorName: string; body: string; createdAt: Timestamp; };
-type Message = { id: string; senderId: string; senderName: string; recipient: string; subject: string; body: string; attachmentUrl?: string; createdAt: Timestamp; replies?: Reply[]; };
+type Message = { id: string; senderId: string; senderName: string; recipientId: string; recipientName: string; subject: string; body: string; attachmentUrl?: string; createdAt: Timestamp; replies?: Reply[]; };
 
 
 // --- Helper Functions (moved to top level) ---
@@ -523,7 +523,7 @@ export default function MemberProfilePage() {
     <ViewContainer title="Mural de Avisos">
         <div className="space-y-4">
             {isLoadingPosts ? (<div className="flex justify-center items-center py-10"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>) 
-            : posts && posts.length > 0 ? (posts.map((post) => { const avatar = getAvatar(post.authorAvatar); return (
+            : posts && posts.length > 0 ? (posts.map((post) => { const avatar = getAvatar(post); return (
                 <Card key={post.id}>
                     <CardHeader>
                         <div className="flex items-start gap-4">
@@ -574,10 +574,21 @@ export default function MemberProfilePage() {
             attachmentUrl = await uploadArquivo(attachment);
         }
 
+        const selectedCongregacao = congregacoes?.find(c => c.id === recipient);
+        
+        let recipientId = 'ADMIN_GROUP';
+        let recipientName = 'Administração Geral';
+
+        if (selectedCongregacao && selectedCongregacao.pastorId) {
+            recipientId = selectedCongregacao.pastorId;
+            recipientName = selectedCongregacao.pastorName || selectedCongregacao.nome;
+        }
+
         await addMessage(firestore, { 
             senderId: authUser.uid, 
             senderName: currentUserData.nome, 
-            recipient, 
+            recipientId,
+            recipientName, 
             subject, 
             body,
             attachmentUrl,
@@ -602,8 +613,8 @@ export default function MemberProfilePage() {
             <Select value={recipient} onValueChange={setRecipient} disabled={loadingCongregacoes}>
               <SelectTrigger id="recipient"><SelectValue placeholder="Selecione o destinatário" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="Administração Geral">Administração Geral</SelectItem>
-                {congregacoes?.map(c => <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>)}
+                <SelectItem value="ADMIN">Administração Geral</SelectItem>
+                {congregacoes?.filter(c => c.pastorId).map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -652,7 +663,7 @@ export default function MemberProfilePage() {
                                         <div className="grid gap-1 flex-1">
                                             <p className="font-medium truncate">{message.subject}</p>
                                             <p className="text-sm text-muted-foreground">
-                                                Para: <span className="font-semibold">{message.recipient}</span>
+                                                Para: <span className="font-semibold">{message.recipientName}</span>
                                             </p>
                                         </div>
                                         <div className="text-sm text-muted-foreground text-right ml-4">
@@ -762,3 +773,5 @@ export default function MemberProfilePage() {
     </div>
   );
 }
+
+    

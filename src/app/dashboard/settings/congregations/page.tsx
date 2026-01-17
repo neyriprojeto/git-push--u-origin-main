@@ -10,7 +10,7 @@ import { useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase
 import { addCongregacao, deleteCongregacao, updateCongregacao, addLeader, updateLeader, deleteLeader, addLogo, deleteLogo } from '@/firebase/firestore/mutations';
 import { Trash2, Save, Loader2, Upload, Plus } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { collection, doc, setDoc } from 'firebase/firestore';
+import { collection, doc, query, setDoc, where } from 'firebase/firestore';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
@@ -21,12 +21,20 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Separator } from '@/components/ui/separator';
 import { uploadArquivo } from '@/lib/cloudinary';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type Congregacao = {
   id: string;
   nome: string;
   endereco?: string;
+  pastorId?: string;
+  pastorName?: string;
 };
+
+type Pastor = {
+    id: string;
+    nome: string;
+}
 
 type ChurchInfo = {
     id?: string;
@@ -96,6 +104,9 @@ export default function CongregationsPage() {
   const congregacoesCollection = useMemoFirebase(() => (firestore ? collection(firestore, 'congregacoes') : null), [firestore]);
   const { data: congregacoes, isLoading: loadingCongregacoes } = useCollection<Congregacao>(congregacoesCollection);
   
+  const pastorsQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'users'), where('cargo', 'in', ['Pastor/dirigente', 'Pastor(a)'])) : null), [firestore]);
+  const { data: pastors, isLoading: loadingPastors } = useCollection<Pastor>(pastorsQuery);
+  
   const [addresses, setAddresses] = useState<Record<string, string>>({});
 
   // Church Info State
@@ -163,6 +174,19 @@ export default function CongregationsPage() {
       toast({ title: 'Sucesso!', description: 'Endereço da congregação atualizado.' });
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Erro ao salvar', description: error.message || 'Não foi possível salvar o endereço.' });
+    }
+  };
+
+  const handleSavePastor = async (congregacaoId: string, pastorId: string) => {
+    if (!firestore || !pastors) return;
+    const selectedPastor = pastors.find(p => p.id === pastorId);
+    if (!selectedPastor) return;
+
+    try {
+        await updateCongregacao(firestore, congregacaoId, { pastorId: selectedPastor.id, pastorName: selectedPastor.nome });
+        toast({ title: 'Sucesso!', description: 'Pastor da congregação atualizado.' });
+    } catch (error: any) {
+        toast({ variant: 'destructive', title: 'Erro ao salvar', description: error.message || 'Não foi possível salvar o pastor.' });
     }
   };
 
@@ -881,7 +905,7 @@ export default function CongregationsPage() {
             <Card>
             <CardHeader>
                 <CardTitle>Gerenciar Congregações</CardTitle>
-                <CardDescription>Adicione ou remova congregações e gerencie seus endereços.</CardDescription>
+                <CardDescription>Adicione ou remova congregações e gerencie seus endereços e pastores.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
                 <div className="flex w-full max-w-sm items-center space-x-2">
@@ -905,7 +929,7 @@ export default function CongregationsPage() {
                     ) : (
                     <ul className="space-y-4 pt-4">
                         {congregacoes?.map((c) => (
-                        <li key={c.id} className="flex flex-col gap-2 p-4 border rounded-md">
+                        <li key={c.id} className="flex flex-col gap-4 p-4 border rounded-md">
                             <div className='flex items-center justify-between'>
                             <span className="font-medium">{c.nome}</span>
                             <AlertDialog>
@@ -930,16 +954,36 @@ export default function CongregationsPage() {
                                 </AlertDialogContent>
                             </AlertDialog>
                             </div>
-                            <div className="space-y-2">
-                                <Textarea
-                                placeholder="Digite o endereço da congregação..."
-                                value={addresses[c.id] ?? c.endereco ?? ''}
-                                onChange={(e) => handleAddressChange(c.id, e.target.value)}
-                                />
-                                <Button size="sm" onClick={() => handleSaveAddress(c.id)} disabled={typeof addresses[c.id] === 'undefined'}>
-                                <Save className="mr-2 h-4 w-4" />
-                                Salvar Endereço
-                                </Button>
+                            <div className="grid md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label>Pastor Responsável</Label>
+                                     <Select 
+                                        defaultValue={c.pastorId} 
+                                        onValueChange={(pastorId) => handleSavePastor(c.id, pastorId)}
+                                        disabled={loadingPastors}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder={loadingPastors ? "Carregando..." : "Selecione um pastor"} />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {pastors?.map(pastor => (
+                                                <SelectItem key={pastor.id} value={pastor.id}>{pastor.nome}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Endereço</Label>
+                                    <Textarea
+                                        placeholder="Digite o endereço da congregação..."
+                                        value={addresses[c.id] ?? c.endereco ?? ''}
+                                        onChange={(e) => handleAddressChange(c.id, e.target.value)}
+                                    />
+                                    <Button size="sm" onClick={() => handleSaveAddress(c.id)} disabled={typeof addresses[c.id] === 'undefined'}>
+                                        <Save className="mr-2 h-4 w-4" />
+                                        Salvar Endereço
+                                    </Button>
+                                </div>
                             </div>
                         </li>
                         ))}

@@ -174,7 +174,6 @@ export default function MemberProfilePage() {
   
   const [activeView, setActiveView] = useState<'panel' | 'profile' | 'mural' | 'card' | 'contact'>('panel');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
   const [permission, setPermission] = useState<{ canView: boolean, canEdit: boolean, canManage: boolean, hasChecked: boolean }>({ canView: false, canEdit: false, canManage: false, hasChecked: false, });
 
   // State for image cropping
@@ -185,6 +184,13 @@ export default function MemberProfilePage() {
     const imgRef = useRef<HTMLImageElement>(null);
     const previewCanvasRef = useRef<HTMLCanvasElement>(null);
     const [currentFile, setCurrentFile] = useState<File | null>(null);
+
+  // State for inner components
+  const [isCardFlipped, setIsCardFlipped] = useState(false);
+  const [recipient, setRecipient] = useState('');
+  const [subject, setSubject] = useState('');
+  const [body, setBody] = useState('');
+  const [isSending, setIsSending] = useState(false);
 
   // Data
   const currentUserRef = useMemoFirebase(() => (firestore && authUser ? doc(firestore, 'users', authUser.uid) : null), [firestore, authUser]);
@@ -237,6 +243,19 @@ export default function MemberProfilePage() {
     try { const result = await deleteUser({ userId: memberId }); deletingToast.dismiss(); if (result.success) { toast({ title: "Sucesso!", description: "O membro foi excluído permanentemente." }); router.push('/dashboard/members'); } else { throw new Error(result.message); } }
     catch (error: any) { deletingToast.dismiss(); console.error("Delete error: ", error); toast({ variant: "destructive", title: "Erro ao Excluir", description: error.message || "Não foi possível excluir o membro.", duration: 9000 }); }
   }
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!firestore || !authUser || !currentUserData) return;
+      if (!recipient || !subject.trim() || !body.trim()) { toast({ variant: 'destructive', title: 'Erro', description: 'Todos os campos são obrigatórios.' }); return; }
+      setIsSending(true);
+      try {
+        await addMessage(firestore, { senderId: authUser.uid, senderName: currentUserData.nome, recipient, subject, body });
+        toast({ title: 'Sucesso!', description: 'Sua mensagem foi enviada.' });
+        setRecipient(''); setSubject(''); setBody('');
+      } catch (error) { console.error("Error sending message:", error); toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível enviar a mensagem.' }); }
+      finally { setIsSending(false); }
+    }
 
   const getAvatar = useCallback((avatarId?: string): { imageUrl: string } | undefined => { if (!avatarId) { return PlaceHolderImages.find((p) => p.id === 'member-avatar-1'); } if(avatarId.startsWith('http')) { return { imageUrl: avatarId }; } return PlaceHolderImages.find((p) => p.id === avatarId); }, []);
 
@@ -410,7 +429,6 @@ export default function MemberProfilePage() {
     </ViewContainer>
   );
 
-  const [isCardFlipped, setIsCardFlipped] = useState(false);
   const CardView = () => (
     <ViewContainer title="Minha Carteirinha Digital">
         <div className="flex justify-center items-center">
@@ -426,24 +444,6 @@ export default function MemberProfilePage() {
   );
 
   const ContactView = () => {
-    const [recipient, setRecipient] = useState('');
-    const [subject, setSubject] = useState('');
-    const [body, setBody] = useState('');
-    const [isSending, setIsSending] = useState(false);
-    
-    const handleSendMessage = async (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!firestore || !authUser || !currentUserData) return;
-      if (!recipient || !subject.trim() || !body.trim()) { toast({ variant: 'destructive', title: 'Erro', description: 'Todos os campos são obrigatórios.' }); return; }
-      setIsSending(true);
-      try {
-        await addMessage(firestore, { senderId: authUser.uid, senderName: currentUserData.nome, recipient, subject, body });
-        toast({ title: 'Sucesso!', description: 'Sua mensagem foi enviada.' });
-        setRecipient(''); setSubject(''); setBody('');
-      } catch (error) { console.error("Error sending message:", error); toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível enviar a mensagem.' }); }
-      finally { setIsSending(false); }
-    }
-
     return (
       <ViewContainer title="Fale Conosco">
         <form onSubmit={handleSendMessage} className="space-y-4">

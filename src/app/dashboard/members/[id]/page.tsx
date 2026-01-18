@@ -682,6 +682,7 @@ export default function MemberProfilePage() {
             try {
                 if (member.sentMessages.length === 0) {
                     setMessages([]);
+                    setIsLoadingMessages(false);
                     return;
                 }
 

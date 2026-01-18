@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Save, Upload, ShieldAlert, Trash2, ChevronRight, User, LayoutGrid, CreditCard, MessageSquare, ArrowLeft, LogOut, Mail, Paperclip, Inbox, Share2 } from "lucide-react";
+import { Loader2, Save, Upload, ShieldAlert, Trash2, ChevronRight, User, LayoutGrid, CreditCard, MessageSquare, ArrowLeft, LogOut, Mail, Paperclip, Inbox, Share2, Radio } from "lucide-react";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { format, formatDistanceToNow } from "date-fns";
@@ -392,13 +392,18 @@ export default function MemberProfilePage() {
                 description: "A promessa do dia foi copiada para a área de transferência.",
             });
         }
-    } catch (err) {
-        console.error("Error sharing", err);
-        toast({
-            variant: 'destructive',
-            title: "Erro ao compartilhar",
-            description: "Não foi possível compartilhar a mensagem.",
-        });
+    } catch (err: any) {
+        // Silently handle AbortError and NotAllowedError, which happen when the user cancels the share action.
+        if (err.name === 'AbortError' || err.name === 'NotAllowedError') {
+            console.log('Share action cancelled by user.');
+        } else {
+            console.error("Error sharing", err);
+            toast({
+                variant: 'destructive',
+                title: "Erro ao compartilhar",
+                description: "Não foi possível compartilhar a mensagem.",
+            });
+        }
     }
   };
 
@@ -435,6 +440,20 @@ export default function MemberProfilePage() {
               </div>
           </CardContent>
       </Card>
+      {loadingChurchInfo ? null : (
+        churchInfo?.radioUrl && (
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-xl flex items-center gap-2"><Radio className="h-5 w-5" /> Rádio Kairós</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="aspect-video w-full rounded-md overflow-hidden bg-muted">
+                        <iframe src={churchInfo.radioUrl} frameBorder="0" allowFullScreen width="100%" height="100%"></iframe>
+                    </div>
+                </CardContent>
+            </Card>
+        )
+      )}
     </div>
   );
 
@@ -891,10 +910,10 @@ export default function MemberProfilePage() {
       <div className="container mx-auto space-y-6 pb-8">
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-center text-lg">Promessa do Dia</CardTitle>
+                    <CardTitle className="text-center text-lg font-script">Promessa do Dia</CardTitle>
                 </CardHeader>
                 <CardContent className="text-center">
-                    <blockquote className="text-xl italic text-foreground/90">"{verse.text}"</blockquote>
+                    <blockquote className="text-xl italic text-foreground/90 font-serif">"{verse.text}"</blockquote>
                     <p className="text-sm text-muted-foreground mt-2">{verse.book} {verse.chapter}:{verse.verse}</p>
                      <p className="text-sm text-muted-foreground mt-4 pt-4 border-t">
                         Que esta promessa ilumine o seu dia e fortaleça a sua fé. Deus tem um plano maravilhoso para você. Confie e descanse em Seu amor incondicional.
@@ -914,5 +933,7 @@ export default function MemberProfilePage() {
   );
 }
 
+
+    
 
     

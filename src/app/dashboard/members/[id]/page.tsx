@@ -574,16 +574,28 @@ export default function MemberProfilePage() {
             attachmentUrl = await uploadArquivo(attachment);
         }
 
-        const selectedCongregacao = (congregacoes as Congregacao[])?.find(c => c.id === recipient);
-        
-        let recipientId = 'ADMIN_GROUP';
-        let recipientName = 'Administração Geral';
+        let recipientId: string;
+        let recipientName: string;
 
-        if (selectedCongregacao && selectedCongregacao.pastorId) {
-            recipientId = selectedCongregacao.pastorId;
-            recipientName = selectedCongregacao.pastorName || selectedCongregacao.nome;
+        if (recipient === 'ADMIN') {
+            recipientId = 'ADMIN_GROUP';
+            recipientName = 'Administração Geral';
+        } else {
+            const selectedCongregacao = (congregacoes as Congregacao[])?.find(c => c.id === recipient);
+            if (selectedCongregacao) {
+                if (selectedCongregacao.pastorId) {
+                    recipientId = selectedCongregacao.pastorId;
+                    recipientName = selectedCongregacao.pastorName || selectedCongregacao.nome;
+                } else {
+                    recipientId = 'ADMIN_GROUP';
+                    recipientName = `Administração (p/ ${selectedCongregacao.nome})`;
+                }
+            } else {
+                recipientId = 'ADMIN_GROUP';
+                recipientName = 'Administração Geral';
+            }
         }
-
+        
         await addMessage(firestore, { 
             senderId: authUser.uid, 
             senderName: currentUserData.nome, 
@@ -614,7 +626,7 @@ export default function MemberProfilePage() {
               <SelectTrigger id="recipient"><SelectValue placeholder="Selecione o destinatário" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="ADMIN">Administração Geral</SelectItem>
-                {(congregacoes as Congregacao[])?.filter(c => c.pastorId).map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+                {(congregacoes as Congregacao[])?.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -647,23 +659,27 @@ export default function MemberProfilePage() {
     const [isLoadingMessages, setIsLoadingMessages] = useState(true);
 
     useEffect(() => {
-        if (!firestore || !member || !member.sentMessages) {
-            setMessages([]);
-            setIsLoadingMessages(false);
-            return;
-        }
-
         const fetchMessages = async () => {
+            if (!firestore || !member || !member.sentMessages) {
+                setMessages([]);
+                setIsLoadingMessages(false);
+                return;
+            }
+
             setIsLoadingMessages(true);
             try {
-                const messagePromises = member.sentMessages!.map(id => getDoc(doc(firestore, 'messages', id)));
+                if (member.sentMessages.length === 0) {
+                    setMessages([]);
+                    return;
+                }
+
+                const messagePromises = member.sentMessages.map(id => getDoc(doc(firestore, 'messages', id)));
                 const messageDocs = await Promise.all(messagePromises);
                 
                 const fetchedMessages = messageDocs
                     .filter(docSnap => docSnap.exists())
                     .map(docSnap => ({ id: docSnap.id, ...docSnap.data() } as Message));
                 
-                // Sort messages by creation date, descending
                 fetchedMessages.sort((a, b) => {
                     const timeA = a.createdAt?.toMillis() || 0;
                     const timeB = b.createdAt?.toMillis() || 0;
@@ -696,7 +712,7 @@ export default function MemberProfilePage() {
                         {messages.map(message => {
                              const messageDate = message.createdAt && typeof message.createdAt.toDate === 'function' 
                                 ? message.createdAt.toDate() 
-                                : null;
+                                : new Date(); // Fallback to current date if timestamp is invalid
 
                             return (
                             <AccordionItem value={message.id} key={message.id}>
@@ -709,7 +725,7 @@ export default function MemberProfilePage() {
                                             </p>
                                         </div>
                                         <div className="text-sm text-muted-foreground text-right ml-4">
-                                            <p>{messageDate ? formatDistanceToNow(messageDate, { addSuffix: true, locale: ptBR }) : 'Enviando...'}</p>
+                                            <p>{formatDistanceToNow(messageDate, { addSuffix: true, locale: ptBR })}</p>
                                             {message.replies && message.replies.length > 0 && (
                                                 <Badge variant="secondary" className="mt-1">
                                                     {message.replies.length} {message.replies.length === 1 ? 'Resposta' : 'Respostas'}
@@ -738,7 +754,7 @@ export default function MemberProfilePage() {
                                             {message.replies.map((reply, index) => {
                                                 const replyDate = reply.createdAt && typeof reply.createdAt.toDate === 'function'
                                                     ? reply.createdAt.toDate()
-                                                    : null;
+                                                    : new Date();
 
                                                 return (
                                                     <div key={index} className="flex items-start gap-3">
@@ -749,7 +765,7 @@ export default function MemberProfilePage() {
                                                             <div className="flex items-center justify-between">
                                                                 <p className="font-semibold text-sm">{reply.authorName}</p>
                                                                 <p className="text-xs text-muted-foreground">
-                                                                    {replyDate ? formatDistanceToNow(replyDate, { addSuffix: true, locale: ptBR }) : 'Enviando...'}
+                                                                    {formatDistanceToNow(replyDate, { addSuffix: true, locale: ptBR })}
                                                                 </p>
                                                             </div>
                                                             <p className="text-sm text-muted-foreground whitespace-pre-wrap mt-1">{reply.body}</p>

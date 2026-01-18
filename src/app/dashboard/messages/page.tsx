@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useEffect, useState, useRef } from 'react';
@@ -58,7 +59,12 @@ export default function MessagesPage() {
     const replyAttachmentInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
     useEffect(() => {
-        if (!firestore || !authUser || !userData) return;
+        if (!firestore || !authUser || !userData) {
+             if (!isUserDataLoading && !isAuthUserLoading) {
+                setIsLoadingMessages(false);
+             }
+             return;
+        };
 
         const fetchMessages = async () => {
             setIsLoadingMessages(true);
@@ -104,7 +110,7 @@ export default function MessagesPage() {
         };
 
         fetchMessages();
-    }, [firestore, authUser, userData, toast]);
+    }, [firestore, authUser, userData, toast, isUserDataLoading, isAuthUserLoading]);
 
 
     const handleReplyChange = (messageId: string, text: string) => {

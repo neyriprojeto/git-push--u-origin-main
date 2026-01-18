@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { notFound, useRouter, useParams } from "next/navigation";
@@ -884,3 +885,4 @@ export default function MemberProfilePage() {
     </div>
   );
 }
+

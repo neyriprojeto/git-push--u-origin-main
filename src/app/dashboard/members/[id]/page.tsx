@@ -387,24 +387,7 @@ export default function MemberProfilePage() {
         url: window.location.origin,
     };
 
-    if (navigator.share) {
-        try {
-            await navigator.share(shareData);
-        } catch (err: any) {
-            // Silently ignore AbortError and NotAllowedError, which happen when the user cancels the share dialog.
-            if (err.name !== 'AbortError' && err.name !== 'NotAllowedError') {
-                console.error("Error using Web Share API:", err);
-                toast({
-                    variant: 'destructive',
-                    title: "Erro ao compartilhar",
-                    description: "O compartilhamento falhou. A mensagem foi copiada para a área de transferência.",
-                });
-                // Fallback to clipboard on other errors.
-                await navigator.clipboard.writeText(shareText);
-            }
-        }
-    } else {
-        // Fallback for browsers that don't support the Web Share API.
+    const copyToClipboard = async () => {
         try {
             await navigator.clipboard.writeText(shareText);
             toast({
@@ -419,6 +402,23 @@ export default function MemberProfilePage() {
                 description: "Não foi possível copiar a mensagem.",
             });
         }
+    };
+
+    if (navigator.share) {
+        try {
+            await navigator.share(shareData);
+        } catch (err: any) {
+            // If the user cancels the share sheet, it throws an AbortError. We can safely ignore it.
+            if (err.name === 'AbortError') {
+                return;
+            }
+            // For any other error (e.g., NotAllowedError), fallback to copying to clipboard.
+            console.error("Web Share API failed, falling back to clipboard:", err);
+            await copyToClipboard();
+        }
+    } else {
+        // Fallback for browsers that don't support the Web Share API.
+        await copyToClipboard();
     }
   };
 
@@ -927,6 +927,7 @@ export default function MemberProfilePage() {
                             data-ai-hint={promiseBg.imageHint}
                             fill
                             className="object-cover z-0"
+                            unoptimized
                         />
                     ) : (
                         <div className="absolute inset-0 bg-gray-500 z-0" />

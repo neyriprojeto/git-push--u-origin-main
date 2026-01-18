@@ -251,3 +251,17 @@ export const addReplyToMessage = async (firestore: Firestore, messageId: string,
         throw error;
     }
 };
+
+export const deleteMessage = async (firestore: Firestore, messageId: string) => {
+    if (!firestore) throw new Error('Firestore is not initialized');
+    const messageRef = doc(firestore, 'messages', messageId);
+    try {
+        await deleteDoc(messageRef);
+    } catch (error) {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+            path: messageRef.path,
+            operation: 'delete',
+        }));
+        throw error;
+    }
+};

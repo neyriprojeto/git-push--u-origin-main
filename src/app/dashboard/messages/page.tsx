@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { useUser, useFirestore, useMemoFirebase, useDoc } from '@/firebase';
-import { doc, collection, query, where, orderBy, Timestamp, deleteDoc, getDocs } from 'firebase/firestore';
+import { doc, collection, query, where, orderBy, Timestamp, getDocs } from 'firebase/firestore';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Loader2, ShieldAlert, Mail, Trash2, Inbox, Paperclip, Send } from 'lucide-react';
@@ -14,7 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
-import { addReplyToMessage } from '@/firebase/firestore/mutations';
+import { addReplyToMessage, deleteMessage } from '@/firebase/firestore/mutations';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
@@ -176,7 +176,7 @@ export default function MessagesPage() {
     const handleDeleteMessage = async (messageId: string) => {
         if (!firestore) return;
         try {
-            await deleteDoc(doc(firestore, 'messages', messageId));
+            await deleteMessage(firestore, messageId);
             setMessages(prev => prev ? prev.filter(m => m.id !== messageId) : null);
             toast({ title: 'Sucesso', description: 'Mensagem removida.' });
         } catch (error) {

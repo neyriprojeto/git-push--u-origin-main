@@ -655,7 +655,8 @@ export default function MemberProfilePage() {
         const fetchMessages = async () => {
             setIsLoadingMessages(true);
             try {
-                const q = query(collection(firestore, 'messages'), where('senderId', '==', authUser.uid), orderBy('createdAt', 'desc'));
+                // Always fetch messages for the member whose page is being viewed.
+                const q = query(collection(firestore, 'messages'), where('senderId', '==', memberId), orderBy('createdAt', 'desc'));
                 const querySnapshot = await getDocs(q);
                 const fetchedMessages = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message));
                 setMessages(fetchedMessages);
@@ -672,7 +673,7 @@ export default function MemberProfilePage() {
         };
 
         fetchMessages();
-    }, [firestore, authUser]);
+    }, [firestore, authUser, memberId]);
 
     return (
         <ViewContainer title="Minhas Mensagens">
@@ -681,7 +682,12 @@ export default function MemberProfilePage() {
                     <div className="flex justify-center items-center py-10"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
                 ) : messages.length > 0 ? (
                     <Accordion type="single" collapsible className="w-full">
-                        {messages.map(message => (
+                        {messages.map(message => {
+                             const messageDate = message.createdAt && typeof message.createdAt.toDate === 'function' 
+                                ? message.createdAt.toDate() 
+                                : null;
+
+                            return (
                             <AccordionItem value={message.id} key={message.id}>
                                 <AccordionTrigger>
                                     <div className="flex items-center gap-4 text-left w-full">
@@ -692,7 +698,7 @@ export default function MemberProfilePage() {
                                             </p>
                                         </div>
                                         <div className="text-sm text-muted-foreground text-right ml-4">
-                                            <p>{formatDistanceToNow(message.createdAt.toDate(), { addSuffix: true, locale: ptBR })}</p>
+                                            <p>{messageDate ? formatDistanceToNow(messageDate, { addSuffix: true, locale: ptBR }) : 'Enviando...'}</p>
                                             {message.replies && message.replies.length > 0 && (
                                                 <Badge variant="secondary" className="mt-1">
                                                     {message.replies.length} {message.replies.length === 1 ? 'Resposta' : 'Respostas'}
@@ -718,32 +724,38 @@ export default function MemberProfilePage() {
                                     {message.replies && message.replies.length > 0 ? (
                                         <div className="space-y-4 pt-4 border-t">
                                             <h4 className="text-sm font-semibold">Respostas</h4>
-                                            {message.replies.map((reply, index) => (
-                                                <div key={index} className="flex items-start gap-3">
-                                                    <Avatar className="h-8 w-8">
-                                                        <AvatarFallback>{reply.authorName.charAt(0)}</AvatarFallback>
-                                                    </Avatar>
-                                                    <div className="flex-1">
-                                                        <div className="flex items-center justify-between">
-                                                            <p className="font-semibold text-sm">{reply.authorName}</p>
-                                                            <p className="text-xs text-muted-foreground">
-                                                                {formatDistanceToNow(reply.createdAt.toDate(), { addSuffix: true, locale: ptBR })}
-                                                            </p>
-                                                        </div>
-                                                        <p className="text-sm text-muted-foreground whitespace-pre-wrap mt-1">{reply.body}</p>
-                                                        {reply.attachmentUrl && (
-                                                            <div className="pt-2">
-                                                                <Button asChild variant="link" className="p-0 h-auto text-left text-xs">
-                                                                    <a href={reply.attachmentUrl} target="_blank" rel="noopener noreferrer" className="truncate">
-                                                                        <Paperclip className="mr-2 h-3 w-3 shrink-0" /> 
-                                                                        <span className="truncate">{reply.attachmentUrl.split('/').pop()?.split('?')[0]}</span>
-                                                                    </a>
-                                                                </Button>
+                                            {message.replies.map((reply, index) => {
+                                                const replyDate = reply.createdAt && typeof reply.createdAt.toDate === 'function'
+                                                    ? reply.createdAt.toDate()
+                                                    : null;
+
+                                                return (
+                                                    <div key={index} className="flex items-start gap-3">
+                                                        <Avatar className="h-8 w-8">
+                                                            <AvatarFallback>{reply.authorName.charAt(0)}</AvatarFallback>
+                                                        </Avatar>
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center justify-between">
+                                                                <p className="font-semibold text-sm">{reply.authorName}</p>
+                                                                <p className="text-xs text-muted-foreground">
+                                                                    {replyDate ? formatDistanceToNow(replyDate, { addSuffix: true, locale: ptBR }) : 'Enviando...'}
+                                                                </p>
                                                             </div>
-                                                        )}
+                                                            <p className="text-sm text-muted-foreground whitespace-pre-wrap mt-1">{reply.body}</p>
+                                                            {reply.attachmentUrl && (
+                                                                <div className="pt-2">
+                                                                    <Button asChild variant="link" className="p-0 h-auto text-left text-xs">
+                                                                        <a href={reply.attachmentUrl} target="_blank" rel="noopener noreferrer" className="truncate">
+                                                                            <Paperclip className="mr-2 h-3 w-3 shrink-0" /> 
+                                                                            <span className="truncate">{reply.attachmentUrl.split('/').pop()?.split('?')[0]}</span>
+                                                                        </a>
+                                                                    </Button>
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            ))}
+                                                );
+                                            })}
                                         </div>
                                     ) : (
                                         <div className="text-center text-sm text-muted-foreground pt-4 border-t">
@@ -752,7 +764,7 @@ export default function MemberProfilePage() {
                                     )}
                                 </AccordionContent>
                             </AccordionItem>
-                        ))}
+                        )})}
                     </Accordion>
                 ) : (
                     <Card><CardContent className="p-8 text-center text-muted-foreground"><Inbox className="mx-auto h-12 w-12" /><p className="mt-4">Você ainda não enviou nenhuma mensagem.</p></CardContent></Card>

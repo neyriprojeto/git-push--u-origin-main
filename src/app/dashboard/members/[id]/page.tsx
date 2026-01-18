@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Save, Upload, ShieldAlert, Trash2, ChevronRight, User, LayoutGrid, CreditCard, MessageSquare, ArrowLeft, LogOut, Mail, Paperclip, Inbox, Share2, Radio } from "lucide-react";
+import { Loader2, Save, Upload, ShieldAlert, Trash2, ChevronRight, User, LayoutGrid, CreditCard, MessageSquare, ArrowLeft, LogOut, Mail, Paperclip, Inbox, Share2 } from "lucide-react";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { format, formatDistanceToNow } from "date-fns";
@@ -951,5 +951,3 @@ export default function MemberProfilePage() {
     </div>
   );
 }
-
-    

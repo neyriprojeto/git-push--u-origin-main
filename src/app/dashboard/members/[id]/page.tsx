@@ -42,6 +42,7 @@ import { bibleVerses } from "@/data/bible-verses";
 import { Textarea } from "@/components/ui/textarea";
 import { signOut } from "firebase/auth";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { nextConfig } from "next.config.mjs";
 
 // --- Types ---
 type ElementStyle = { position: { top: number; left: number }; size: { width?: number; height?: number; fontSize?: number }; text?: string; fontWeight?: 'normal' | 'bold'; src?: string; textAlign?: 'left' | 'center' | 'right'; };
@@ -215,6 +216,8 @@ export default function MemberProfilePage() {
 
   // State for inner components
   const [isCardFlipped, setIsCardFlipped] = useState(false);
+  const [verse, setVerse] = useState(bibleVerses[0]);
+
 
   // Data
   const currentUserRef = useMemoFirebase(() => (firestore && authUser ? doc(firestore, 'users', authUser.uid) : null), [firestore, authUser]);
@@ -242,6 +245,11 @@ export default function MemberProfilePage() {
   const memberForm = useForm<MemberFormData>({ resolver: zodResolver(memberFormSchema), defaultValues: { nome: '', email: '', phone: '', whatsapp: '', cep: '', logradouro: '', numero: '', complemento: '', bairro: '', cidade: '', estado: '', avatar: '', dataNascimento: '', rg: '', cpf: '', gender: 'Masculino', maritalStatus: 'Solteiro(a)', naturalness: '', nationality: '', cargo: '', status: 'Pendente', congregacao: '', dataBatismo: '', dataMembro: '', recordNumber: '', responsiblePastor: '' }, });
 
   // --- Effects ---
+  useEffect(() => {
+    const verseIndex = new Date().getDate() % bibleVerses.length;
+    setVerse(bibleVerses[verseIndex]);
+  }, []);
+
   useEffect(() => { setIsLoadingStates(true); fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome').then(res => res.json()).then(setBrazilianStates).catch(err => console.error("Failed to fetch states", err)).finally(() => setIsLoadingStates(false)); }, []);
   useEffect(() => { if (!selectedState) { setCities([]); return; } setIsLoadingCities(true); fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${selectedState}/municipios?orderBy=nome`).then(res => res.json()).then(setCities).catch(err => console.error("Failed to fetch cities", err)).finally(() => setIsLoadingCities(false)); }, [selectedState]);
   useEffect(() => { if (!addressState) { setAddressCities([]); return; } setIsLoadingAddressCities(true); fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${addressState}/municipios?orderBy=nome`).then(res => res.json()).then(setAddressCities).catch(err => console.error("Failed to fetch address cities", err)).finally(() => setIsLoadingAddressCities(false)); }, [addressState]);
@@ -368,13 +376,6 @@ export default function MemberProfilePage() {
 
   // --- Loading and Permission ---
   const isLoading = isUserLoading || isCurrentUserLoading || memberLoading || !permission.hasChecked;
-  if (isLoading) { return ( <div className="flex-1 h-screen flex items-center justify-center bg-secondary"> <Loader2 className="h-16 w-16 animate-spin" /> </div> ) }
-  if (permission.hasChecked && !permission.canView) { return ( <div className="flex-1 space-y-4 p-4 md:p-8 pt-6"><Card className="border-destructive"><CardHeader className="items-center text-center"><ShieldAlert className="h-12 w-12 text-destructive mb-4" /><CardTitle className="text-destructive">Acesso Negado</CardTitle></CardHeader><CardContent className='pt-4 text-center'><p>Você não tem permissão para acessar esta página ou o membro não foi encontrado.</p><Button onClick={() => router.back()} className="mt-6">Voltar</Button></CardContent></Card></div> ); }
-  if (!member) { return notFound(); }
-  
-  const avatar = getAvatar(member.avatar);
-  const verse = bibleVerses[new Date().getDate() % bibleVerses.length];
-  const promiseBg = PlaceHolderImages.find((p) => p.id === 'promise-card-bg');
   
   const handleShare = async () => {
     const shareText = `Promessa do Dia (A.D. Kairós Connect):\n\n"${verse.text}" (${verse.book} ${verse.chapter}:${verse.verse})`;
@@ -384,7 +385,6 @@ export default function MemberProfilePage() {
         url: window.location.origin, 
     };
 
-    // Check if Web Share API is supported
     if (navigator.share) {
         try {
             await navigator.share(shareData);
@@ -396,28 +396,34 @@ export default function MemberProfilePage() {
                     title: "Erro ao compartilhar",
                     description: "Não foi possível abrir o diálogo de compartilhamento.",
                 });
-            } else {
-                 console.log('Share action was cancelled or permission denied.');
             }
         }
     } else {
-        // Fallback to clipboard
         try {
             await navigator.clipboard.writeText(shareText);
             toast({
                 title: "Copiado!",
                 description: "A promessa do dia foi copiada. Você pode colá-la onde quiser.",
             });
-        } catch (err: any) {
+        } catch (err) {
             console.error("Error copying to clipboard:", err);
             toast({
                 variant: 'destructive',
                 title: "Erro ao copiar",
-                description: "Seu navegador não suporta compartilhamento direto ou cópia para a área de transferência.",
+                description: "Não foi possível copiar a mensagem.",
             });
         }
     }
   };
+
+
+  if (isLoading) { return ( <div className="flex-1 h-screen flex items-center justify-center bg-secondary"> <Loader2 className="h-16 w-16 animate-spin" /> </div> ) }
+  if (permission.hasChecked && !permission.canView) { return ( <div className="flex-1 space-y-4 p-4 md:p-8 pt-6"><Card className="border-destructive"><CardHeader className="items-center text-center"><ShieldAlert className="h-12 w-12 text-destructive mb-4" /><CardTitle className="text-destructive">Acesso Negado</CardTitle></CardHeader><CardContent className='pt-4 text-center'><p>Você não tem permissão para acessar esta página ou o membro não foi encontrado.</p><Button onClick={() => router.back()} className="mt-6">Voltar</Button></CardContent></Card></div> ); }
+  if (!member) { return notFound(); }
+  
+  const avatar = getAvatar(member.avatar);
+  
+  const promiseBg = PlaceHolderImages.find((p) => p.id === 'promise-card-bg');
 
 
   const renderPanel = () => (
@@ -507,7 +513,7 @@ export default function MemberProfilePage() {
                     <h3 className="font-medium text-lg border-b pb-2">Dados Eclesiásticos</h3>
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                         <FormField control={memberForm.control} name="recordNumber" render={({ field }) => (<FormItem><FormLabel>Nº da Ficha</FormLabel><FormControl><Input {...field} disabled={!permission.canManage} /></FormControl><FormMessage /></FormItem>)} />
-                        <FormField control={memberForm.control} name="cargo" render={({ field }) => (<FormItem><FormLabel>Cargo Ministerial</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={!permission.canManage}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="Membro">Membro</SelectItem><SelectItem value="Cooperador(a)">Cooperador(a)</SelectItem><SelectItem value="Diácono(a)">Diácono(a)</SelectItem><SelectItem value="Presbítero">Presbítero</SelectItem><SelectItem value="Evangelista">Evangelista</SelectItem><SelectItem value="Missionário(a)">Missionário(a)</SelectItem><SelectItem value="Pastor(a)">Pastor(a)</SelectItem><SelectItem value="Pastor/dirigente">Pastor/dirigente</SelectItem><SelectItem value="Administrador">Administrador</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
+                        <FormField control={memberForm.control} name="cargo" render={({ field }) => (<FormItem><FormLabel>Cargo Ministerial</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={loadingCongregacoes || !permission.canManage}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="Membro">Membro</SelectItem><SelectItem value="Cooperador(a)">Cooperador(a)</SelectItem><SelectItem value="Diácono(a)">Diácono(a)</SelectItem><SelectItem value="Presbítero">Presbítero</SelectItem><SelectItem value="Evangelista">Evangelista</SelectItem><SelectItem value="Missionário(a)">Missionário(a)</SelectItem><SelectItem value="Pastor(a)">Pastor(a)</SelectItem><SelectItem value="Pastor/dirigente">Pastor/dirigente</SelectItem><SelectItem value="Administrador">Administrador</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
                         <FormField control={memberForm.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={!permission.canManage}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="Ativo">Ativo</SelectItem><SelectItem value="Inativo">Inativo</SelectItem><SelectItem value="Pendente">Pendente</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
                         <FormField control={memberForm.control} name="congregacao" render={({ field }) => (<FormItem><FormLabel>Congregação</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={loadingCongregacoes || !permission.canManage}><FormControl><SelectTrigger><SelectValue placeholder={loadingCongregacoes ? "Carregando..." : "Selecione a congregação"} /></SelectTrigger></FormControl><SelectContent>{congregacoes?.map((c: Congregacao) => <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
                         <FormField control={memberForm.control} name="dataMembro" render={({ field }) => (<FormItem><FormLabel>Data de Membresia</FormLabel><FormControl><Input type="date" {...field} disabled={!permission.canManage} /></FormControl><FormMessage /></FormItem>)} />
@@ -697,15 +703,16 @@ export default function MemberProfilePage() {
   };
 
   const MyMessagesView = () => {
-    const [messages, setMessages] = useState<Message[]>([]);
+    const [messages, setMessages] = useState<Message[] | null>(null);
     const [isLoadingMessages, setIsLoadingMessages] = useState(true);
-    
+    const [messagesError, setMessagesError] = useState<string | null>(null);
+
     const handleMemberDeleteMessage = async (messageId: string) => {
         if (!firestore || !authUser) return;
 
         try {
             await removeMessageFromMember(firestore, authUser.uid, messageId);
-            setMessages(prev => prev.filter(m => m.id !== messageId));
+            setMessages(prev => prev ? prev.filter(m => m.id !== messageId) : null);
             toast({ title: 'Sucesso', description: 'Conversa removida.' });
         } catch (error) {
             console.error("Error removing message:", error);
@@ -721,10 +728,9 @@ export default function MemberProfilePage() {
                 return;
             }
             
-            // Only proceed if there's a member object.
             setIsLoadingMessages(true);
+            setMessagesError(null);
             try {
-                // Get the list of message IDs from the member's profile.
                 const sentMessageIds = member.sentMessages || [];
                 
                 if (sentMessageIds.length === 0) {
@@ -733,26 +739,24 @@ export default function MemberProfilePage() {
                     return;
                 }
                 
-                // Fetch each message document individually using getDoc.
-                // This corresponds to a 'get' operation in Firestore rules.
                 const messagePromises = sentMessageIds.map(id => getDoc(doc(firestore, 'messages', id)));
                 const messageDocs = await Promise.all(messagePromises);
                 
                 const fetchedMessages = messageDocs
-                    .filter(docSnap => docSnap.exists()) // Filter out any deleted messages
+                    .filter(docSnap => docSnap.exists())
                     .map(docSnap => ({ id: docSnap.id, ...docSnap.data() } as Message));
                 
-                // Sort messages by creation date, newest first.
                 fetchedMessages.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
                 
                 setMessages(fetchedMessages);
 
             } catch (error) {
                 console.error("Error fetching member messages:", error);
+                setMessagesError("Não foi possível buscar suas mensagens. Tente novamente mais tarde.");
                 toast({
                     variant: "destructive",
                     title: "Erro ao Carregar Mensagens",
-                    description: "Não foi possível buscar suas mensagens. Verifique suas permissões ou tente mais tarde."
+                    description: "Não foi possível buscar suas mensagens."
                 });
             } finally {
                 setIsLoadingMessages(false);
@@ -760,19 +764,21 @@ export default function MemberProfilePage() {
         };
     
         fetchMessages();
-    }, [firestore, member, toast]);
+    }, [firestore, member]);
 
     return (
         <ViewContainer title="Minhas Mensagens">
             <div className="space-y-4">
                 {isLoadingMessages ? (
                     <div className="flex justify-center items-center py-10"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
-                ) : messages.length > 0 ? (
+                ) : messagesError ? (
+                     <Card><CardContent className="p-8 text-center text-destructive">{messagesError}</CardContent></Card>
+                ) : messages && messages.length > 0 ? (
                     <Accordion type="single" collapsible className="w-full">
                         {messages.map(message => {
                              const messageDate = message.createdAt && typeof message.createdAt.toDate === 'function' 
                                 ? message.createdAt.toDate() 
-                                : new Date(); // Fallback to current date if timestamp is invalid
+                                : new Date();
 
                             return (
                             <AccordionItem value={message.id} key={message.id}>
@@ -914,6 +920,7 @@ export default function MemberProfilePage() {
                         data-ai-hint={promiseBg.imageHint}
                         fill
                         className="object-cover z-0"
+                        unoptimized
                     />
                 ) : (
                     <div className="absolute inset-0 bg-gray-500 z-0" />
@@ -921,12 +928,12 @@ export default function MemberProfilePage() {
                 <div className="absolute inset-0 bg-black/50 z-10" />
                 <div className="relative z-20">
                     <CardHeader>
-                        <CardTitle className="text-center text-lg font-script">Promessa do Dia</CardTitle>
+                        <CardTitle className="text-center text-lg font-script tracking-wider">Promessa do Dia</CardTitle>
                     </CardHeader>
                     <CardContent className="text-center">
                         <blockquote className="text-xl font-serif italic text-white/90">"{verse.text}"</blockquote>
                         <p className="text-sm text-white/70 mt-2">{verse.book} {verse.chapter}:{verse.verse}</p>
-                        <p className="text-sm text-white/70 mt-4 pt-4 border-t border-white/20">
+                        <p className="text-sm text-white/70 mt-4 pt-4 border-t border-white/20 font-sans">
                             Que esta promessa ilumine o seu dia e fortaleça a sua fé. Deus tem um plano maravilhoso para você. Confie e descanse em Seu amor incondicional.
                         </p>
                     </CardContent>
@@ -944,3 +951,5 @@ export default function MemberProfilePage() {
     </div>
   );
 }
+
+    

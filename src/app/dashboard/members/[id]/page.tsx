@@ -389,7 +389,7 @@ export default function MemberProfilePage() {
         try {
             await navigator.share(shareData);
         } catch (err: any) {
-            if (err.name !== 'AbortError') {
+            if (err.name !== 'AbortError' && err.name !== 'NotAllowedError') {
                 console.error("Error using Web Share API:", err);
                 toast({
                     variant: 'destructive',
@@ -397,7 +397,7 @@ export default function MemberProfilePage() {
                     description: "Não foi possível abrir o diálogo de compartilhamento.",
                 });
             } else {
-                 console.log('Share action was cancelled by the user.');
+                 console.log('Share action was cancelled or permission denied.');
             }
         }
     } else {

@@ -672,21 +672,31 @@ export default function MemberProfilePage() {
 
     useEffect(() => {
         const fetchMessages = async () => {
-            if (!firestore || !member || !member.sentMessages) {
+            if (!firestore || !member) {
                 setMessages([]);
                 setIsLoadingMessages(false);
                 return;
             }
 
+            // Use the currently viewed member's data
+            const currentMember = member;
+
+            if (!currentMember.sentMessages) {
+                 setMessages([]);
+                 setIsLoadingMessages(false);
+                 return;
+            }
+
+
             setIsLoadingMessages(true);
             try {
-                if (member.sentMessages.length === 0) {
+                if (currentMember.sentMessages.length === 0) {
                     setMessages([]);
                     setIsLoadingMessages(false);
                     return;
                 }
 
-                const messagePromises = member.sentMessages.map(id => getDoc(doc(firestore, 'messages', id)));
+                const messagePromises = currentMember.sentMessages.map(id => getDoc(doc(firestore, 'messages', id)));
                 const messageDocs = await Promise.all(messagePromises);
                 
                 const fetchedMessages = messageDocs

@@ -32,7 +32,12 @@
         "estado": { "type": "string", "description": "State." },
         "complemento": { "type": "string", "description": "Address complement." },
         "congregacao": { "type": "string", "description": "Congregation the user belongs to." },
-        "responsiblePastor": { "type": "string", "description": "Name of the responsible pastor/leader." }
+        "responsiblePastor": { "type": "string", "description": "Name of the responsible pastor/leader." },
+        "sentMessages": {
+          "type": "array",
+          "description": "An array of message IDs sent by the user.",
+          "items": { "type": "string" }
+        }
       },
       "required": ["nome", "email", "cargo", "status"]
     },
@@ -238,5 +243,3 @@
     }
   }
 }
-
-    

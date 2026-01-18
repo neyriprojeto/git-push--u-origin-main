@@ -159,7 +159,7 @@ service cloud.firestore {
     
     /**
      * @description
-     *   Manages the customizable card template for member IDs.
+     *   Manages the customizable card template for member ID cards.
      *   Readable by any signed-in user, but only writable by Admins.
      * @path /cardTemplates/{templateId}
      */
@@ -218,7 +218,7 @@ service cloud.firestore {
      *   - `create`: Any signed-in user can send a message.
      *   - `get`: Senders can read their own messages. Recipients (pastors/admins)
      *     can read messages sent to them. Admins can read all.
-     *   - `list`: Limited. Client queries must be specific and are validated by `get` rule on each doc.
+     *   - `list`: Limited to admins and pastors. Client queries MUST be specific.
      *   - `update`: Recipients (pastors/admins) and Admins can update to add replies.
      *   - `delete`: Only Admins can delete messages.
      * @path /messages/{messageId}
@@ -226,8 +226,8 @@ service cloud.firestore {
     match /messages/{messageId} {
       allow create: if isSignedIn();
       allow get: if canAccessMessage(resource.data);
-      allow list: if isSignedIn();
-      allow update: if canAccessMessage(resource.data);
+      allow list: if isAdmin() || isPastor();
+      allow update: if isAdmin() || (isPastor() && request.auth.uid == resource.data.recipientId);
       allow delete: if isAdmin();
     }
   }

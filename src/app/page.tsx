@@ -134,13 +134,12 @@ export default function Home() {
   const instagramUrl = churchInfo?.instagramUrl;
   const youtubeUrl = churchInfo?.youtubeUrl;
   const websiteUrl = churchInfo?.websiteUrl;
-  const radioUrl = churchInfo?.radioUrl;
   const radioPageUrl = churchInfo?.radioPageUrl;
 
 
   return (
     <div className="flex flex-col min-h-screen bg-secondary">
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="sticky top-[65px] z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-14 items-center justify-between">
           <div className="flex items-center gap-4">
               <Sheet>
@@ -211,18 +210,6 @@ export default function Home() {
           </div>
         </div>
       </header>
-
-      {!loadingChurchInfo && radioUrl && (
-        <div className="sticky top-14 z-40 w-full bg-card shadow-md">
-            <iframe
-              src={radioUrl}
-              frameBorder="0"
-              width="100%"
-              height="65"
-              allow="autoplay"
-            ></iframe>
-        </div>
-      )}
 
       <main className="flex-1">
         {/* Hero Section */}

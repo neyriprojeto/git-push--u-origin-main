@@ -22,7 +22,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useDoc, useFirestore, useMemoFirebase, useUser, useAuth } from "@/firebase";
+import { useDoc, useFirestore, useMemoFirebase, useUser, useAuth, useCollection } from "@/firebase";
 import { doc, collection, getDoc, serverTimestamp, query, orderBy, Timestamp, where, getDocs } from "firebase/firestore";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm, SubmitHandler } from "react-hook-form";
@@ -223,9 +223,9 @@ export default function MemberProfilePage() {
   const templateRef = useMemoFirebase(() => (firestore && authUser ? doc(firestore, 'cardTemplates', 'default') : null), [firestore, authUser]);
   const { data: templateData, isLoading: isTemplateLoading } = useDoc<CardTemplateData>(templateRef);
   const congregacoesCollection = useMemoFirebase(() => (firestore ? collection(firestore, 'congregacoes') : null), [firestore]);
-  const { data: congregacoes, isLoading: loadingCongregacoes } = useDoc<Congregacao[]>(congregacoesCollection as any);
+  const { data: congregacoes, isLoading: loadingCongregacoes } = useCollection<Congregacao>(congregacoesCollection);
   const postsCollection = useMemoFirebase(() => (firestore ? query(collection(firestore, 'posts'), orderBy('createdAt', 'desc')) : null), [firestore]);
-  const { data: posts, isLoading: isLoadingPosts } = useDoc<Post[]>(postsCollection as any);
+  const { data: posts, isLoading: isLoadingPosts } = useCollection<Post>(postsCollection);
   const churchInfoRef = useMemoFirebase(() => (firestore ? doc(firestore, 'churchInfo', 'main') : null), [firestore]);
   const { data: churchInfo, isLoading: loadingChurchInfo } = useDoc<ChurchInfo>(churchInfoRef);
 
@@ -808,4 +808,3 @@ export default function MemberProfilePage() {
     </div>
   );
 }
-

@@ -677,39 +677,29 @@ export default function MemberProfilePage() {
                 setIsLoadingMessages(false);
                 return;
             }
-
-            // Use the currently viewed member's data
-            const currentMember = member;
-
-            if (!currentMember.sentMessages) {
-                 setMessages([]);
-                 setIsLoadingMessages(false);
-                 return;
-            }
-
-
+    
             setIsLoadingMessages(true);
             try {
-                if (currentMember.sentMessages.length === 0) {
+                const sentMessageIds = member.sentMessages || [];
+                
+                if (sentMessageIds.length === 0) {
                     setMessages([]);
-                    setIsLoadingMessages(false);
-                    return;
+                } else {
+                    const messagePromises = sentMessageIds.map(id => getDoc(doc(firestore, 'messages', id)));
+                    const messageDocs = await Promise.all(messagePromises);
+                    
+                    const fetchedMessages = messageDocs
+                        .filter(docSnap => docSnap.exists())
+                        .map(docSnap => ({ id: docSnap.id, ...docSnap.data() } as Message));
+                    
+                    fetchedMessages.sort((a, b) => {
+                        const timeA = a.createdAt?.toMillis() || 0;
+                        const timeB = b.createdAt?.toMillis() || 0;
+                        return timeB - timeA;
+                    });
+    
+                    setMessages(fetchedMessages);
                 }
-
-                const messagePromises = currentMember.sentMessages.map(id => getDoc(doc(firestore, 'messages', id)));
-                const messageDocs = await Promise.all(messagePromises);
-                
-                const fetchedMessages = messageDocs
-                    .filter(docSnap => docSnap.exists())
-                    .map(docSnap => ({ id: docSnap.id, ...docSnap.data() } as Message));
-                
-                fetchedMessages.sort((a, b) => {
-                    const timeA = a.createdAt?.toMillis() || 0;
-                    const timeB = b.createdAt?.toMillis() || 0;
-                    return timeB - timeA;
-                });
-
-                setMessages(fetchedMessages);
             } catch (error) {
                 console.error("Error fetching messages:", error);
                 toast({
@@ -721,9 +711,9 @@ export default function MemberProfilePage() {
                 setIsLoadingMessages(false);
             }
         };
-
+    
         fetchMessages();
-    }, [firestore, member]);
+    }, [firestore, member, toast]);
 
     return (
         <ViewContainer title="Minhas Mensagens">

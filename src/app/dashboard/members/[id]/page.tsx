@@ -30,7 +30,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { addMessage, updateMember } from "@/firebase/firestore/mutations";
+import { addMessage, updateMember, removeMessageFromMember } from "@/firebase/firestore/mutations";
 import { deleteUser } from '@/ai/flows/delete-user-flow';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
@@ -218,16 +218,13 @@ export default function MemberProfilePage() {
   // Data
   const currentUserRef = useMemoFirebase(() => (firestore && authUser ? doc(firestore, 'users', authUser.uid) : null), [firestore, authUser]);
   const { data: currentUserData, isLoading: isCurrentUserLoading } = useDoc<Member>(currentUserRef);
-  const memberRef = useMemoFirebase(() => (firestore && authUser ? doc(firestore, 'users', memberId) : null), [firestore, authUser, memberId]);
+  const memberRef = useMemoFirebase(() => (firestore && memberId ? doc(firestore, 'users', memberId) : null), [firestore, memberId]);
   const { data: member, isLoading: memberLoading } = useDoc<Member>(memberRef);
   const templateRef = useMemoFirebase(() => (firestore && authUser ? doc(firestore, 'cardTemplates', 'default') : null), [firestore, authUser]);
   const { data: templateData, isLoading: isTemplateLoading } = useDoc<CardTemplateData>(templateRef);
-  const congregacoesCollection = useMemoFirebase(() => (firestore ? collection(firestore, 'congregacoes') : null), [firestore]);
-  const { data: congregacoes, isLoading: loadingCongregacoes } = useCollection<Congregacao>(congregacoesCollection);
-  const postsCollection = useMemoFirebase(() => (firestore ? query(collection(firestore, 'posts'), orderBy('createdAt', 'desc')) : null), [firestore]);
-  const { data: posts, isLoading: isLoadingPosts } = useCollection<Post>(postsCollection);
-  const churchInfoRef = useMemoFirebase(() => (firestore ? doc(firestore, 'churchInfo', 'main') : null), [firestore]);
-  const { data: churchInfo, isLoading: loadingChurchInfo } = useDoc<ChurchInfo>(churchInfoRef);
+  const { data: congregacoes, isLoading: loadingCongregacoes } = useCollection<Congregacao>(useMemoFirebase(() => (firestore ? collection(firestore, 'congregacoes') : null), [firestore]));
+  const { data: posts, isLoading: isLoadingPosts } = useCollection<Post>(useMemoFirebase(() => (firestore ? query(collection(firestore, 'posts'), orderBy('createdAt', 'desc')) : null), [firestore]));
+  const { data: churchInfo, isLoading: loadingChurchInfo } = useDoc<ChurchInfo>(useMemoFirebase(() => (firestore ? doc(firestore, 'churchInfo', 'main') : null), [firestore]));
 
   // State for location dropdowns
   const [brazilianStates, setBrazilianStates] = useState<{ sigla: string; nome: string }[]>([]);
@@ -523,7 +520,7 @@ export default function MemberProfilePage() {
     <ViewContainer title="Mural de Avisos">
         <div className="space-y-4">
             {isLoadingPosts ? (<div className="flex justify-center items-center py-10"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>) 
-            : posts && posts.length > 0 ? ((posts as Post[]).map((post) => { const avatar = getAvatar(post.authorAvatar as any); return (
+            : posts && posts.length > 0 ? (posts.map((post) => { const avatar = getAvatar(post.authorAvatar as any); return (
                 <Card key={post.id}>
                     <CardHeader>
                         <div className="flex items-start gap-4">
@@ -657,6 +654,20 @@ export default function MemberProfilePage() {
   const MyMessagesView = () => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [isLoadingMessages, setIsLoadingMessages] = useState(true);
+    
+    const handleMemberDeleteMessage = async (messageId: string) => {
+        if (!firestore || !authUser) return;
+
+        try {
+            await removeMessageFromMember(firestore, authUser.uid, messageId);
+            setMessages(prev => prev.filter(m => m.id !== messageId));
+            toast({ title: 'Sucesso', description: 'Conversa removida.' });
+        } catch (error) {
+            console.error("Error removing message:", error);
+            toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível remover a conversa.' });
+        }
+    };
+
 
     useEffect(() => {
         const fetchMessages = async () => {
@@ -787,6 +798,32 @@ export default function MemberProfilePage() {
                                     ) : (
                                         <div className="text-center text-sm text-muted-foreground pt-4 border-t">
                                             Nenhuma resposta ainda.
+                                        </div>
+                                    )}
+
+                                    {isOwner && (
+                                        <div className="pt-4 border-t">
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                                                        <Trash2 className="mr-2 h-4 w-4" /> Excluir Conversa
+                                                    </Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
+                                                        <AlertDialogDescription>
+                                                            Esta ação removerá a conversa da sua caixa de entrada, mas ela poderá continuar visível para a administração. Deseja continuar?
+                                                        </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                                        <AlertDialogAction onClick={() => handleMemberDeleteMessage(message.id)} className="bg-destructive hover:bg-destructive/90">
+                                                            Excluir
+                                                        </AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
                                         </div>
                                     )}
                                 </AccordionContent>

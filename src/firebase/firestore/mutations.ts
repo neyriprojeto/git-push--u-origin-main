@@ -1,6 +1,6 @@
 
 'use client';
-import { addDoc, collection, deleteDoc, doc, Firestore, serverTimestamp, setDoc, updateDoc, arrayUnion, Timestamp } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, Firestore, serverTimestamp, setDoc, updateDoc, arrayUnion, arrayRemove, Timestamp } from 'firebase/firestore';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
@@ -261,6 +261,24 @@ export const deleteMessage = async (firestore: Firestore, messageId: string) => 
         errorEmitter.emit('permission-error', new FirestorePermissionError({
             path: messageRef.path,
             operation: 'delete',
+        }));
+        throw error;
+    }
+};
+
+export const removeMessageFromMember = async (firestore: Firestore, userId: string, messageId: string) => {
+    if (!firestore) throw new Error('Firestore is not initialized');
+    const userRef = doc(firestore, 'users', userId);
+
+    try {
+        await updateDoc(userRef, {
+            sentMessages: arrayRemove(messageId)
+        });
+    } catch (error) {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+            path: userRef.path,
+            operation: 'update',
+            requestResourceData: { sentMessages: `remove ${messageId}` },
         }));
         throw error;
     }

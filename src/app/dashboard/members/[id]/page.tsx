@@ -374,6 +374,7 @@ export default function MemberProfilePage() {
   
   const avatar = getAvatar(member.avatar);
   const verse = bibleVerses[new Date().getDate() % bibleVerses.length];
+  const promiseBg = PlaceHolderImages.find((p) => p.id === 'promise-card-bg');
   
   const handleShare = async () => {
     const shareText = `Promessa do Dia (A.D. Kairós Connect):\n\n"${verse.text}" (${verse.book} ${verse.chapter}:${verse.verse})`;
@@ -382,26 +383,37 @@ export default function MemberProfilePage() {
         text: shareText,
         url: window.location.origin, 
     };
-    try {
-        if (navigator.share) {
+
+    // Check if Web Share API is supported
+    if (navigator.share) {
+        try {
             await navigator.share(shareData);
-        } else {
+        } catch (err: any) {
+            if (err.name !== 'AbortError') {
+                console.error("Error using Web Share API:", err);
+                toast({
+                    variant: 'destructive',
+                    title: "Erro ao compartilhar",
+                    description: "Não foi possível abrir o diálogo de compartilhamento.",
+                });
+            } else {
+                 console.log('Share action was cancelled by the user.');
+            }
+        }
+    } else {
+        // Fallback to clipboard
+        try {
             await navigator.clipboard.writeText(shareText);
             toast({
                 title: "Copiado!",
-                description: "A promessa do dia foi copiada para a área de transferência.",
+                description: "A promessa do dia foi copiada. Você pode colá-la onde quiser.",
             });
-        }
-    } catch (err: any) {
-        // Silently handle AbortError and NotAllowedError, which happen when the user cancels the share action.
-        if (err.name === 'AbortError' || err.name === 'NotAllowedError') {
-            console.log('Share action cancelled by user.');
-        } else {
-            console.error("Error sharing", err);
+        } catch (err: any) {
+            console.error("Error copying to clipboard:", err);
             toast({
                 variant: 'destructive',
-                title: "Erro ao compartilhar",
-                description: "Não foi possível compartilhar a mensagem.",
+                title: "Erro ao copiar",
+                description: "Seu navegador não suporta compartilhamento direto ou cópia para a área de transferência.",
             });
         }
     }
@@ -895,13 +907,17 @@ export default function MemberProfilePage() {
 
       <div className="container mx-auto space-y-6 pb-8">
             <Card className="relative overflow-hidden text-white">
-                <Image
-                    src="https://images.unsplash.com/photo-1537147729294-f86410c57c43?q=80&w=1974&auto=format&fit=crop"
-                    alt="Céu com nuvens e luz do sol"
-                    data-ai-hint="sky clouds"
-                    fill
-                    className="object-cover z-0"
-                />
+                {promiseBg ? (
+                    <Image
+                        src={promiseBg.imageUrl}
+                        alt={promiseBg.description}
+                        data-ai-hint={promiseBg.imageHint}
+                        fill
+                        className="object-cover z-0"
+                    />
+                ) : (
+                    <div className="absolute inset-0 bg-gray-500 z-0" />
+                )}
                 <div className="absolute inset-0 bg-black/50 z-10" />
                 <div className="relative z-20">
                     <CardHeader>
@@ -928,5 +944,3 @@ export default function MemberProfilePage() {
     </div>
   );
 }
-
-    

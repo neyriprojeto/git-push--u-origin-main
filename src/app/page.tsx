@@ -1,4 +1,3 @@
-
 'use client';
 
 import Image from "next/image";
@@ -213,6 +212,18 @@ export default function Home() {
         </div>
       </header>
 
+      {!loadingChurchInfo && radioUrl && (
+        <div className="sticky top-14 z-40 w-full bg-card shadow-md">
+            <iframe
+              src={radioUrl}
+              frameBorder="0"
+              width="100%"
+              height="65"
+              allow="autoplay"
+            ></iframe>
+        </div>
+      )}
+
       <main className="flex-1">
         {/* Hero Section */}
         <div className="relative h-64 w-full text-white">
@@ -277,28 +288,6 @@ export default function Home() {
                 </Button>
               </CardContent>
             </Card>
-
-            {radioUrl && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-center text-primary">Nossa Rádio</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="aspect-video w-full rounded-lg overflow-hidden">
-                      <iframe
-                          src={radioUrl}
-                          className="w-full h-full border-0"
-                          allow="autoplay"
-                      />
-                  </div>
-                  {radioPageUrl && (
-                      <Button asChild className="w-full">
-                          <Link href={radioPageUrl} target="_blank">Ouvir em nova aba</Link>
-                      </Button>
-                  )}
-                </CardContent>
-              </Card>
-            )}
 
             {/* Palavra Pastoral */}
             <Card>

@@ -216,7 +216,7 @@ export default function MemberProfilePage() {
 
   // State for inner components
   const [isCardFlipped, setIsCardFlipped] = useState(false);
-  const [verse, setVerse] = useState(bibleVerses[0]);
+  const [verse, setVerse] = useState<(typeof bibleVerses)[0] | null>(null);
 
 
   // Data
@@ -246,7 +246,8 @@ export default function MemberProfilePage() {
 
   // --- Effects ---
   useEffect(() => {
-    const verseIndex = new Date().getDate() % bibleVerses.length;
+    // Pick a random verse on client-side mount
+    const verseIndex = Math.floor(Math.random() * bibleVerses.length);
     setVerse(bibleVerses[verseIndex]);
   }, []);
 
@@ -378,32 +379,37 @@ export default function MemberProfilePage() {
   const isLoading = isUserLoading || isCurrentUserLoading || memberLoading || !permission.hasChecked;
   
   const handleShare = async () => {
-    const shareText = `Promessa do Dia (A.D. Kairós Connect):\n\n"${verse.text}" (${verse.book} ${verse.chapter}:${verse.verse})`;
+    if (!verse) return;
+    const shareText = `Promessa do Dia (A.D. Kairós Connect):\n\n"${verse.text}"\n(${verse.book} ${verse.chapter}:${verse.verse})\n\n${verse.devotional}`;
     const shareData = {
         title: 'Promessa do Dia - A.D. Kairós Connect',
         text: shareText,
-        url: window.location.origin, 
+        url: window.location.origin,
     };
 
     if (navigator.share) {
         try {
             await navigator.share(shareData);
         } catch (err: any) {
+            // Silently ignore AbortError and NotAllowedError, which happen when the user cancels the share dialog.
             if (err.name !== 'AbortError' && err.name !== 'NotAllowedError') {
                 console.error("Error using Web Share API:", err);
                 toast({
                     variant: 'destructive',
                     title: "Erro ao compartilhar",
-                    description: "Não foi possível abrir o diálogo de compartilhamento.",
+                    description: "O compartilhamento falhou. A mensagem foi copiada para a área de transferência.",
                 });
+                // Fallback to clipboard on other errors.
+                await navigator.clipboard.writeText(shareText);
             }
         }
     } else {
+        // Fallback for browsers that don't support the Web Share API.
         try {
             await navigator.clipboard.writeText(shareText);
             toast({
                 title: "Copiado!",
-                description: "A promessa do dia foi copiada. Você pode colá-la onde quiser.",
+                description: "A promessa do dia foi copiada para você colar.",
             });
         } catch (err) {
             console.error("Error copying to clipboard:", err);
@@ -912,39 +918,48 @@ export default function MemberProfilePage() {
       </div>
 
       <div className="container mx-auto space-y-6 pb-8">
-            <Card className="relative overflow-hidden text-white">
-                {promiseBg ? (
-                    <Image
-                        src={promiseBg.imageUrl}
-                        alt={promiseBg.description}
-                        data-ai-hint={promiseBg.imageHint}
-                        fill
-                        className="object-cover z-0"
-                        unoptimized
-                    />
-                ) : (
-                    <div className="absolute inset-0 bg-gray-500 z-0" />
-                )}
-                <div className="absolute inset-0 bg-black/50 z-10" />
-                <div className="relative z-20">
-                    <CardHeader>
-                        <CardTitle className="text-center text-lg font-script tracking-wider">Promessa do Dia</CardTitle>
-                    </CardHeader>
-                    <CardContent className="text-center">
-                        <blockquote className="text-xl font-serif italic text-white/90">"{verse.text}"</blockquote>
-                        <p className="text-sm text-white/70 mt-2">{verse.book} {verse.chapter}:{verse.verse}</p>
-                        <p className="text-sm text-white/70 mt-4 pt-4 border-t border-white/20 font-sans">
-                            Que esta promessa ilumine o seu dia e fortaleça a sua fé. Deus tem um plano maravilhoso para você. Confie e descanse em Seu amor incondicional.
-                        </p>
-                    </CardContent>
-                    <CardFooter className="justify-center">
-                        <Button variant="secondary" onClick={handleShare}>
-                            <Share2 className="mr-2 h-4 w-4" />
-                            Compartilhar Promessa
-                        </Button>
-                    </CardFooter>
-                </div>
-            </Card>
+            {verse ? (
+                <Card className="relative overflow-hidden text-white">
+                    {promiseBg ? (
+                        <Image
+                            src={promiseBg.imageUrl}
+                            alt={promiseBg.description}
+                            data-ai-hint={promiseBg.imageHint}
+                            fill
+                            className="object-cover z-0"
+                        />
+                    ) : (
+                        <div className="absolute inset-0 bg-gray-500 z-0" />
+                    )}
+                    <div className="absolute inset-0 bg-black/50 z-10" />
+                    <div className="relative z-20">
+                        <CardHeader>
+                            <CardTitle className="text-center text-lg font-script tracking-wider">Promessa do Dia</CardTitle>
+                        </CardHeader>
+                        <CardContent className="text-center">
+                            <blockquote className="text-xl font-serif italic text-white/90">"{verse.text}"</blockquote>
+                            <p className="text-sm text-white/70 mt-2">{verse.book} {verse.chapter}:{verse.verse}</p>
+                            <p className="text-sm text-white/70 mt-4 pt-4 border-t border-white/20 font-sans">
+                                {verse.devotional}
+                            </p>
+                        </CardContent>
+                        <CardFooter className="justify-center">
+                            <Button variant="secondary" onClick={handleShare}>
+                                <Share2 className="mr-2 h-4 w-4" />
+                                Compartilhar Promessa
+                            </Button>
+                        </CardFooter>
+                    </div>
+                </Card>
+            ) : (
+                 <Card className="relative overflow-hidden text-white h-[350px]">
+                    <div className="absolute inset-0 bg-gray-500 z-0 animate-pulse" />
+                    <div className="absolute inset-0 bg-black/50 z-10" />
+                    <div className="relative z-20 flex flex-col items-center justify-center h-full">
+                        <Loader2 className="h-8 w-8 animate-spin" />
+                    </div>
+                </Card>
+            )}
             
             {renderView()}
       </div>

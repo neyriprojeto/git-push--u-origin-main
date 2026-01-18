@@ -440,20 +440,6 @@ export default function MemberProfilePage() {
               </div>
           </CardContent>
       </Card>
-      {loadingChurchInfo ? null : (
-        churchInfo?.radioUrl && (
-            <Card>
-                <CardHeader>
-                    <CardTitle className="text-xl flex items-center gap-2"><Radio className="h-5 w-5" /> Rádio Kairós</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="aspect-video w-full rounded-md overflow-hidden bg-muted">
-                        <iframe src={churchInfo.radioUrl} frameBorder="0" allowFullScreen width="100%" height="100%"></iframe>
-                    </div>
-                </CardContent>
-            </Card>
-        )
-      )}
     </div>
   );
 
@@ -908,23 +894,33 @@ export default function MemberProfilePage() {
       </div>
 
       <div className="container mx-auto space-y-6 pb-8">
-            <Card>
-                <CardHeader>
-                    <CardTitle className="text-center text-lg font-script">Promessa do Dia</CardTitle>
-                </CardHeader>
-                <CardContent className="text-center">
-                    <blockquote className="text-xl italic text-foreground/90 font-serif">"{verse.text}"</blockquote>
-                    <p className="text-sm text-muted-foreground mt-2">{verse.book} {verse.chapter}:{verse.verse}</p>
-                     <p className="text-sm text-muted-foreground mt-4 pt-4 border-t">
-                        Que esta promessa ilumine o seu dia e fortaleça a sua fé. Deus tem um plano maravilhoso para você. Confie e descanse em Seu amor incondicional.
-                    </p>
-                </CardContent>
-                <CardFooter className="justify-center">
-                     <Button variant="outline" onClick={handleShare}>
-                        <Share2 className="mr-2 h-4 w-4" />
-                        Compartilhar Promessa
-                    </Button>
-                </CardFooter>
+            <Card className="relative overflow-hidden text-white">
+                <Image
+                    src="https://images.unsplash.com/photo-1537147729294-f86410c57c43?q=80&w=1974&auto=format&fit=crop"
+                    alt="Céu com nuvens e luz do sol"
+                    data-ai-hint="sky clouds"
+                    fill
+                    className="object-cover z-0"
+                />
+                <div className="absolute inset-0 bg-black/50 z-10" />
+                <div className="relative z-20">
+                    <CardHeader>
+                        <CardTitle className="text-center text-lg font-script">Promessa do Dia</CardTitle>
+                    </CardHeader>
+                    <CardContent className="text-center">
+                        <blockquote className="text-xl font-serif italic text-white/90">"{verse.text}"</blockquote>
+                        <p className="text-sm text-white/70 mt-2">{verse.book} {verse.chapter}:{verse.verse}</p>
+                        <p className="text-sm text-white/70 mt-4 pt-4 border-t border-white/20">
+                            Que esta promessa ilumine o seu dia e fortaleça a sua fé. Deus tem um plano maravilhoso para você. Confie e descanse em Seu amor incondicional.
+                        </p>
+                    </CardContent>
+                    <CardFooter className="justify-center">
+                        <Button variant="secondary" onClick={handleShare}>
+                            <Share2 className="mr-2 h-4 w-4" />
+                            Compartilhar Promessa
+                        </Button>
+                    </CardFooter>
+                </div>
             </Card>
             
             {renderView()}
@@ -932,8 +928,5 @@ export default function MemberProfilePage() {
     </div>
   );
 }
-
-
-    
 
     

@@ -74,16 +74,11 @@ export default function MessagesPage() {
                     const q = query(collection(firestore, 'messages'), orderBy('createdAt', 'desc'));
                     const querySnapshot = await getDocs(q);
                     finalMessages = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message));
-                } else if (userData.cargo === 'Pastor/dirigente') {
-                    const q1 = query(collection(firestore, 'messages'), where('recipientId', '==', authUser.uid));
-                    const q2 = query(collection(firestore, 'messages'), where('recipientId', '==', 'ADMIN_GROUP'));
+                } else if (userData.cargo === 'Pastor/dirigente' || userData.cargo === 'Pastor(a)') {
+                    const q = query(collection(firestore, 'messages'), where('recipientId', 'in', [authUser.uid, 'ADMIN_GROUP']));
+                    const querySnapshot = await getDocs(q);
+                    const combined = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message));
                     
-                    const [snapshot1, snapshot2] = await Promise.all([getDocs(q1), getDocs(q2)]);
-                    
-                    const messages1 = snapshot1.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message));
-                    const messages2 = snapshot2.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message));
-
-                    const combined = [...messages1, ...messages2];
                     const unique = Array.from(new Map(combined.map(m => [m.id, m])).values());
                     unique.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
                     finalMessages = unique;
@@ -197,7 +192,7 @@ export default function MessagesPage() {
         return <div className="flex-1 h-screen flex items-center justify-center"><Loader2 className="h-16 w-16 animate-spin" /></div>;
     }
 
-    if (!userData?.cargo || !['Administrador', 'Pastor/dirigente'].includes(userData.cargo)) {
+    if (!userData?.cargo || !['Administrador', 'Pastor/dirigente', 'Pastor(a)'].includes(userData.cargo)) {
          return (
            <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
                <Card className="border-destructive"><CardHeader className="items-center text-center"><ShieldAlert className="h-12 w-12 text-destructive mb-4" /><CardTitle className="text-destructive">Acesso Negado</CardTitle></CardHeader><CardContent className='pt-4 text-center'><p>Você não tem permissão para acessar a caixa de entrada.</p></CardContent></Card>

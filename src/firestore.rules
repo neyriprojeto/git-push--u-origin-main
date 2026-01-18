@@ -95,7 +95,7 @@ service cloud.firestore {
      *   by ownership and role.
      */
     match /users/{userId} {
-      allow get: if isOwner(userId) || isAdmin() || (isPastor() && isPastorOfSameCongregation(resource.data));
+      allow get: if isOwner(userId) || isAdmin() || (isPastor() && isPastorOfSameCongregation(get(/databases/$(database)/documents/users/$(userId)).data));
       allow list: if isAdmin() || isPastor();
       allow create: if isOwner(userId); // Public registration, but must create own document
       allow update: if isOwner(userId) || isAdmin() || (isPastor() && isPastorOfSameCongregation(resource.data));
@@ -110,7 +110,6 @@ service cloud.firestore {
       // READ: A user can read a specific message if they sent it. Pastors and Admins have broader access.
       allow get: if (isSignedIn() && request.auth.uid == resource.data.senderId) || 
                    (isPastor() && request.auth.uid == resource.data.recipientId) ||
-                   (isPastor() && resource.data.recipientId == 'ADMIN_GROUP') ||
                    isAdmin();
       
       // LIST: Only Admins and Pastors can list messages. Members CANNOT list the collection.

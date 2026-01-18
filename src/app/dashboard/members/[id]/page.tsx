@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Save, Upload, ShieldAlert, Trash2, ChevronRight, User, LayoutGrid, CreditCard, MessageSquare, ArrowLeft, LogOut, Mail, Paperclip, Inbox, Share2 } from "lucide-react";
+import { Loader2, Save, Upload, ShieldAlert, Trash2, ChevronRight, User, LayoutGrid, CreditCard, MessageSquare, ArrowLeft, LogOut, Mail, Paperclip, Inbox, Share2, Download } from "lucide-react";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { format, formatDistanceToNow } from "date-fns";
@@ -43,6 +43,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { signOut } from "firebase/auth";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { nextConfig } from "next.config.mjs";
+import html2canvas from 'html2canvas';
 
 // --- Types ---
 type ElementStyle = { position: { top: number; left: number }; size: { width?: number; height?: number; fontSize?: number }; text?: string; fontWeight?: 'normal' | 'bold'; src?: string; textAlign?: 'left' | 'center' | 'right'; };
@@ -217,13 +218,20 @@ export default function MemberProfilePage() {
   // State for inner components
   const [isCardFlipped, setIsCardFlipped] = useState(false);
   const [verse, setVerse] = useState<(typeof bibleVerses)[0] | null>(null);
+  const promiseCardRef = useRef<HTMLDivElement>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
 
 
   // Data
   const currentUserRef = useMemoFirebase(() => (firestore && authUser ? doc(firestore, 'users', authUser.uid) : null), [firestore, authUser]);
   const { data: currentUserData, isLoading: isCurrentUserLoading } = useDoc<Member>(currentUserRef);
-  const memberRef = useMemoFirebase(() => (firestore && !isUserLoading && memberId ? doc(firestore, 'users', memberId) : null), [firestore, isUserLoading, memberId]);
+  
+  const memberRef = useMemoFirebase(
+    () => (firestore && !isUserLoading && memberId ? doc(firestore, 'users', memberId) : null),
+    [firestore, isUserLoading, memberId]
+  );
   const { data: member, isLoading: memberLoading } = useDoc<Member>(memberRef);
+
   const templateRef = useMemoFirebase(() => (firestore && authUser ? doc(firestore, 'cardTemplates', 'default') : null), [firestore, authUser]);
   const { data: templateData, isLoading: isTemplateLoading } = useDoc<CardTemplateData>(templateRef);
   const { data: congregacoes, isLoading: loadingCongregacoes } = useCollection<Congregacao>(useMemoFirebase(() => (firestore ? collection(firestore, 'congregacoes') : null), [firestore]));
@@ -246,7 +254,6 @@ export default function MemberProfilePage() {
 
   // --- Effects ---
   useEffect(() => {
-    // Pick a random verse on client-side mount
     const verseIndex = Math.floor(Math.random() * bibleVerses.length);
     setVerse(bibleVerses[verseIndex]);
   }, []);
@@ -256,24 +263,20 @@ export default function MemberProfilePage() {
   useEffect(() => { if (!addressState) { setAddressCities([]); return; } setIsLoadingAddressCities(true); fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${addressState}/municipios?orderBy=nome`).then(res => res.json()).then(setAddressCities).catch(err => console.error("Failed to fetch address cities", err)).finally(() => setIsLoadingAddressCities(false)); }, [addressState]);
   
   useEffect(() => {
-    // While any data is loading, don't make a decision.
     if (isUserLoading || isCurrentUserLoading || memberLoading) {
       return;
     }
 
-    // If there is no authenticated user, or their data is missing, deny all permissions.
     if (!authUser || !currentUserData) {
       setPermission({ canView: false, canEdit: false, canManage: false, hasChecked: true });
       return;
     }
 
-    // If we can't find the member being requested, deny permissions.
     if (!member) {
         setPermission({ canView: false, canEdit: false, canManage: false, hasChecked: true });
         return;
     }
 
-    // Now we have all the data, determine permissions.
     const isAdmin = currentUserData.cargo === 'Administrador';
     const isUserOwner = authUser.uid === member.id;
     const isPastorOfCongregation = currentUserData.cargo === 'Pastor/dirigente' && currentUserData.congregacao === member.congregacao;
@@ -360,7 +363,6 @@ export default function MemberProfilePage() {
 
   const handleLogout = async () => {
     if (!auth) return;
-    // Set permission to false immediately to prevent data fetching on re-render during logout
     setPermission({ canView: false, canEdit: false, canManage: false, hasChecked: true });
     try {
       await signOut(auth);
@@ -375,8 +377,52 @@ export default function MemberProfilePage() {
     }
   };
 
-  // --- Loading and Permission ---
-  const isLoading = isUserLoading || isCurrentUserLoading || memberLoading || !permission.hasChecked;
+    const handleDownloadImage = async () => {
+        const cardElement = promiseCardRef.current;
+        if (!cardElement || !verse) {
+            toast({
+                variant: 'destructive',
+                title: 'Erro',
+                description: 'Aguarde o carregamento da promessa para baixar.',
+            });
+            return;
+        }
+
+        const buttonsContainer = cardElement.querySelector('[data-id="promise-buttons-container"]');
+        if (!buttonsContainer) return;
+
+        setIsDownloading(true);
+        (buttonsContainer as HTMLElement).style.visibility = 'hidden';
+
+        try {
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            const canvas = await html2canvas(cardElement, {
+                useCORS: true,
+                backgroundColor: null,
+                scale: 2,
+            });
+            
+            const image = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.href = image;
+            link.download = 'promessa-do-dia.png';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+        } catch (error) {
+            console.error('Error downloading image:', error);
+            toast({
+                variant: 'destructive',
+                title: 'Erro ao baixar imagem',
+                description: 'Não foi possível gerar a imagem. Tente novamente.',
+            });
+        } finally {
+            (buttonsContainer as HTMLElement).style.visibility = 'visible';
+            setIsDownloading(false);
+        }
+    };
   
   const handleShare = async () => {
     if (!verse) return;
@@ -408,20 +454,21 @@ export default function MemberProfilePage() {
         try {
             await navigator.share(shareData);
         } catch (err: any) {
-            // If the user cancels the share sheet, it throws an AbortError. We can safely ignore it.
             if (err.name === 'AbortError') {
                 return;
             }
-            // For any other error (e.g., NotAllowedError), fallback to copying to clipboard.
             console.error("Web Share API failed, falling back to clipboard:", err);
             await copyToClipboard();
         }
     } else {
-        // Fallback for browsers that don't support the Web Share API.
         await copyToClipboard();
     }
   };
 
+
+  // --- Loading and Permission ---
+  const isLoading = isUserLoading || isCurrentUserLoading || memberLoading || !permission.hasChecked;
+  
 
   if (isLoading) { return ( <div className="flex-1 h-screen flex items-center justify-center bg-secondary"> <Loader2 className="h-16 w-16 animate-spin" /> </div> ) }
   if (permission.hasChecked && !permission.canView) { return ( <div className="flex-1 space-y-4 p-4 md:p-8 pt-6"><Card className="border-destructive"><CardHeader className="items-center text-center"><ShieldAlert className="h-12 w-12 text-destructive mb-4" /><CardTitle className="text-destructive">Acesso Negado</CardTitle></CardHeader><CardContent className='pt-4 text-center'><p>Você não tem permissão para acessar esta página ou o membro não foi encontrado.</p><Button onClick={() => router.back()} className="mt-6">Voltar</Button></CardContent></Card></div> ); }
@@ -719,7 +766,7 @@ export default function MemberProfilePage() {
         try {
             await removeMessageFromMember(firestore, authUser.uid, messageId);
             setMessages(prev => prev ? prev.filter(m => m.id !== messageId) : null);
-            toast({ title: 'Sucesso', description: 'Conversa removida.' });
+            toast({ title: 'Sucesso', description: 'Conversa removida da sua visualização.' });
         } catch (error) {
             console.error("Error removing message:", error);
             toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível remover a conversa.' });
@@ -919,7 +966,7 @@ export default function MemberProfilePage() {
 
       <div className="container mx-auto space-y-6 pb-8">
             {verse ? (
-                <Card className="relative overflow-hidden text-white">
+                <Card className="relative overflow-hidden text-white" ref={promiseCardRef}>
                     {promiseBg ? (
                         <Image
                             src={promiseBg.imageUrl}
@@ -933,22 +980,29 @@ export default function MemberProfilePage() {
                         <div className="absolute inset-0 bg-gray-500 z-0" />
                     )}
                     <div className="absolute inset-0 bg-black/50 z-10" />
-                    <div className="relative z-20">
+                    <div className="relative z-20 flex flex-col" style={{minHeight: '350px'}}>
                         <CardHeader>
                             <CardTitle className="text-center text-lg font-script tracking-wider">Promessa do Dia</CardTitle>
                         </CardHeader>
-                        <CardContent className="text-center">
+                        <CardContent className="text-center flex-grow">
                             <blockquote className="text-xl font-serif italic text-white/90">"{verse.text}"</blockquote>
                             <p className="text-sm text-white/70 mt-2">{verse.book} {verse.chapter}:{verse.verse}</p>
                             <p className="text-sm text-white/70 mt-4 pt-4 border-t border-white/20 font-sans">
                                 {verse.devotional}
                             </p>
                         </CardContent>
-                        <CardFooter className="justify-center">
-                            <Button variant="secondary" onClick={handleShare} disabled={!verse}>
-                                {!verse ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Share2 className="mr-2 h-4 w-4" />}
-                                {!verse ? 'Carregando...' : 'Compartilhar Promessa'}
-                            </Button>
+                        <CardFooter className="flex-col justify-center gap-4 pt-2">
+                             <p className="text-xs text-white/70 font-sans">ADKAIROS CONNECT</p>
+                            <div className="flex flex-wrap gap-2 justify-center" data-id="promise-buttons-container">
+                                <Button variant="secondary" onClick={handleShare} disabled={!verse}>
+                                    {!verse ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Share2 className="mr-2 h-4 w-4" />}
+                                    {!verse ? 'Carregando...' : 'Compartilhar Promessa'}
+                                </Button>
+                                <Button variant="secondary" onClick={handleDownloadImage} disabled={!verse || isDownloading}>
+                                    {isDownloading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                                    {isDownloading ? 'Baixando...' : 'Baixar PNG'}
+                                </Button>
+                            </div>
                         </CardFooter>
                     </div>
                 </Card>
@@ -967,3 +1021,4 @@ export default function MemberProfilePage() {
     </div>
   );
 }
+

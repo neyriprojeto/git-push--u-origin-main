@@ -37,6 +37,11 @@
           "type": "array",
           "description": "An array of message IDs sent by the user.",
           "items": { "type": "string" }
+        },
+        "bibleReadingProgress": {
+          "type": "array",
+          "description": "An array of day numbers for the completed readings in the annual bible plan.",
+          "items": { "type": "number" }
         }
       },
       "required": ["nome", "email", "cargo", "status"]

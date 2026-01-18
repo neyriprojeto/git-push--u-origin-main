@@ -18,13 +18,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Save, Upload, ShieldAlert, Trash2, ChevronRight, User, LayoutGrid, CreditCard, MessageSquare, ArrowLeft, LogOut, Mail, Paperclip, Inbox, Share2, Download } from "lucide-react";
+import { Loader2, Save, Upload, ShieldAlert, Trash2, ChevronRight, User, LayoutGrid, CreditCard, MessageSquare, ArrowLeft, LogOut, Mail, Paperclip, Inbox, Share2, Download, BookOpen } from "lucide-react";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useDoc, useFirestore, useMemoFirebase, useUser, useAuth, useCollection } from "@/firebase";
-import { doc, collection, getDoc, serverTimestamp, query, orderBy, Timestamp, where, getDocs } from "firebase/firestore";
+import { doc, collection, getDoc, serverTimestamp, query, orderBy, Timestamp, where, getDocs, arrayUnion, arrayRemove } from "firebase/firestore";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -44,15 +44,19 @@ import { signOut } from "firebase/auth";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { nextConfig } from "next.config.mjs";
 import html2canvas from 'html2canvas';
+import jsPDF from "jspdf";
+import bibleReadingPlan from '@/data/bible-plan.json';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // --- Types ---
 type ElementStyle = { position: { top: number; left: number }; size: { width?: number; height?: number; fontSize?: number }; text?: string; fontWeight?: 'normal' | 'bold'; src?: string; textAlign?: 'left' | 'center' | 'right'; };
 type CardElements = { [key: string]: ElementStyle };
 type CardTemplateData = { elements: CardElements; cardStyles: { frontBackground: string; backBackground: string; frontBackgroundImage: string; backBackgroundImage: string; }; textColors: { title: string; personalData: string; backText: string; }; };
-interface Member { id: string; nome: string; email?: string; avatar?: string; recordNumber?: string; status: 'Ativo' | 'Inativo' | 'Pendente'; gender?: 'Masculino' | 'Feminino'; dataNascimento?: string | { seconds: number; nanoseconds: number }; dataBatismo?: string | { seconds: number; nanoseconds: number }; maritalStatus?: 'Solteiro(a)' | 'Casado(a)' | 'Divorciado(a)' | 'Viúvo(a)'; cpf?: string; rg?: string; naturalness?: string; nationality?: string; phone?: string; whatsapp?: string; cargo: string; dataMembro?: string | { seconds: number; nanoseconds: number }; cep?: string; logradouro?: string; numero?: string; bairro?: string; cidade?: string; estado?: string; complemento?: string; congregacao?: string; responsiblePastor?: string; messageIds?: string[]; }
+interface Member { id: string; nome: string; email?: string; avatar?: string; recordNumber?: string; status: 'Ativo' | 'Inativo' | 'Pendente'; gender?: 'Masculino' | 'Feminino'; dataNascimento?: string | { seconds: number; nanoseconds: number }; dataBatismo?: string | { seconds: number; nanoseconds: number }; maritalStatus?: 'Solteiro(a)' | 'Casado(a)' | 'Divorciado(a)' | 'Viúvo(a)'; cpf?: string; rg?: string; naturalness?: string; nationality?: string; phone?: string; whatsapp?: string; cargo: string; dataMembro?: string | { seconds: number; nanoseconds: number }; cep?: string; logradouro?: string; numero?: string; bairro?: string; cidade?: string; estado?: string; complemento?: string; congregacao?: string; responsiblePastor?: string; messageIds?: string[]; bibleReadingProgress?: number[]; }
 type Congregacao = { id: string; nome: string; pastorId?: string; pastorName?: string; };
 type Post = { id: string; title: string; content: string; authorId: string; authorName: string; authorAvatar?: string; imageUrl?: string; createdAt: Timestamp; };
-type ChurchInfo = { radioUrl?: string };
+type ChurchInfo = { radioUrl?: string; fichaLogoUrl?: string; };
 type Reply = { authorId: string; authorName: string; body: string; attachmentUrl?: string; createdAt: Timestamp; };
 type Message = { id: string; userId: string; senderName: string; recipientId: string; recipientName: string; subject: string; body: string; attachmentUrl?: string; createdAt: Timestamp; replies?: Reply[]; };
 
@@ -201,7 +205,7 @@ export default function MemberProfilePage() {
   const router = useRouter();
   const { toast } = useToast();
   
-  const [activeView, setActiveView] = useState<'panel' | 'profile' | 'mural' | 'card' | 'contact' | 'my-messages'>('panel');
+  const [activeView, setActiveView] = useState<'panel' | 'profile' | 'mural' | 'card' | 'contact' | 'my-messages' | 'reading-plan'>('panel');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [permission, setPermission] = useState<{ canView: boolean, canEdit: boolean, canManage: boolean, hasChecked: boolean }>({ canView: false, canEdit: false, canManage: false, hasChecked: true, });
   const isOwner = authUser?.uid === memberId;
@@ -491,6 +495,10 @@ export default function MemberProfilePage() {
                   <div className="flex items-center gap-4"><User className="h-6 w-6 text-primary" /><p className="font-semibold">Meu Perfil</p></div>
                   <ChevronRight className="h-5 w-5 text-muted-foreground" />
               </div>
+              <div onClick={() => setActiveView('reading-plan')} className="flex items-center justify-between rounded-lg border p-4 hover:bg-accent transition-colors cursor-pointer">
+                  <div className="flex items-center gap-4"><BookOpen className="h-6 w-6 text-primary" /><p className="font-semibold">Plano de Leitura Bíblica</p></div>
+                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
+              </div>
               <div onClick={() => setActiveView('mural')} className="flex items-center justify-between rounded-lg border p-4 hover:bg-accent transition-colors cursor-pointer">
                   <div className="flex items-center gap-4"><LayoutGrid className="h-6 w-6 text-primary" /><p className="font-semibold">Mural de Avisos</p></div>
                   <ChevronRight className="h-5 w-5 text-muted-foreground" />
@@ -521,6 +529,7 @@ export default function MemberProfilePage() {
       case 'card': return <CardView />;
       case 'contact': return <ContactView />;
       case 'my-messages': return <MyMessagesView />;
+      case 'reading-plan': return <ReadingPlanView />;
       default: return renderPanel();
     }
   };
@@ -945,6 +954,166 @@ export default function MemberProfilePage() {
         </ViewContainer>
     );
   };
+
+  const PrintableReadingPlan = React.forwardRef<HTMLDivElement>((props, ref) => {
+    const { data: churchInfo } = useDoc<{ fichaLogoUrl?: string }>(useMemoFirebase(() => (firestore ? doc(firestore, 'churchInfo', 'main') : null), [firestore]));
+    
+    return (
+        <div ref={ref} className="bg-white p-8 text-black w-[210mm]">
+            <div className="text-center mb-6">
+                {churchInfo?.fichaLogoUrl && (
+                    <img src={churchInfo.fichaLogoUrl} alt="Logo da Igreja" className="h-24 w-24 mx-auto mb-4" crossOrigin="anonymous"/>
+                )}
+                <h1 className="text-3xl font-bold">Plano de Leitura Bíblica Anual</h1>
+                <p className="mt-2 text-sm italic">"Toda a Escritura é inspirada por Deus e útil para o ensino, para a repreensão, para a correção e para a instrução na justiça, para que o homem de Deus seja apto e plenamente preparado para toda boa obra." (2 Timóteo 3:16-17)</p>
+            </div>
+            <table className="w-full text-xs border-collapse">
+                 <thead>
+                    <tr className="bg-gray-100">
+                        <th className="border p-2">Data</th>
+                        <th className="border p-2">Leitura</th>
+                        <th className="border p-2 w-12">Feito</th>
+                    </tr>
+                 </thead>
+                 <tbody>
+                    {bibleReadingPlan.map(day => (
+                        <tr key={day.day}>
+                            <td className="border p-2">{day.date}</td>
+                            <td className="border p-2">{day.reading}</td>
+                            <td className="border p-2 text-center">
+                                <div className="h-4 w-4 border border-black mx-auto"></div>
+                            </td>
+                        </tr>
+                    ))}
+                 </tbody>
+            </table>
+        </div>
+    );
+  });
+  PrintableReadingPlan.displayName = 'PrintableReadingPlan';
+
+  const ReadingPlanView = () => {
+    const [currentDate, setCurrentDate] = useState(new Date());
+    const [isDownloadingPlan, setIsDownloadingPlan] = useState(false);
+    const printablePlanRef = useRef<HTMLDivElement>(null);
+
+    if (!member) return <Loader2 className="animate-spin" />;
+
+    const handleProgressChange = async (day: number, checked: boolean) => {
+        if (!firestore || !authUser) return;
+        
+        try {
+            await updateMember(firestore, authUser.uid, {
+                bibleReadingProgress: checked ? arrayUnion(day) : arrayRemove(day),
+            });
+            toast({
+                title: "Progresso salvo!",
+                description: `Sua leitura do dia ${day} foi atualizada.`
+            });
+        } catch (error) {
+            console.error("Failed to save reading progress", error);
+            toast({
+                variant: 'destructive',
+                title: "Erro",
+                description: "Não foi possível salvar seu progresso."
+            });
+        }
+    };
+    
+    const handleDownloadPlan = async () => {
+        const input = printablePlanRef.current;
+        if (!input) {
+            toast({ variant: 'destructive', title: 'Erro', description: 'Elemento do plano não encontrado para gerar o PDF.' });
+            return;
+        }
+        setIsDownloadingPlan(true);
+        try {
+            const canvas = await html2canvas(input, { scale: 2, useCORS: true });
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = pdf.internal.pageSize.getHeight();
+            const imgWidth = canvas.width;
+            const imgHeight = canvas.height;
+            const ratio = imgWidth / imgHeight;
+            let finalImgHeight = pdfWidth / ratio;
+            let heightLeft = finalImgHeight;
+            let position = 0;
+            
+            pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, finalImgHeight);
+            heightLeft -= pdfHeight;
+    
+            while (heightLeft > 0) {
+                position -= pdfHeight;
+                pdf.addPage();
+                pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, finalImgHeight);
+                heightLeft -= pdfHeight;
+            }
+    
+            pdf.save('plano-leitura-biblica-anual.pdf');
+        } catch (e) {
+            console.error("Error generating PDF:", e);
+            toast({ variant: 'destructive', title: 'Erro ao gerar PDF', description: 'Ocorreu um problema ao tentar criar o arquivo.' });
+        } finally {
+           setIsDownloadingPlan(false);
+        }
+    };
+
+    const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+    const currentMonthName = monthNames[currentDate.getMonth()];
+    const currentYear = currentDate.getFullYear();
+    const readingsForMonth = bibleReadingPlan.filter(r => r.date.startsWith(currentMonthName.substring(0, 3)));
+
+    return (
+        <ViewContainer title="Plano de Leitura Bíblica Anual">
+            <div className="space-y-4">
+                <div className="flex justify-between items-center flex-wrap gap-2">
+                    <h3 className="text-xl font-bold">{currentMonthName} {currentYear}</h3>
+                    <div className="flex gap-2">
+                        <Button variant="outline" onClick={() => setCurrentDate(d => new Date(d.setMonth(d.getMonth() - 1)))}>Anterior</Button>
+                        <Button variant="outline" onClick={() => setCurrentDate(d => new Date(d.setMonth(d.getMonth() + 1)))}>Próximo</Button>
+                    </div>
+                </div>
+                <Button onClick={handleDownloadPlan} disabled={isDownloadingPlan}>
+                    {isDownloadingPlan ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Download className="mr-2 h-4 w-4"/>}
+                    Baixar Plano Completo (PDF)
+                </Button>
+                <Card>
+                  <Table>
+                      <TableHeader>
+                          <TableRow>
+                              <TableHead className="w-[100px]">Data</TableHead>
+                              <TableHead>Leitura</TableHead>
+                              <TableHead className="text-right w-[80px]">Lido</TableHead>
+                          </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                          {readingsForMonth.map(reading => {
+                              const isRead = member.bibleReadingProgress?.includes(reading.day);
+                              return (
+                                  <TableRow key={reading.day} className={cn(isRead && "bg-green-100 dark:bg-green-900/20")}>
+                                      <TableCell className="font-medium">{reading.date}</TableCell>
+                                      <TableCell>{reading.reading}</TableCell>
+                                      <TableCell className="text-right">
+                                          <Checkbox 
+                                              checked={isRead}
+                                              onCheckedChange={(checked) => handleProgressChange(reading.day, !!checked)}
+                                          />
+                                      </TableCell>
+                                  </TableRow>
+                              );
+                          })}
+                      </TableBody>
+                  </Table>
+                </Card>
+            </div>
+            
+            <div className="absolute -left-[9999px] top-auto">
+                 <PrintableReadingPlan ref={printablePlanRef} />
+            </div>
+        </ViewContainer>
+    );
+  }
 
 
   return (

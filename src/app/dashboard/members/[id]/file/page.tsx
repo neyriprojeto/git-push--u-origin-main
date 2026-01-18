@@ -84,7 +84,7 @@ export default function MemberFilePage() {
     const frontRef = useRef<HTMLDivElement>(null);
     const backRef = useRef<HTMLDivElement>(null);
 
-    const memberRef = useMemoFirebase(() => (firestore ? doc(firestore, 'users', memberId) : null), [firestore, memberId]);
+    const memberRef = useMemoFirebase(() => (firestore && !isUserLoading ? doc(firestore, 'users', memberId) : null), [firestore, isUserLoading, memberId]);
     const { data: member, isLoading: memberLoading } = useDoc<Member>(memberRef);
     
     const currentUserRef = useMemoFirebase(() => (firestore && authUser ? doc(firestore, 'users', authUser.uid) : null), [firestore, authUser]);

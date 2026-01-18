@@ -222,7 +222,7 @@ export default function MemberProfilePage() {
   // Data
   const currentUserRef = useMemoFirebase(() => (firestore && authUser ? doc(firestore, 'users', authUser.uid) : null), [firestore, authUser]);
   const { data: currentUserData, isLoading: isCurrentUserLoading } = useDoc<Member>(currentUserRef);
-  const memberRef = useMemoFirebase(() => (firestore && memberId ? doc(firestore, 'users', memberId) : null), [firestore, memberId]);
+  const memberRef = useMemoFirebase(() => (firestore && !isUserLoading && memberId ? doc(firestore, 'users', memberId) : null), [firestore, isUserLoading, memberId]);
   const { data: member, isLoading: memberLoading } = useDoc<Member>(memberRef);
   const templateRef = useMemoFirebase(() => (firestore && authUser ? doc(firestore, 'cardTemplates', 'default') : null), [firestore, authUser]);
   const { data: templateData, isLoading: isTemplateLoading } = useDoc<CardTemplateData>(templateRef);

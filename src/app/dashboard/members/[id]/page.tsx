@@ -669,7 +669,6 @@ export default function MemberProfilePage() {
         }
     };
 
-
     useEffect(() => {
         const fetchMessages = async () => {
             if (!firestore || !member) {
@@ -677,35 +676,39 @@ export default function MemberProfilePage() {
                 setIsLoadingMessages(false);
                 return;
             }
-    
+            
+            // Only proceed if there's a member object.
             setIsLoadingMessages(true);
             try {
+                // Get the list of message IDs from the member's profile.
                 const sentMessageIds = member.sentMessages || [];
                 
                 if (sentMessageIds.length === 0) {
                     setMessages([]);
-                } else {
-                    const messagePromises = sentMessageIds.map(id => getDoc(doc(firestore, 'messages', id)));
-                    const messageDocs = await Promise.all(messagePromises);
-                    
-                    const fetchedMessages = messageDocs
-                        .filter(docSnap => docSnap.exists())
-                        .map(docSnap => ({ id: docSnap.id, ...docSnap.data() } as Message));
-                    
-                    fetchedMessages.sort((a, b) => {
-                        const timeA = a.createdAt?.toMillis() || 0;
-                        const timeB = b.createdAt?.toMillis() || 0;
-                        return timeB - timeA;
-                    });
-    
-                    setMessages(fetchedMessages);
+                    setIsLoadingMessages(false);
+                    return;
                 }
+                
+                // Fetch each message document individually using getDoc.
+                // This corresponds to a 'get' operation in Firestore rules.
+                const messagePromises = sentMessageIds.map(id => getDoc(doc(firestore, 'messages', id)));
+                const messageDocs = await Promise.all(messagePromises);
+                
+                const fetchedMessages = messageDocs
+                    .filter(docSnap => docSnap.exists()) // Filter out any deleted messages
+                    .map(docSnap => ({ id: docSnap.id, ...docSnap.data() } as Message));
+                
+                // Sort messages by creation date, newest first.
+                fetchedMessages.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+                
+                setMessages(fetchedMessages);
+
             } catch (error) {
-                console.error("Error fetching messages:", error);
+                console.error("Error fetching member messages:", error);
                 toast({
                     variant: "destructive",
-                    title: "Erro ao carregar mensagens",
-                    description: "Não foi possível buscar suas mensagens. Tente recarregar a página."
+                    title: "Erro ao Carregar Mensagens",
+                    description: "Não foi possível buscar suas mensagens. Verifique suas permissões ou tente mais tarde."
                 });
             } finally {
                 setIsLoadingMessages(false);
@@ -886,4 +889,3 @@ export default function MemberProfilePage() {
     </div>
   );
 }
-

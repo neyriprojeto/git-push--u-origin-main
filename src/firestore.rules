@@ -85,17 +85,6 @@ service cloud.firestore {
              requestingUserData.congregacao == targetUserData.congregacao;
     }
     
-    /**
-     * Checks if a user can access a specific message.
-     */
-    function canAccessMessage(messageData) {
-      return isAdmin() || 
-             (isSignedIn() && request.auth.uid == messageData.senderId) || 
-             (isPastor() && request.auth.uid == messageData.recipientId) ||
-             (isPastor() && messageData.recipientId == 'ADMIN_GROUP');
-    }
-    
-
     // =================================
     // Collection Rules
     // =================================
@@ -104,131 +93,77 @@ service cloud.firestore {
      * @description
      *   Manages user documents, which store all member data. Access is strictly controlled
      *   by ownership and role.
-     *   - `get`: A user can read their own data. An admin can read anyone's data. A pastor can read
-     *            data of members in their own congregation.
-     *   - `list`: Only admins and pastors can list users (client-side queries must enforce
-     *             congregation filtering for pastors).
-     *   - `update`: A user can update their own data. An admin can update anyone's data. A pastor
-     *               can update data of members in their own congregation.
-     *   - `create`: Anyone can create their own user document (i.e., register). The document ID
-     *               must match their auth UID.
-     *   - `delete`: Only admins can delete users.
-     * @path /users/{userId}
      */
     match /users/{userId} {
       allow get: if isOwner(userId) || isAdmin() || (isPastor() && isPastorOfSameCongregation(resource.data));
       allow list: if isAdmin() || isPastor();
-      allow update: if isOwner(userId) || isAdmin() || (isPastor() && isPastorOfSameCongregation(resource.data));
       allow create: if isOwner(userId); // Public registration, but must create own document
+      allow update: if isOwner(userId) || isAdmin() || (isPastor() && isPastorOfSameCongregation(resource.data));
       allow delete: if isAdmin();
     }
 
-
     /**
      * @description
-     *   Manages church groups. This is a placeholder and is currently locked down.
-     *   To enable, define a 'members' map on the group document with user UIDs and roles.
-     * @path /groups/{groupId}
+     *   Stores messages. Access is based on sender/recipient and role.
      */
+    match /messages/{messageId} {
+      // READ: A user can read a specific message if they sent it. Pastors and Admins have broader access.
+      allow get: if (isSignedIn() && request.auth.uid == resource.data.senderId) || 
+                   (isPastor() && request.auth.uid == resource.data.recipientId) ||
+                   (isPastor() && resource.data.recipientId == 'ADMIN_GROUP') ||
+                   isAdmin();
+      
+      // LIST: Only Admins and Pastors can list messages. Members CANNOT list the collection.
+      allow list: if isAdmin() || isPastor();
+      
+      // CREATE: Any signed-in user can create a message, but their UID must match the senderId field.
+      allow create: if isSignedIn() && request.resource.data.senderId == request.auth.uid;
+
+      // UPDATE: Only the recipient (if a pastor) or an admin can update a message (e.g., to add a reply).
+      allow update: if (isPastor() && request.auth.uid == resource.data.recipientId) || isAdmin();
+      
+      // DELETE: Only admins can delete messages from the collection.
+      allow delete: if isAdmin();
+    }
+
     match /groups/{groupId} {
       allow read, write: if false; // Locked until feature is fully implemented.
     }
     
-    /**
-     * @description
-     *   Manages the list of congregations. Publicly readable for registration forms.
-     *   Only Admins can create, update, or delete congregations.
-     * @path /congregacoes/{congregacaoId}
-     */
     match /congregacoes/{congregacaoId} {
         allow get, list: if true;
         allow create, update, delete: if isAdmin();
     }
 
-    /**
-     * @description
-     *   Stores singular, public-facing information about the church (e.g., banner URLs).
-     *   Readable by anyone, but only writable by an Admin.
-     * @path /churchInfo/{churchInfoId}
-     */
     match /churchInfo/{churchInfoId} {
       allow get, list: if true;
       allow create, delete: if isAdmin();
       allow update: if isAdmin() || isPastor();
     }
     
-    /**
-     * @description
-     *   Manages the customizable card template for member ID cards.
-     *   Readable by any signed-in user, but only writable by Admins.
-     * @path /cardTemplates/{templateId}
-     */
     match /cardTemplates/{templateId} {
       allow read: if isSignedIn();
       allow write: if isAdmin();
     }
     
-    /**
-     * @description
-     *   Manages the executive committee leaders for the homepage.
-     *   Publicly readable, but only writable by an Admin.
-     * @path /leaders/{leaderId}
-     */
     match /leaders/{leaderId} {
       allow get, list: if true;
       allow create, update, delete: if isAdmin();
     }
 
-    /**
-     * @description
-     *   Manages document templates, like for letters of recommendation.
-     *   Readable by signed-in users, but only writable by an Admin.
-     * @path /documentTemplates/{templateId}
-     */
     match /documentTemplates/{templateId} {
       allow read: if isSignedIn();
       allow write: if isAdmin();
     }
 
-    /**
-     * @description
-     *   Manages church logos for download.
-     *   Readable by signed-in leaders, but only writable by an Admin.
-     * @path /logos/{logoId}
-     */
     match /logos/{logoId} {
       allow get, list: if isSignedIn();
       allow create, update, delete: if isAdmin();
     }
 
-    /**
-     * @description
-     *   Stores announcements for the mural. Publicly readable by anyone.
-     *   Only Admins can create, update, or delete posts.
-     * @path /posts/{postId}
-     */
     match /posts/{postId} {
       allow get, list: if true;
       allow create, update, delete: if isAdmin();
-    }
-
-    /**
-     * @description
-     *   Stores messages. Access is based on sender/recipient and role.
-     *   - `create`: Any signed-in user can send a message.
-     *   - `get`: Senders can read their own messages. Recipients (pastors/admins)
-     *     can read messages sent to them. Admins can read all.
-     *   - `list`: Limited to admins and pastors. Client queries MUST be specific.
-     *   - `update`: Recipients (pastors/admins) and Admins can update to add replies.
-     *   - `delete`: Only Admins can delete messages.
-     * @path /messages/{messageId}
-     */
-    match /messages/{messageId} {
-      allow create: if isSignedIn();
-      allow get: if canAccessMessage(resource.data);
-      allow list: if isAdmin() || isPastor();
-      allow update: if isAdmin() || (isPastor() && request.auth.uid == resource.data.recipientId);
-      allow delete: if isAdmin();
     }
   }
 }

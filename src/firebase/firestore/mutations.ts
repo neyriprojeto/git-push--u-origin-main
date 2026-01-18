@@ -88,7 +88,7 @@ export const addCongregacao = async (firestore: Firestore, nome: string) => {
         });
 }
 
-export const updateCongregacao = async (firestore: Firestore, id: string, data: { endereco?: string }) => {
+export const updateCongregacao = async (firestore: Firestore, id: string, data: { endereco?: string; pastorId?: string; pastorName?: string; }) => {
     if (!firestore) {
         throw new Error('Firestore is not initialized');
     }
@@ -208,14 +208,25 @@ export const deletePost = async (firestore: Firestore, postId: string) => {
 export const addMessage = async (firestore: Firestore, messageData: any) => {
     if (!firestore) throw new Error('Firestore is not initialized');
     const messagesRef = collection(firestore, 'messages');
-    addDoc(messagesRef, { ...messageData, createdAt: serverTimestamp() })
-        .catch(error => {
-            errorEmitter.emit('permission-error', new FirestorePermissionError({
-                path: messagesRef.path,
-                operation: 'create',
-                requestResourceData: messageData,
-            }));
-        });
+    
+    try {
+        const docRef = await addDoc(messagesRef, { ...messageData, createdAt: serverTimestamp() });
+        
+        // After successfully creating the message, update the user's document
+        // to include the ID of the newly created message.
+        if (messageData.senderId) {
+            const userRef = doc(firestore, 'users', messageData.senderId);
+            await updateDoc(userRef, {
+                sentMessages: arrayUnion(docRef.id)
+            });
+        }
+    } catch (error) {
+         errorEmitter.emit('permission-error', new FirestorePermissionError({
+            path: messagesRef.path,
+            operation: 'create',
+            requestResourceData: messageData,
+        }));
+    }
 };
 
 export const addReplyToMessage = async (firestore: Firestore, messageId: string, replyData: any) => {

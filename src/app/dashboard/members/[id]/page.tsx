@@ -46,7 +46,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 type ElementStyle = { position: { top: number; left: number }; size: { width?: number; height?: number; fontSize?: number }; text?: string; fontWeight?: 'normal' | 'bold'; src?: string; textAlign?: 'left' | 'center' | 'right'; };
 type CardElements = { [key: string]: ElementStyle };
 type CardTemplateData = { elements: CardElements; cardStyles: { frontBackground: string; backBackground: string; frontBackgroundImage: string; backBackgroundImage: string; }; textColors: { title: string; personalData: string; backText: string; }; };
-interface Member { id: string; nome: string; email?: string; avatar?: string; recordNumber?: string; status: 'Ativo' | 'Inativo' | 'Pendente'; gender?: 'Masculino' | 'Feminino'; dataNascimento?: string | { seconds: number; nanoseconds: number }; dataBatismo?: string | { seconds: number; nanoseconds: number }; maritalStatus?: 'Solteiro(a)' | 'Casado(a)' | 'Divorciado(a)' | 'Viúvo(a)'; cpf?: string; rg?: string; naturalness?: string; nationality?: string; phone?: string; whatsapp?: string; cargo: string; dataMembro?: string | { seconds: number; nanoseconds: number }; cep?: string; logradouro?: string; numero?: string; bairro?: string; cidade?: string; estado?: string; complemento?: string; congregacao?: string; responsiblePastor?: string; }
+interface Member { id: string; nome: string; email?: string; avatar?: string; recordNumber?: string; status: 'Ativo' | 'Inativo' | 'Pendente'; gender?: 'Masculino' | 'Feminino'; dataNascimento?: string | { seconds: number; nanoseconds: number }; dataBatismo?: string | { seconds: number; nanoseconds: number }; maritalStatus?: 'Solteiro(a)' | 'Casado(a)' | 'Divorciado(a)' | 'Viúvo(a)'; cpf?: string; rg?: string; naturalness?: string; nationality?: string; phone?: string; whatsapp?: string; cargo: string; dataMembro?: string | { seconds: number; nanoseconds: number }; cep?: string; logradouro?: string; numero?: string; bairro?: string; cidade?: string; estado?: string; complemento?: string; congregacao?: string; responsiblePastor?: string; sentMessages?: string[]; }
 type Congregacao = { id: string; nome: string; pastorId?: string; pastorName?: string; };
 type Post = { id: string; title: string; content: string; authorId: string; authorName: string; authorAvatar?: string; imageUrl?: string; createdAt: Timestamp; };
 type ChurchInfo = { radioUrl?: string };
@@ -647,7 +647,8 @@ export default function MemberProfilePage() {
     const [isLoadingMessages, setIsLoadingMessages] = useState(true);
 
     useEffect(() => {
-        if (!firestore || !authUser) {
+        if (!firestore || !member || !member.sentMessages) {
+            setMessages([]);
             setIsLoadingMessages(false);
             return;
         }
@@ -655,10 +656,20 @@ export default function MemberProfilePage() {
         const fetchMessages = async () => {
             setIsLoadingMessages(true);
             try {
-                // Always fetch messages for the member whose page is being viewed.
-                const q = query(collection(firestore, 'messages'), where('senderId', '==', memberId), orderBy('createdAt', 'desc'));
-                const querySnapshot = await getDocs(q);
-                const fetchedMessages = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message));
+                const messagePromises = member.sentMessages!.map(id => getDoc(doc(firestore, 'messages', id)));
+                const messageDocs = await Promise.all(messagePromises);
+                
+                const fetchedMessages = messageDocs
+                    .filter(docSnap => docSnap.exists())
+                    .map(docSnap => ({ id: docSnap.id, ...docSnap.data() } as Message));
+                
+                // Sort messages by creation date, descending
+                fetchedMessages.sort((a, b) => {
+                    const timeA = a.createdAt?.toMillis() || 0;
+                    const timeB = b.createdAt?.toMillis() || 0;
+                    return timeB - timeA;
+                });
+
                 setMessages(fetchedMessages);
             } catch (error) {
                 console.error("Error fetching messages:", error);
@@ -673,7 +684,7 @@ export default function MemberProfilePage() {
         };
 
         fetchMessages();
-    }, [firestore, authUser, memberId]);
+    }, [firestore, member]);
 
     return (
         <ViewContainer title="Minhas Mensagens">

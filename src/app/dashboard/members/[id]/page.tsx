@@ -867,12 +867,12 @@ export default function MemberProfilePage() {
                                             <AlertDialog>
                                                 <AlertDialogTrigger asChild>
                                                     <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
-                                                        <Trash2 className="mr-2 h-4 w-4" /> Excluir Conversa
+                                                        <Trash2 className="mr-2 h-4 w-4" /> Remover Conversa
                                                     </Button>
                                                 </AlertDialogTrigger>
                                                 <AlertDialogContent>
                                                     <AlertDialogHeader>
-                                                        <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
+                                                        <AlertDialogTitle>Remover Conversa?</AlertDialogTitle>
                                                         <AlertDialogDescription>
                                                             Esta ação removerá a conversa da sua caixa de entrada, mas ela poderá continuar visível para a administração. Deseja continuar?
                                                         </AlertDialogDescription>
@@ -880,7 +880,7 @@ export default function MemberProfilePage() {
                                                     <AlertDialogFooter>
                                                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
                                                         <AlertDialogAction onClick={() => handleMemberDeleteMessage(message.id)} className="bg-destructive hover:bg-destructive/90">
-                                                            Excluir
+                                                            Remover
                                                         </AlertDialogAction>
                                                     </AlertDialogFooter>
                                                 </AlertDialogContent>
@@ -944,9 +944,9 @@ export default function MemberProfilePage() {
                             </p>
                         </CardContent>
                         <CardFooter className="justify-center">
-                            <Button variant="secondary" onClick={handleShare}>
-                                <Share2 className="mr-2 h-4 w-4" />
-                                Compartilhar Promessa
+                            <Button variant="secondary" onClick={handleShare} disabled={!verse}>
+                                {!verse ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Share2 className="mr-2 h-4 w-4" />}
+                                {!verse ? 'Carregando...' : 'Compartilhar Promessa'}
                             </Button>
                         </CardFooter>
                     </div>

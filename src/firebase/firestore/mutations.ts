@@ -214,10 +214,10 @@ export const addMessage = async (firestore: Firestore, messageData: any) => {
         
         // After successfully creating the message, update the user's document
         // to include the ID of the newly created message.
-        if (messageData.senderId) {
-            const userRef = doc(firestore, 'users', messageData.senderId);
+        if (messageData.userId) {
+            const userRef = doc(firestore, 'users', messageData.userId);
             await updateDoc(userRef, {
-                sentMessages: arrayUnion(docRef.id)
+                messageIds: arrayUnion(docRef.id)
             });
         }
     } catch (error) {
@@ -272,14 +272,16 @@ export const removeMessageFromMember = async (firestore: Firestore, userId: stri
 
     try {
         await updateDoc(userRef, {
-            sentMessages: arrayRemove(messageId)
+            messageIds: arrayRemove(messageId)
         });
     } catch (error) {
         errorEmitter.emit('permission-error', new FirestorePermissionError({
             path: userRef.path,
             operation: 'update',
-            requestResourceData: { sentMessages: `remove ${messageId}` },
+            requestResourceData: { messageIds: `remove ${messageId}` },
         }));
         throw error;
     }
 };
+
+    

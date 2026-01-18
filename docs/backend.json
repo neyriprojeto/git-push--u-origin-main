@@ -33,7 +33,7 @@
         "complemento": { "type": "string", "description": "Address complement." },
         "congregacao": { "type": "string", "description": "Congregation the user belongs to." },
         "responsiblePastor": { "type": "string", "description": "Name of the responsible pastor/leader." },
-        "sentMessages": {
+        "messageIds": {
           "type": "array",
           "description": "An array of message IDs sent by the user.",
           "items": { "type": "string" }
@@ -170,7 +170,7 @@
       "description": "Represents a message sent to the administration or a congregation.",
       "properties": {
         "id": { "type": "string" },
-        "senderId": { "type": "string" },
+        "userId": { "type": "string", "description": "The UID of the user who sent the message." },
         "senderName": { "type": "string" },
         "recipientId": { "type": "string", "description": "UID of the recipient pastor, or a group ID like 'ADMIN_GROUP'." },
         "recipientName": { "type": "string", "description": "Display name of the recipient (e.g., 'Pr. João' or 'Administração Geral')." },
@@ -194,7 +194,7 @@
           }
         }
       },
-      "required": ["senderId", "senderName", "recipientId", "recipientName", "subject", "body", "createdAt"]
+      "required": ["userId", "senderName", "recipientId", "recipientName", "subject", "body", "createdAt"]
     }
   },
   "auth": {
@@ -243,3 +243,5 @@
     }
   }
 }
+
+    

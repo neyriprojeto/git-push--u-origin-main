@@ -60,10 +60,10 @@ service cloud.firestore {
     }
 
     /**
-     * Checks if the requesting user is a 'Pastor/dirigente'.
+     * Checks if the requesting user is a 'Pastor/dirigente' or 'Pastor(a)'.
      */
     function isPastor() {
-      return isSignedIn() && getRequestingUserData().cargo == 'Pastor/dirigente';
+      return isSignedIn() && (getRequestingUserData().cargo == 'Pastor/dirigente' || getRequestingUserData().cargo == 'Pastor(a)');
     }
 
     /**
@@ -94,22 +94,35 @@ service cloud.firestore {
      * @description
      *   Manages user documents, which store all member data. Access is strictly controlled
      *   by ownership and role.
-     *   - `get`: A user can read their own data. An admin can read anyone's data. A pastor can read
-     *            data of members in their own congregation.
-     *   - `list`: Only admins and pastors can list users (client-side queries must enforce
-     *             congregation filtering for pastors).
-     *   - `update`: A user can update their own data. An admin can update anyone's data. A pastor
-     *               can update data of members in their own congregation.
-     *   - `create`: Anyone can create their own user document (i.e., register). The document ID
-     *               must match their auth UID.
-     *   - `delete`: Only admins can delete users.
-     * @path /users/{userId}
      */
     match /users/{userId} {
-      allow get: if isOwner(userId) || isAdmin() || (isPastor() && isPastorOfSameCongregation(resource.data));
+      allow get: if isOwner(userId) || isAdmin() || (isPastor() && isPastorOfSameCongregation(get(/databases/$(database)/documents/users/$(userId)).data));
       allow list: if isAdmin() || isPastor();
-      allow update: if isOwner(userId) || isAdmin() || (isPastor() && isPastorOfSameCongregation(resource.data));
       allow create: if isOwner(userId); // Public registration, but must create own document
+      allow update: if isOwner(userId) || isAdmin() || (isPastor() && isPastorOfSameCongregation(resource.data));
+      allow delete: if isAdmin();
+    }
+
+    /**
+     * @description
+     *   Stores messages. Access is based on sender/recipient and role.
+     */
+    match /messages/{messageId} {
+      // READ: A user can read a specific message if they are the sender, the recipient (if pastor), or an admin.
+      allow get: if (isSignedIn() && request.auth.uid == resource.data.userId) || 
+                   (isPastor() && request.auth.uid == resource.data.recipientId) ||
+                   isAdmin();
+      
+      // LIST: Only Admins and Pastors can list messages. Members CANNOT list the collection.
+      allow list: if isAdmin() || isPastor();
+      
+      // CREATE: Any signed-in user can create a message, but their UID must match the userId field.
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+
+      // UPDATE: Only the recipient (if a pastor) or an admin can update a message (e.g., to add a reply).
+      allow update: if (isPastor() && request.auth.uid == resource.data.recipientId) || isAdmin();
+      
+      // DELETE: Only admins can delete messages from the collection.
       allow delete: if isAdmin();
     }
 
@@ -200,24 +213,6 @@ service cloud.firestore {
     match /posts/{postId} {
       allow get, list: if true;
       allow create, update, delete: if isAdmin();
-    }
-
-    /**
-     * @description
-     *   Stores messages. Access is based on sender/recipient and role.
-     *   - `create`: Any signed-in user can send a message.
-     *   - `read`: Senders can read their own messages. Recipients (pastors)
-     *     can read messages sent to them. Admins can read all.
-     *   - `update`: Recipients (pastors) and Admins can update to add replies.
-     *   - `delete`: Only Admins can delete messages.
-     *   - `list`: Client queries MUST constrain by senderId or recipientId.
-     * @path /messages/{messageId}
-     */
-    match /messages/{messageId} {
-      allow create: if isSignedIn();
-      allow read: if isAdmin() || (isSignedIn() && (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.recipientId));
-      allow update: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.recipientId);
-      allow delete: if isAdmin();
     }
   }
 }

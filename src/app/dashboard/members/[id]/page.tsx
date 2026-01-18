@@ -48,12 +48,12 @@ import { nextConfig } from "next.config.mjs";
 type ElementStyle = { position: { top: number; left: number }; size: { width?: number; height?: number; fontSize?: number }; text?: string; fontWeight?: 'normal' | 'bold'; src?: string; textAlign?: 'left' | 'center' | 'right'; };
 type CardElements = { [key: string]: ElementStyle };
 type CardTemplateData = { elements: CardElements; cardStyles: { frontBackground: string; backBackground: string; frontBackgroundImage: string; backBackgroundImage: string; }; textColors: { title: string; personalData: string; backText: string; }; };
-interface Member { id: string; nome: string; email?: string; avatar?: string; recordNumber?: string; status: 'Ativo' | 'Inativo' | 'Pendente'; gender?: 'Masculino' | 'Feminino'; dataNascimento?: string | { seconds: number; nanoseconds: number }; dataBatismo?: string | { seconds: number; nanoseconds: number }; maritalStatus?: 'Solteiro(a)' | 'Casado(a)' | 'Divorciado(a)' | 'Viúvo(a)'; cpf?: string; rg?: string; naturalness?: string; nationality?: string; phone?: string; whatsapp?: string; cargo: string; dataMembro?: string | { seconds: number; nanoseconds: number }; cep?: string; logradouro?: string; numero?: string; bairro?: string; cidade?: string; estado?: string; complemento?: string; congregacao?: string; responsiblePastor?: string; sentMessages?: string[]; }
+interface Member { id: string; nome: string; email?: string; avatar?: string; recordNumber?: string; status: 'Ativo' | 'Inativo' | 'Pendente'; gender?: 'Masculino' | 'Feminino'; dataNascimento?: string | { seconds: number; nanoseconds: number }; dataBatismo?: string | { seconds: number; nanoseconds: number }; maritalStatus?: 'Solteiro(a)' | 'Casado(a)' | 'Divorciado(a)' | 'Viúvo(a)'; cpf?: string; rg?: string; naturalness?: string; nationality?: string; phone?: string; whatsapp?: string; cargo: string; dataMembro?: string | { seconds: number; nanoseconds: number }; cep?: string; logradouro?: string; numero?: string; bairro?: string; cidade?: string; estado?: string; complemento?: string; congregacao?: string; responsiblePastor?: string; messageIds?: string[]; }
 type Congregacao = { id: string; nome: string; pastorId?: string; pastorName?: string; };
 type Post = { id: string; title: string; content: string; authorId: string; authorName: string; authorAvatar?: string; imageUrl?: string; createdAt: Timestamp; };
 type ChurchInfo = { radioUrl?: string };
 type Reply = { authorId: string; authorName: string; body: string; attachmentUrl?: string; createdAt: Timestamp; };
-type Message = { id: string; senderId: string; senderName: string; recipientId: string; recipientName: string; subject: string; body: string; attachmentUrl?: string; createdAt: Timestamp; replies?: Reply[]; };
+type Message = { id: string; userId: string; senderName: string; recipientId: string; recipientName: string; subject: string; body: string; attachmentUrl?: string; createdAt: Timestamp; replies?: Reply[]; };
 
 
 // --- Helper Functions (moved to top level) ---
@@ -645,7 +645,7 @@ export default function MemberProfilePage() {
         }
         
         await addMessage(firestore, { 
-            senderId: authUser.uid, 
+            userId: authUser.uid, 
             senderName: currentUserData.nome, 
             recipientId,
             recipientName, 
@@ -731,15 +731,15 @@ export default function MemberProfilePage() {
             setIsLoadingMessages(true);
             setMessagesError(null);
             try {
-                const sentMessageIds = member.sentMessages || [];
+                const messageIds = member.messageIds || [];
                 
-                if (sentMessageIds.length === 0) {
+                if (messageIds.length === 0) {
                     setMessages([]);
                     setIsLoadingMessages(false);
                     return;
                 }
                 
-                const messagePromises = sentMessageIds.map(id => getDoc(doc(firestore, 'messages', id)));
+                const messagePromises = messageIds.map(id => getDoc(doc(firestore, 'messages', id)));
                 const messageDocs = await Promise.all(messagePromises);
                 
                 const fetchedMessages = messageDocs

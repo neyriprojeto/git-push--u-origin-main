@@ -126,6 +126,12 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
 
 
     const renderElement = (id: string, el: ElementStyle) => {
+        // Conditionally hide fields if the member data is missing
+        if (id === 'Valor Data de Batismo' && !member.dataBatismo) return null;
+        if (id === 'Valor Nº Reg.' && !member.recordNumber) return null;
+        if (id === 'Valor CPF' && !member.cpf) return null;
+        if (id === 'Membro Desde' && !member.dataMembro) return null;
+
         const isImage = 'src' in el;
         const isText = 'text' in el;
 

@@ -206,7 +206,7 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
 
     const frontElements = Object.keys(elements).filter(id => !id.includes('Convenção') && !id.includes('QR Code') && !id.includes('Assinatura') && !id.includes('Validade') && !id.includes('Membro Desde') && !id.includes('Assinatura Pastor'));
     const backElements = Object.keys(elements).filter(id => id.includes('Convenção') || id.includes('QR Code') || id.includes('Assinatura') || id.includes('Validade') || id.includes('Membro Desde') || id.includes('Assinatura Pastor'));
-    const signatureLineElement = elements['Assinatura Pastor'];
+    const signatureTextElement = elements['Assinatura Pastor'];
 
 
     const CardFace = ({ isFrontFace, fRef }: { isFrontFace: boolean, fRef: React.RefObject<HTMLDivElement> }) => (
@@ -220,13 +220,17 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
             ) : (
                 <>
                     {backElements.map(id => elements[id] ? renderElement(id, elements[id]) : null)}
-                    {signatureLineElement && (
-                        <div style={{
-                            position: 'absolute', borderTop: '1px solid black', width: '40%',
-                            top: '85%',
-                            left: '50%',
-                            transform: 'translateX(-50%)'
-                        }} />
+                    {signatureTextElement && (
+                         <div 
+                            style={{
+                                position: 'absolute', 
+                                borderTop: '1px solid black', 
+                                width: '40%', 
+                                top: `calc(${signatureTextElement.position.top}% - 2px)`,
+                                left: `${signatureTextElement.position.left}%`,
+                                transform: 'translateX(-50%)'
+                            }}
+                        />
                     )}
                 </>
             )}
@@ -393,9 +397,3 @@ export default function MemberCardPage() {
         </div>
     );
 }
-
-    
-    
-
-    
-

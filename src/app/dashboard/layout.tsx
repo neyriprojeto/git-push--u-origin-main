@@ -183,7 +183,7 @@ export default function DashboardLayout({
                   {isFullAdmin && (
                     <SidebarMenuItem>
                       <SidebarMenuButton asChild tooltip={{ children: "Gerenciar Administradores" }}>
-                        <Link href="#">
+                        <Link href="/dashboard/settings/admins">
                           <UserCog />
                           <span>Gerenciar Admins</span>
                         </Link>

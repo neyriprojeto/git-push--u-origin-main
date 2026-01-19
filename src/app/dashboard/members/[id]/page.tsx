@@ -591,7 +591,7 @@ export default function MemberProfilePage() {
                 <h3 className="font-medium text-lg border-b pb-2">Dados de Acesso</h3>
                 <FormField control={memberForm.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email</FormLabel><FormControl><Input {...field} disabled /></FormControl><FormDescription>O e-mail não pode ser alterado.</FormDescription><FormMessage /></FormItem>)} />
             </div>
-            {permission.canManage && (
+            {permission.canView && (
                 <div className="space-y-4">
                     <h3 className="font-medium text-lg border-b pb-2">Dados Eclesiásticos</h3>
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1154,3 +1154,5 @@ export default function MemberProfilePage() {
     </div>
   );
 }
+
+    

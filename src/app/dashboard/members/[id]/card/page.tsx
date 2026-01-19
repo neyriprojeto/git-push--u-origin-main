@@ -83,6 +83,14 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
     const [isFront, setIsFront] = useState(true);
     const frontRef = useRef<HTMLDivElement>(null);
     const backRef = useRef<HTMLDivElement>(null);
+    const [qrCodeUrl, setQrCodeUrl] = useState('');
+
+     useEffect(() => {
+        if (member?.id && typeof window !== 'undefined') {
+            const verificationUrl = `${window.location.origin}/verify/${member.id}`;
+            setQrCodeUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(verificationUrl)}`);
+        }
+    }, [member?.id]);
     
      React.useImperativeHandle(ref, () => ({
         getFrontCanvas: async () => {
@@ -147,6 +155,9 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
             if (id === 'Foto do Membro' && member.avatar) {
                 src = member.avatar;
             }
+            if (id === 'QR Code') {
+                src = qrCodeUrl;
+            }
 
             if (!src) {
                  elementContent = <div style={{...style, border: '1px dashed #ccc'}} className="bg-gray-200/50 flex items-center justify-center text-xs text-gray-500">{id}</div>;
@@ -162,8 +173,9 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
                 );
             }
         } else if (isText) {
-            let textToRender: string | null;
-
+            let textToRender: string | null = null;
+            
+            // Explicitly map member data to template fields
             switch (id) {
                 case 'Valor Nome':
                     textToRender = member.nome ? `Nome: ${member.nome}` : null;
@@ -186,13 +198,23 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
                 case 'Membro Desde':
                     textToRender = member.dataMembro ? `Membro desde: ${formatDate(member.dataMembro)}` : null;
                     break;
+                 case 'Validade': {
+                    const validityDate = new Date();
+                    validityDate.setFullYear(validityDate.getFullYear() + 1);
+                    textToRender = `Validade: ${format(validityDate, 'dd/MM/yyyy')}`;
+                    break;
+                }
                 case 'Congregação':
                     textToRender = member.congregacao || el.text;
                     break;
                 default:
+                    // For static text like 'Título 1', 'Endereço', etc.
                     textToRender = el.text || null;
             }
             
+            // Absolutely do not render 'Batismo' on the front
+            if (id.includes('Batismo')) return null;
+
             if (textToRender === null) {
                 return null;
             }

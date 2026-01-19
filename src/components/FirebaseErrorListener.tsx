@@ -15,7 +15,16 @@ export function FirebaseErrorListener() {
   useEffect(() => {
     // The callback now expects a strongly-typed error, matching the event payload.
     const handleError = (error: FirestorePermissionError) => {
-      // Set error in state to trigger a re-render.
+      // This is a special case. Firestore listeners can fire a permission error
+      // during the logout process because the user's authentication state changes
+      // while the listener is still being torn down. We can safely ignore these
+      // errors if the 'auth' object in the simulated request is null.
+      if (error.request.auth === null) {
+        console.warn("Suppressed Firestore permission error, likely due to logout.", error);
+        return; // Do not set the error state, preventing the error from being thrown.
+      }
+      
+      // Set error in state to trigger a re-render for all other permission errors.
       setError(error);
     };
 

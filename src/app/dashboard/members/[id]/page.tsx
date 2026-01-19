@@ -45,6 +45,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import html2canvas from 'html2canvas';
 import jsPDF from "jspdf";
 import bibleReadingPlan from '@/data/bible-plan.json';
+import bibleReadingPlanGrid from '@/data/bible-plan-grid.json';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FirestorePermissionError } from "@/firebase";
@@ -207,7 +208,7 @@ export default function MemberProfilePage() {
   
   const [activeView, setActiveView] = useState<'panel' | 'profile' | 'mural' | 'card' | 'contact' | 'my-messages' | 'reading-plan'>('panel');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [permission, setPermission] = useState<{ canView: boolean, canEdit: boolean, canManage: boolean, hasChecked: boolean }>({ canView: false, canEdit: false, canManage: false, hasChecked: true, });
+  const [permission, setPermission] = useState<{ canView: boolean, canEdit: boolean, canManage: boolean, hasChecked: boolean }>({ canView: false, canEdit: false, canManage: false, hasChecked: false, });
   const isOwner = authUser?.uid === memberId;
 
   // State for image cropping
@@ -641,7 +642,7 @@ export default function MemberProfilePage() {
     <ViewContainer title="Mural de Avisos">
         <div className="space-y-4">
             {isLoadingPosts ? (<div className="flex justify-center items-center py-10"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>) 
-            : posts && posts.length > 0 ? (posts.map((post) => { const avatar = getAvatar(post.authorAvatar); return (
+            : posts && posts.length > 0 ? (posts.map((post) => { const avatar = getAvatar(post); return (
                 <Card key={post.id}>
                     <CardHeader>
                         <div className="flex items-start gap-4">
@@ -714,7 +715,9 @@ export default function MemberProfilePage() {
             }
         }
         
-        const messageId = await addMessage(firestore, { 
+        const messageId = doc(collection(firestore, 'messages')).id;
+        
+        await addMessage(firestore, messageId, { 
             userId: authUser.uid, 
             senderName: currentUserData.nome, 
             recipientId,
@@ -724,11 +727,9 @@ export default function MemberProfilePage() {
             attachmentUrl,
         });
 
-        if (messageId) {
-            await updateMember(firestore, authUser.uid, {
-                messageIds: arrayUnion(messageId)
-            });
-        }
+        await updateMember(firestore, authUser.uid, {
+            messageIds: arrayUnion(messageId)
+        });
 
         toast({ title: 'Sucesso!', description: 'Sua mensagem foi enviada.' });
         setRecipient(''); 
@@ -786,37 +787,36 @@ export default function MemberProfilePage() {
 
     useEffect(() => {
         const fetchMessages = async () => {
-            if (!firestore || !member || !member.messageIds || member.messageIds.length === 0) {
+            if (!firestore || !authUser) {
                 setIsLoadingMessages(false);
-                setMessages([]);
                 return;
             }
 
             setIsLoadingMessages(true);
             setError(null);
             try {
-                const fetchedMessages: Message[] = [];
-                // Fetch each message document by its ID
-                for (const msgId of member.messageIds) {
-                    const msgRef = doc(firestore, 'messages', msgId);
-                    const docSnap = await getDoc(msgRef);
-                    if (docSnap.exists()) {
-                        fetchedMessages.push({ id: docSnap.id, ...docSnap.data() } as Message);
-                    }
-                }
-                // Sort messages by creation date, most recent first
-                fetchedMessages.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+                const q = query(collection(firestore, "messages"), where("userId", "==", authUser.uid), orderBy("createdAt", "desc"));
+                const querySnapshot = await getDocs(q);
+                const fetchedMessages: Message[] = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message));
                 setMessages(fetchedMessages);
-            } catch (err) {
+            } catch (err: any) {
                 console.error("Error fetching member messages:", err);
-                setError("Não foi possível carregar suas mensagens.");
+                if (err.code === 'permission-denied') {
+                    setError("Você não tem permissão para ver estas mensagens.");
+                } else {
+                    setError("Não foi possível carregar suas mensagens.");
+                }
             } finally {
                 setIsLoadingMessages(false);
             }
         };
 
-        fetchMessages();
-    }, [firestore, member]);
+        if (isOwner) {
+            fetchMessages();
+        } else {
+            setIsLoadingMessages(false);
+        }
+    }, [firestore, authUser, isOwner]);
 
 
     return (
@@ -922,36 +922,44 @@ export default function MemberProfilePage() {
 
   const PrintableReadingPlan = React.forwardRef<HTMLDivElement, {}>((props, ref) => {
     const { data: churchInfo } = useDoc<{ fichaLogoUrl?: string }>(useMemoFirebase(() => (firestore ? doc(firestore, 'churchInfo', 'main') : null), [firestore]));
+    const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
     
     return (
-        <div ref={ref} className="bg-white p-8 text-black w-[210mm]">
-            <div className="text-center mb-6">
+        <div ref={ref} className="bg-white p-4 text-black w-[297mm]">
+            <div className="text-center mb-4">
                 {churchInfo?.fichaLogoUrl && (
-                    <img src={churchInfo.fichaLogoUrl} alt="Logo da Igreja" className="h-24 w-24 mx-auto mb-4" crossOrigin="anonymous"/>
+                    <img src={churchInfo.fichaLogoUrl} alt="Logo da Igreja" className="h-20 w-20 mx-auto mb-2" crossOrigin="anonymous"/>
                 )}
-                <h1 className="text-3xl font-bold">Plano de Leitura Bíblica Anual</h1>
-                <p className="mt-2 text-sm italic">"Toda a Escritura é inspirada por Deus e útil para o ensino, para a repreensão, para a correção e para a instrução na justiça, para que o homem de Deus seja apto e plenamente preparado para toda boa obra." (2 Timóteo 3:16-17)</p>
+                <p className="text-sm">Plano de leitura anual da</p>
+                <h1 className="text-4xl font-bold text-blue-700" style={{fontFamily: "'Times New Roman', serif"}}>BÍBLIA SAGRADA</h1>
             </div>
-            <table className="w-full text-xs border-collapse">
-                 <thead>
-                    <tr className="bg-gray-100">
-                        <th className="border p-2">Data</th>
-                        <th className="border p-2">Leitura</th>
-                        <th className="border p-2 w-12">Feito</th>
+
+            <table className="w-full text-[7px] border-collapse border border-blue-300">
+                <thead>
+                    <tr className="bg-blue-100 text-blue-800 font-bold">
+                        <th className="border border-blue-300 p-1 w-[2%]"></th>
+                        {months.map((month, index) => (
+                            <th key={month} className="border border-blue-300 p-1">{`${(index + 1).toString().padStart(2, '0')} ${month}`}</th>
+                        ))}
                     </tr>
-                 </thead>
-                 <tbody>
-                    {bibleReadingPlan.map(day => (
-                        <tr key={day.day}>
-                            <td className="border p-2">{day.date}</td>
-                            <td className="border p-2">{day.reading}</td>
-                            <td className="border p-2 text-center">
-                                <div className="h-4 w-4 border border-black mx-auto"></div>
-                            </td>
+                </thead>
+                <tbody>
+                    {bibleReadingPlanGrid.map(row => (
+                        <tr key={row.day} className="even:bg-blue-50">
+                            <td className="border border-blue-300 p-1 font-bold text-center">{row.day}</td>
+                            {months.map(month => (
+                                <td key={`${row.day}-${month}`} className="border border-blue-300 p-1 text-center">
+                                    {(row as any)[month.toLowerCase()] || ''}
+                                </td>
+                            ))}
                         </tr>
                     ))}
-                 </tbody>
+                </tbody>
             </table>
+
+            <div className="text-center mt-4">
+                <p className="text-xs italic text-blue-800">"Toda a Escritura é inspirada por Deus e útil para o ensino, para a repreensão, para a correção e para a instrução na justiça, para que o homem de Deus seja apto e plenamente preparado para toda boa obra." (2 Timóteo 3:16-17)</p>
+            </div>
         </div>
     );
   });
@@ -993,27 +1001,13 @@ export default function MemberProfilePage() {
         }
         setIsDownloadingPlan(true);
         try {
-            const canvas = await html2canvas(input, { scale: 2, useCORS: true });
+            const canvas = await html2canvas(input, { scale: 3, useCORS: true });
             const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pdf = new jsPDF('l', 'mm', 'a4');
             const pdfWidth = pdf.internal.pageSize.getWidth();
             const pdfHeight = pdf.internal.pageSize.getHeight();
-            const imgWidth = canvas.width;
-            const imgHeight = canvas.height;
-            const ratio = imgWidth / imgHeight;
-            let finalImgHeight = pdfWidth / ratio;
-            let heightLeft = finalImgHeight;
-            let position = 0;
             
-            pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, finalImgHeight);
-            heightLeft -= pdfHeight;
-    
-            while (heightLeft > 0) {
-                position -= pdfHeight;
-                pdf.addPage();
-                pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, finalImgHeight);
-                heightLeft -= pdfHeight;
-            }
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
     
             pdf.save('plano-leitura-biblica-anual.pdf');
         } catch (e) {

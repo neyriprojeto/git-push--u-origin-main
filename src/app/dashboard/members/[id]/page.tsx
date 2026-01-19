@@ -206,7 +206,7 @@ export default function MemberProfilePage() {
   
   const [activeView, setActiveView] = useState<'panel' | 'profile' | 'mural' | 'card' | 'contact' | 'my-messages' | 'reading-plan'>('panel');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [permission, setPermission] = useState<{ canView: boolean, canEdit: boolean, canManage: boolean, hasChecked: boolean }>({ canView: false, canEdit: false, canManage: false, hasChecked: true, });
+  const [permission, setPermission] = useState<{ canView: boolean, canEdit: boolean, canManage: boolean, hasChecked: boolean }>({ canView: false, canEdit: false, canManage: false, hasChecked: false, });
   const isOwner = authUser?.uid === memberId;
 
   // State for image cropping
@@ -366,7 +366,6 @@ export default function MemberProfilePage() {
 
   const handleLogout = async () => {
     if (!auth) return;
-    setPermission({ canView: false, canEdit: false, canManage: false, hasChecked: true });
     try {
       await signOut(auth);
       router.push('/');
@@ -1189,5 +1188,6 @@ export default function MemberProfilePage() {
     </div>
   );
 }
+
 
 

@@ -270,9 +270,12 @@ export default function MemberProfilePage() {
   useEffect(() => {
     if (isUserLoading || isCurrentUserLoading || !authUser) return;
   
+    // Wait until the member data is also loaded before checking permissions
     if (memberLoading) return;
     
+    // Once both user and member are loaded (or failed to load), proceed.
     if (!currentUserData || !member) {
+      // If either is missing after loading, deny access.
       setPermission({ canView: false, canEdit: false, canManage: false, hasChecked: true });
       return;
     }
@@ -557,20 +560,32 @@ export default function MemberProfilePage() {
       <Form {...memberForm}>
         <form onSubmit={memberForm.handleSubmit(onMemberSubmit)} className="space-y-8">
             <div className="space-y-4">
-                <div className="flex items-center gap-4">
-                    <Avatar className="h-20 w-20 border">
-                        {avatar && <AvatarImage src={avatar.imageUrl} alt={member.nome} />}
-                        <AvatarFallback className="text-3xl">{member.nome.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div className="grid gap-2">
-                        <Label>Foto de Perfil</Label>
+                <div className="flex items-center gap-6">
+                    <div className="space-y-2">
+                         <FormLabel>Foto de Perfil</FormLabel>
+                         <label
+                            htmlFor="avatar-upload"
+                            className={cn(
+                                "relative group rounded-full w-24 h-24 flex items-center justify-center border",
+                                permission.canEdit ? "cursor-pointer" : "cursor-not-allowed"
+                            )}
+                        >
+                            <Avatar className="h-full w-full">
+                                {avatar && <AvatarImage src={avatar.imageUrl} alt={member.nome} className="object-cover" />}
+                                <AvatarFallback className="text-3xl">{member.nome.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            {permission.canEdit && (
+                                <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Upload className="h-8 w-8" />
+                                </div>
+                            )}
+                        </label>
                         <Input id="avatar-upload" type="file" accept="image/*" className="hidden" onChange={onSelectFile} disabled={!permission.canEdit} />
-                        <Button type="button" variant="outline" onClick={() => document.getElementById('avatar-upload')?.click()} disabled={!permission.canEdit}>
-                            <Upload className="mr-2 h-4 w-4" /> Alterar Foto
-                        </Button>
+                    </div>
+                    <div className="flex-grow">
+                         <FormField control={memberForm.control} name="nome" render={({ field }) => (<FormItem><FormLabel>Nome Completo</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
                     </div>
                 </div>
-                <FormField control={memberForm.control} name="nome" render={({ field }) => (<FormItem><FormLabel>Nome Completo</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
             </div>
             <div className="space-y-4">
                 <h3 className="font-medium text-lg border-b pb-2">Dados de Acesso</h3>
@@ -614,11 +629,9 @@ export default function MemberProfilePage() {
             </div>
             <div className="space-y-4">
                 <h3 className="font-medium text-lg border-b pb-2">Endereço</h3>
-                <div className="grid md:grid-cols-3 gap-4">
+                 <div className="grid md:grid-cols-2 gap-4">
                     <FormField name="cep" control={memberForm.control} render={({ field }) => (<FormItem><FormLabel>CEP</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField name="logradouro" control={memberForm.control} render={({ field }) => (<FormItem className="md:col-span-2"><FormLabel>Logradouro</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
-                </div>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <FormField name="logradouro" control={memberForm.control} render={({ field }) => (<FormItem><FormLabel>Logradouro</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
                     <FormField name="numero" control={memberForm.control} render={({ field }) => (<FormItem><FormLabel>Número</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
                     <FormField name="complemento" control={memberForm.control} render={({ field }) => (<FormItem><FormLabel>Complemento</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
                     <FormField name="bairro" control={memberForm.control} render={({ field }) => (<FormItem><FormLabel>Bairro</FormLabel><FormControl><Input {...field} disabled={!permission.canEdit} /></FormControl><FormMessage /></FormItem>)} />
@@ -639,7 +652,7 @@ export default function MemberProfilePage() {
     <ViewContainer title="Mural de Avisos">
         <div className="space-y-4">
             {isLoadingPosts ? (<div className="flex justify-center items-center py-10"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>) 
-            : posts && posts.length > 0 ? (posts.map((post) => { const avatar = getAvatar(post.authorAvatar); return (
+            : posts && posts.length > 0 ? (posts.map((post) => { const avatar = getAvatar(post); return (
                 <Card key={post.id}>
                     <CardHeader>
                         <div className="flex items-start gap-4">

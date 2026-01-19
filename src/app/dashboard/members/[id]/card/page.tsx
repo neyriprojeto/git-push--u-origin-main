@@ -162,21 +162,35 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
                 );
             }
         } else if (isText) {
-            let textToRender: string | null = el.text || null;
+            let textToRender: string | null;
 
-            // --- Dynamic data mapping ---
-            const dataMap: { [key: string]: string | null } = {
-                'Valor Nome': `Nome: ${member.nome || ''}`,
-                'Valor Nº Reg.': member.recordNumber ? `Nº Reg.: ${member.recordNumber}` : null,
-                'Valor Nascimento': member.dataNascimento ? `Nasc: ${formatDate(member.dataNascimento)}` : null,
-                'Valor CPF': member.cpf ? `CPF: ${member.cpf}` : null,
-                'Valor Cargo': `Cargo: ${member.cargo || ''}`,
-                'Membro Desde': member.dataMembro ? `Membro desde: ${formatDate(member.dataMembro)}` : null,
-                'Congregação': member.congregacao || el.text,
-            };
-
-            if (id in dataMap) {
-                textToRender = dataMap[id];
+            switch (id) {
+                case 'Valor Nome':
+                    textToRender = member.nome ? `Nome: ${member.nome}` : null;
+                    break;
+                case 'Valor Nº Reg.':
+                    textToRender = member.recordNumber ? `Nº Reg.: ${member.recordNumber}` : null;
+                    break;
+                case 'Valor Nascimento':
+                    textToRender = member.dataNascimento ? `Nasc: ${formatDate(member.dataNascimento)}` : null;
+                    break;
+                case 'Valor CPF':
+                    textToRender = member.cpf ? `CPF: ${member.cpf}` : null;
+                    break;
+                case 'Valor RG':
+                    textToRender = member.rg ? `RG: ${member.rg}` : null;
+                    break;
+                case 'Valor Cargo':
+                    textToRender = member.cargo ? `Cargo: ${member.cargo}` : null;
+                    break;
+                case 'Membro Desde':
+                    textToRender = member.dataMembro ? `Membro desde: ${formatDate(member.dataMembro)}` : null;
+                    break;
+                case 'Congregação':
+                    textToRender = member.congregacao || el.text;
+                    break;
+                default:
+                    textToRender = el.text || null;
             }
             
             if (textToRender === null) {

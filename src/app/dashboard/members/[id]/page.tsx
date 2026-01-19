@@ -47,12 +47,13 @@ import jsPDF from "jspdf";
 import bibleReadingPlan from '@/data/bible-plan.json';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
+import { FirestorePermissionError } from "@/firebase";
 
 // --- Types ---
 type ElementStyle = { position: { top: number; left: number }; size: { width?: number; height?: number; fontSize?: number }; text?: string; fontWeight?: 'normal' | 'bold'; src?: string; textAlign?: 'left' | 'center' | 'right'; };
 type CardElements = { [key: string]: ElementStyle };
 type CardTemplateData = { elements: CardElements; cardStyles: { frontBackground: string; backBackground: string; frontBackgroundImage: string; backBackgroundImage: string; }; textColors: { title: string; personalData: string; backText: string; }; };
-interface Member { id: string; nome: string; email?: string; avatar?: string; recordNumber?: string; status: 'Ativo' | 'Inativo' | 'Pendente'; gender?: 'Masculino' | 'Feminino'; dataNascimento?: string | { seconds: number; nanoseconds: number }; dataBatismo?: string | { seconds: number; nanoseconds: number }; maritalStatus?: 'Solteiro(a)' | 'Casado(a)' | 'Divorciado(a)' | 'Viúvo(a)'; cpf?: string; rg?: string; naturalness?: string; nationality?: string; phone?: string; whatsapp?: string; cargo: string; dataMembro?: string | { seconds: number; nanoseconds: number }; cep?: string; logradouro?: string; numero?: string; bairro?: string; cidade?: string; estado?: string; complemento?: string; congregacao?: string; responsiblePastor?: string; messageIds?: string[]; bibleReadingProgress?: number[]; }
+interface Member { id: string; nome: string; email?: string; avatar?: string; recordNumber?: string; status: 'Ativo' | 'Inativo' | 'Pendente'; gender?: 'Masculino' | 'Feminino'; dataNascimento?: string | { seconds: number; nanoseconds: number }; dataBatismo?: string | { seconds: number; nanoseconds: number }; maritalStatus?: 'Solteiro(a)' | 'Casado(a)' | 'Divorciado(a)' | 'Viúvo(a)'; cpf?: string; rg?: string; naturalness?: string; nationality?: string; phone?: string; whatsapp?: string; cargo: string; dataMembro?: string | { seconds: number; nanoseconds: number }; cep?: string; logradouro?: string; numero?: string; bairro?: string; cidade?: string; estado?: string; complemento?: string; congregacao?: string; responsiblePastor?: string; bibleReadingProgress?: number[]; }
 type Congregacao = { id: string; nome: string; pastorId?: string; pastorName?: string; };
 type Post = { id: string; title: string; content: string; authorId: string; authorName: string; authorAvatar?: string; imageUrl?: string; createdAt: Timestamp; };
 type ChurchInfo = { radioUrl?: string; fichaLogoUrl?: string; };
@@ -206,7 +207,7 @@ export default function MemberProfilePage() {
   
   const [activeView, setActiveView] = useState<'panel' | 'profile' | 'mural' | 'card' | 'contact' | 'my-messages' | 'reading-plan'>('panel');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [permission, setPermission] = useState<{ canView: boolean, canEdit: boolean, canManage: boolean, hasChecked: boolean }>({ canView: false, canEdit: false, canManage: false, hasChecked: true, });
+  const [permission, setPermission] = useState<{ canView: boolean, canEdit: boolean, canManage: boolean, hasChecked: boolean }>({ canView: false, canEdit: false, canManage: false, hasChecked: false, });
   const isOwner = authUser?.uid === memberId;
 
   // State for image cropping
@@ -763,16 +764,47 @@ export default function MemberProfilePage() {
   };
 
   const MyMessagesView = () => {
-    const messagesQuery = useMemoFirebase(() => (
-        firestore && member ?
-        query(
-            collection(firestore, 'messages'), 
-            where('userId', '==', member.id), 
-            orderBy('createdAt', 'desc')
-        ) : null
-    ), [firestore, member]);
+    const [messages, setMessages] = useState<Message[] | null>(null);
+    const [isLoadingMessages, setIsLoadingMessages] = useState(true);
+    const [messagesError, setMessagesError] = useState<Error | null>(null);
 
-    const { data: messages, isLoading: isLoadingMessages, error: messagesError } = useCollection<Message>(messagesQuery);
+    useEffect(() => {
+        if (!firestore || !member) {
+            setIsLoadingMessages(false);
+            return;
+        }
+
+        const fetchMessages = async () => {
+            setIsLoadingMessages(true);
+            setMessagesError(null);
+            try {
+                const q = query(
+                    collection(firestore, 'messages'),
+                    where('userId', '==', member.id),
+                    orderBy('createdAt', 'desc')
+                );
+                const querySnapshot = await getDocs(q);
+                const fetchedMessages = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message));
+                setMessages(fetchedMessages);
+            } catch (err: any) {
+                console.error("Error fetching member messages:", err);
+                if (err.code === 'permission-denied') {
+                    const contextualError = new FirestorePermissionError({
+                        operation: 'list',
+                        path: `messages where userId == ${member.id}`,
+                    });
+                    setMessagesError(contextualError);
+                } else {
+                    setMessagesError(err);
+                }
+            } finally {
+                setIsLoadingMessages(false);
+            }
+        };
+
+        fetchMessages();
+    }, [firestore, member]);
+
 
     return (
         <ViewContainer title="Minhas Mensagens">

@@ -72,11 +72,11 @@ const defaultElements: CardElements = {
     'Endereço': { position: { top: 23, left: 50 }, size: { fontSize: 8 }, text: 'Rua Presidente Prudente, N°28\nEldorado, Diadema-SP', textAlign: 'center' },
     'Foto do Membro': { position: { top: 40, left: 15 }, size: { width: 80, height: 100 }, src: '' },
 
-    'Valor Nome': { position: { top: 60, left: 40 }, size: { fontSize: 11 }, text: `Nome: ${memberSample.name}`, fontWeight: 'normal', textAlign: 'left' },
-    'Valor Nº Reg.': { position: { top: 68, left: 40 }, size: { fontSize: 10 }, text: `Nº Reg.: ${memberSample.recordNumber}`, textAlign: 'left' },
-    'Valor Data de Batismo': { position: { top: 74, left: 40 }, size: { fontSize: 10 }, text: 'Data de Batismo: 01/01/2024', textAlign: 'left' },
-    'Valor CPF': { position: { top: 80, left: 40 }, size: { fontSize: 10 }, text: `CPF: ${memberSample.cpf}`, textAlign: 'left' },
-    'Valor Cargo': { position: { top: 86, left: 40 }, size: { fontSize: 10 }, text: `Cargo: ${memberSample.role}`, textAlign: 'left' },
+    'Valor Nome': { position: { top: 58, left: 40 }, size: { fontSize: 11 }, text: `Nome: ${memberSample.name}`, fontWeight: 'normal', textAlign: 'left' },
+    'Valor Nº Reg.': { position: { top: 66, left: 40 }, size: { fontSize: 10 }, text: `Nº Reg.: ${memberSample.recordNumber}`, textAlign: 'left' },
+    'Valor RG': { position: { top: 72, left: 40 }, size: { fontSize: 10 }, text: `RG: ${memberSample.rg}`, textAlign: 'left' },
+    'Valor CPF': { position: { top: 78, left: 40 }, size: { fontSize: 10 }, text: `CPF: ${memberSample.cpf}`, textAlign: 'left' },
+    'Valor Cargo': { position: { top: 84, left: 40 }, size: { fontSize: 10 }, text: `Cargo: ${memberSample.role}`, textAlign: 'left' },
     
     'Logo Igreja': { position: { top: 38, left: 80 }, size: { width: 70, height: 70 }, src: churchLogoPlaceholder?.imageUrl || '', textAlign: 'center' },
     

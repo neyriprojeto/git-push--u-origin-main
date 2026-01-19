@@ -116,6 +116,11 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
         const isImage = 'src' in el;
         const isText = 'text' in el;
 
+        // Explicitly remove baptism date field from rendering
+        if (id === 'Valor Data de Batismo') {
+            return null;
+        }
+
         let color = '#000000';
         if (isText && templateData) {
             const { textColors } = templateData;
@@ -162,48 +167,37 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
                 );
             }
         } else if (isText) {
+            let textToRender: string | null = el.text || null;
+
+            // --- Dynamic data mapping ---
+            const dataMap: { [key: string]: string | null } = {
+                'Valor Nome': `Nome: ${member.nome || ''}`,
+                'Valor Nº Reg.': member.recordNumber ? `Nº Reg.: ${member.recordNumber}` : null,
+                'Valor RG': member.rg ? `RG: ${member.rg}` : null,
+                'Valor CPF': member.cpf ? `CPF: ${member.cpf}` : null,
+                'Valor Cargo': `Cargo: ${member.cargo || ''}`,
+                'Membro Desde': member.dataMembro ? `Membro desde: ${formatDate(member.dataMembro)}` : null,
+                'Congregação': member.congregacao || el.text,
+            };
+
+            if (id in dataMap) {
+                textToRender = dataMap[id];
+            }
+            
+            // If text is null (meaning optional field has no data), don't render anything.
+            if (textToRender === null) {
+                return null;
+            }
+
             style.fontSize = el.size.fontSize ? `${el.size.fontSize}px` : undefined;
             style.color = color;
             style.fontWeight = el.fontWeight;
             style.textAlign = el.textAlign;
             style.whiteSpace = 'pre-wrap';
 
-            let textToRender = el.text; // Default text
-
-            // Handle dynamic text replacement
-            switch(id) {
-                case 'Valor Nome':
-                    textToRender = `Nome: ${member.nome || ''}`;
-                    break;
-                case 'Valor Nº Reg.':
-                    if (!member.recordNumber) return null;
-                    textToRender = `Nº Reg.: ${member.recordNumber}`;
-                    break;
-                case 'Valor CPF':
-                    if (!member.cpf) return null;
-                    textToRender = `CPF: ${member.cpf}`;
-                    break;
-                case 'Valor Cargo':
-                    textToRender = `Cargo: ${member.cargo || ''}`;
-                    break;
-                case 'Valor Data de Batismo':
-                    if (!member.dataBatismo) return null;
-                    textToRender = `Data de Batismo: ${formatDate(member.dataBatismo)}`;
-                    break;
-                case 'Membro Desde':
-                    if (!member.dataMembro) return null;
-                    textToRender = `Membro desde: ${formatDate(member.dataMembro)}`;
-                    break;
-                case 'Congregação':
-                    textToRender = member.congregacao || el.text;
-                    break;
-            }
-
-
             if (id.includes('Título') || id.includes('Valor') || id.includes('Assinatura Pastor') || id.includes('Validade') || id.includes('Membro Desde')) {
                 style.whiteSpace = 'nowrap';
             }
-
 
             elementContent = <p style={style}>{textToRender}</p>;
         }
@@ -412,4 +406,3 @@ export default function MemberCardPage() {
         </div>
     );
 }
-

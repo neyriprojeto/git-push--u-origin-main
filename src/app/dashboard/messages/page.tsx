@@ -31,7 +31,7 @@ type Reply = {
 };
 type Message = {
     id: string;
-    senderId: string;
+    userId: string;
     senderName: string;
     recipientId: string;
     recipientName: string;

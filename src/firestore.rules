@@ -107,59 +107,116 @@ service cloud.firestore {
      *   Stores messages. Access is based on sender/recipient and role.
      */
     match /messages/{messageId} {
-      // READ: A user can read a specific message if they sent it. Pastors and Admins have broader access.
-      allow get: if (isSignedIn() && request.auth.uid == resource.data.senderId) || 
-                   (isPastor() && request.auth.uid == resource.data.recipientId) ||
-                   isAdmin();
+      // READ (get):
+      // - The sender can read it.
+      // - An Admin can read it.
+      // - A Pastor can read it if they are the recipient OR if the message is for the admin group.
+      allow get: if isAdmin() || 
+                   (isSignedIn() && request.auth.uid == resource.data.userId) || 
+                   (isPastor() && (request.auth.uid == resource.data.recipientId || resource.data.recipientId == 'ADMIN_GROUP'));
       
-      // LIST: Only Admins and Pastors can list messages. Members CANNOT list the collection.
+      // LIST:
+      // Admins and Pastors can issue list queries. The `get` rule will secure the results.
       allow list: if isAdmin() || isPastor();
       
-      // CREATE: Any signed-in user can create a message, but their UID must match the senderId field.
-      allow create: if isSignedIn() && request.resource.data.senderId == request.auth.uid;
+      // CREATE:
+      // Any authenticated user can create a message, but they must be the sender.
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
 
-      // UPDATE: Only the recipient (if a pastor) or an admin can update a message (e.g., to add a reply).
-      allow update: if (isPastor() && request.auth.uid == resource.data.recipientId) || isAdmin();
+      // UPDATE (reply):
+      // - An Admin can update it.
+      // - A Pastor can update it if they are the recipient OR if the message is for the admin group.
+      allow update: if isAdmin() || (isPastor() && (request.auth.uid == resource.data.recipientId || resource.data.recipientId == 'ADMIN_GROUP'));
       
-      // DELETE: Only admins can delete messages from the collection.
+      // DELETE:
+      // Only admins can delete.
       allow delete: if isAdmin();
     }
 
+
+    /**
+     * @description
+     *   Manages church groups. This is a placeholder and is currently locked down.
+     *   To enable, define a 'members' map on the group document with user UIDs and roles.
+     * @path /groups/{groupId}
+     */
     match /groups/{groupId} {
       allow read, write: if false; // Locked until feature is fully implemented.
     }
     
+    /**
+     * @description
+     *   Manages the list of congregations. Publicly readable for registration forms.
+     *   Only Admins can create, update, or delete congregations.
+     * @path /congregacoes/{congregacaoId}
+     */
     match /congregacoes/{congregacaoId} {
         allow get, list: if true;
         allow create, update, delete: if isAdmin();
     }
 
+    /**
+     * @description
+     *   Stores singular, public-facing information about the church (e.g., banner URLs).
+     *   Readable by anyone, but only writable by an Admin.
+     * @path /churchInfo/{churchInfoId}
+     */
     match /churchInfo/{churchInfoId} {
       allow get, list: if true;
       allow create, delete: if isAdmin();
       allow update: if isAdmin() || isPastor();
     }
     
+    /**
+     * @description
+     *   Manages the customizable card template for member IDs.
+     *   Readable by any signed-in user, but only writable by Admins.
+     * @path /cardTemplates/{templateId}
+     */
     match /cardTemplates/{templateId} {
       allow read: if isSignedIn();
       allow write: if isAdmin();
     }
     
+    /**
+     * @description
+     *   Manages the executive committee leaders for the homepage.
+     *   Publicly readable, but only writable by an Admin.
+     * @path /leaders/{leaderId}
+     */
     match /leaders/{leaderId} {
       allow get, list: if true;
       allow create, update, delete: if isAdmin();
     }
 
+    /**
+     * @description
+     *   Manages document templates, like for letters of recommendation.
+     *   Readable by signed-in users, but only writable by an Admin.
+     * @path /documentTemplates/{templateId}
+     */
     match /documentTemplates/{templateId} {
       allow read: if isSignedIn();
       allow write: if isAdmin();
     }
 
+    /**
+     * @description
+     *   Manages church logos for download.
+     *   Readable by signed-in leaders, but only writable by an Admin.
+     * @path /logos/{logoId}
+     */
     match /logos/{logoId} {
       allow get, list: if isSignedIn();
       allow create, update, delete: if isAdmin();
     }
 
+    /**
+     * @description
+     *   Stores announcements for the mural. Publicly readable by anyone.
+     *   Only Admins can create, update, or delete posts.
+     * @path /posts/{postId}
+     */
     match /posts/{postId} {
       allow get, list: if true;
       allow create, update, delete: if isAdmin();

@@ -206,7 +206,7 @@ export default function MemberProfilePage() {
   
   const [activeView, setActiveView] = useState<'panel' | 'profile' | 'mural' | 'card' | 'contact' | 'my-messages' | 'reading-plan'>('panel');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [permission, setPermission] = useState<{ canView: boolean, canEdit: boolean, canManage: boolean, hasChecked: boolean }>({ canView: false, canEdit: false, canManage: false, hasChecked: false, });
+  const [permission, setPermission] = useState<{ canView: boolean, canEdit: boolean, canManage: boolean, hasChecked: boolean }>({ canView: false, canEdit: false, canManage: false, hasChecked: true, });
   const isOwner = authUser?.uid === memberId;
 
   // State for image cropping
@@ -230,8 +230,8 @@ export default function MemberProfilePage() {
   const { data: currentUserData, isLoading: isCurrentUserLoading } = useDoc<Member>(currentUserRef);
   
   const memberRef = useMemoFirebase(
-    () => (firestore && !isUserLoading && memberId ? doc(firestore, 'users', memberId) : null),
-    [firestore, isUserLoading, memberId]
+    () => (firestore && authUser && memberId ? doc(firestore, 'users', memberId) : null),
+    [firestore, authUser, memberId]
   );
   const { data: member, isLoading: memberLoading } = useDoc<Member>(memberRef);
 
@@ -1188,6 +1188,7 @@ export default function MemberProfilePage() {
     </div>
   );
 }
+
 
 
 

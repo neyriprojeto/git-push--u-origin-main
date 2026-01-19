@@ -639,7 +639,7 @@ export default function MemberProfilePage() {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        {post.imageUrl && (<div className="mb-4 relative aspect-video w-full rounded-md overflow-hidden"><Image src={post.imageUrl} alt={post.title} layout="fill" objectFit="cover" /></div>)}
+                        {post.imageUrl && (<div className="mb-4 relative aspect-video w-full rounded-md overflow-hidden bg-muted/30"><Image src={post.imageUrl} alt={post.title} layout="fill" objectFit="contain" /></div>)}
                         <p className="text-sm text-muted-foreground whitespace-pre-wrap">{post.content}</p>
                     </CardContent>
                 </Card>

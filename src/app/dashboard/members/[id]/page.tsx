@@ -53,7 +53,7 @@ import { FirestorePermissionError } from "@/firebase";
 type ElementStyle = { position: { top: number; left: number }; size: { width?: number; height?: number; fontSize?: number }; text?: string; fontWeight?: 'normal' | 'bold'; src?: string; textAlign?: 'left' | 'center' | 'right'; };
 type CardElements = { [key: string]: ElementStyle };
 type CardTemplateData = { elements: CardElements; cardStyles: { frontBackground: string; backBackground: string; frontBackgroundImage: string; backBackgroundImage: string; }; textColors: { title: string; personalData: string; backText: string; }; };
-interface Member { id: string; nome: string; email?: string; avatar?: string; recordNumber?: string; status: 'Ativo' | 'Inativo' | 'Pendente'; gender?: 'Masculino' | 'Feminino'; dataNascimento?: string | { seconds: number; nanoseconds: number }; dataBatismo?: string | { seconds: number; nanoseconds: number }; maritalStatus?: 'Solteiro(a)' | 'Casado(a)' | 'Divorciado(a)' | 'Viúvo(a)'; cpf?: string; rg?: string; naturalness?: string; nationality?: string; phone?: string; whatsapp?: string; cargo: string; dataMembro?: string | { seconds: number; nanoseconds: number }; cep?: string; logradouro?: string; numero?: string; bairro?: string; cidade?: string; estado?: string; complemento?: string; congregacao?: string; responsiblePastor?: string; bibleReadingProgress?: number[]; }
+interface Member { id: string; nome: string; email?: string; avatar?: string; recordNumber?: string; status: 'Ativo' | 'Inativo' | 'Pendente'; gender?: 'Masculino' | 'Feminino'; dataNascimento?: string | { seconds: number; nanoseconds: number }; dataBatismo?: string | { seconds: number; nanoseconds: number }; maritalStatus?: 'Solteiro(a)' | 'Casado(a)' | 'Divorciado(a)' | 'Viúvo(a)'; cpf?: string; rg?: string; naturalness?: string; nationality?: string; phone?: string; whatsapp?: string; cargo: string; dataMembro?: string | { seconds: number; nanoseconds: number }; cep?: string; logradouro?: string; numero?: string; bairro?: string; cidade?: string; estado?: string; complemento?: string; congregacao?: string; responsiblePastor?: string; bibleReadingProgress?: number[]; messageIds?: string[]; }
 type Congregacao = { id: string; nome: string; pastorId?: string; pastorName?: string; };
 type Post = { id: string; title: string; content: string; authorId: string; authorName: string; authorAvatar?: string; imageUrl?: string; createdAt: Timestamp; };
 type ChurchInfo = { radioUrl?: string; fichaLogoUrl?: string; };
@@ -207,7 +207,7 @@ export default function MemberProfilePage() {
   
   const [activeView, setActiveView] = useState<'panel' | 'profile' | 'mural' | 'card' | 'contact' | 'my-messages' | 'reading-plan'>('panel');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [permission, setPermission] = useState<{ canView: boolean, canEdit: boolean, canManage: boolean, hasChecked: boolean }>({ canView: false, canEdit: false, canManage: false, hasChecked: false, });
+  const [permission, setPermission] = useState<{ canView: boolean, canEdit: boolean, canManage: boolean, hasChecked: boolean }>({ canView: false, canEdit: false, canManage: false, hasChecked: true, });
   const isOwner = authUser?.uid === memberId;
 
   // State for image cropping
@@ -267,30 +267,28 @@ export default function MemberProfilePage() {
   useEffect(() => { if (!addressState) { setAddressCities([]); return; } setIsLoadingAddressCities(true); fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${addressState}/municipios?orderBy=nome`).then(res => res.json()).then(setAddressCities).catch(err => console.error("Failed to fetch address cities", err)).finally(() => setIsLoadingAddressCities(false)); }, [addressState]);
   
   useEffect(() => {
-    if (isUserLoading || isCurrentUserLoading || memberLoading) {
+    // This effect should only run when data has finished loading and authUser is available.
+    if (isUserLoading || isCurrentUserLoading || memberLoading || !authUser) {
       return;
     }
-
-    if (!authUser || !currentUserData) {
+  
+    // At this point, all loading is false, and authUser is available.
+    // We can now make a definitive permission check.
+    if (!currentUserData || !member) {
       setPermission({ canView: false, canEdit: false, canManage: false, hasChecked: true });
       return;
     }
-
-    if (!member) {
-        setPermission({ canView: false, canEdit: false, canManage: false, hasChecked: true });
-        return;
-    }
-
+  
     const isAdmin = currentUserData.cargo === 'Administrador';
     const isUserOwner = authUser.uid === member.id;
     const isPastorOfCongregation = currentUserData.cargo === 'Pastor/dirigente' && currentUserData.congregacao === member.congregacao;
-
+  
     const canView = isUserOwner || isAdmin || isPastorOfCongregation;
     const canEdit = isUserOwner || isAdmin || isPastorOfCongregation;
     const canManage = isAdmin || isPastorOfCongregation;
-
+  
     setPermission({ canView, canEdit, canManage, hasChecked: true });
-
+  
   }, [authUser, currentUserData, member, isUserLoading, isCurrentUserLoading, memberLoading]);
 
   useEffect(() => { if (member) { memberForm.reset({ nome: member.nome || '', email: member.email || '', phone: member.phone || '', whatsapp: member.whatsapp || '', cep: member.cep || '', logradouro: member.logradouro || '', numero: member.numero || '', complemento: member.complemento || '', bairro: member.bairro || '', cidade: member.cidade || '', estado: member.estado || '', avatar: member.avatar || '', dataNascimento: formatDate(member.dataNascimento) || '', rg: member.rg || '', cpf: member.cpf || '', gender: member.gender || 'Masculino', maritalStatus: 'Solteiro(a)', naturalness: member.naturalness || '', nationality: member.nationality || '', cargo: member.cargo || '', status: member.status || 'Pendente', congregacao: member.congregacao || '', dataBatismo: formatDate(member.dataBatismo) || '', dataMembro: formatDate(member.dataMembro) || '', recordNumber: member.recordNumber || '', responsiblePastor: member.responsiblePastor || '', }); if (member.naturalness && member.naturalness.includes('/')) { const [city, state] = member.naturalness.split('/'); setSelectedState(state); setSelectedCity(city); } else { setSelectedState(''); setSelectedCity(''); } if (member.estado) { setAddressState(member.estado); } else { setAddressState(''); } } }, [member, memberForm]);
@@ -632,7 +630,7 @@ export default function MemberProfilePage() {
     <ViewContainer title="Mural de Avisos">
         <div className="space-y-4">
             {isLoadingPosts ? (<div className="flex justify-center items-center py-10"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>) 
-            : posts && posts.length > 0 ? (posts.map((post) => { const avatar = getAvatar(post.authorAvatar as any); return (
+            : posts && posts.length > 0 ? (posts.map((post) => { const avatar = getAvatar(post as any); return (
                 <Card key={post.id}>
                     <CardHeader>
                         <div className="flex items-start gap-4">
@@ -767,9 +765,16 @@ export default function MemberProfilePage() {
     const [messages, setMessages] = useState<Message[] | null>(null);
     const [isLoadingMessages, setIsLoadingMessages] = useState(true);
     const [messagesError, setMessagesError] = useState<Error | null>(null);
-
+  
     useEffect(() => {
         if (!firestore || !member) {
+            setIsLoadingMessages(false);
+            return;
+        }
+
+        // Use the messageIds from the member's document to fetch messages
+        if (!member.messageIds || member.messageIds.length === 0) {
+            setMessages([]);
             setIsLoadingMessages(false);
             return;
         }
@@ -778,25 +783,25 @@ export default function MemberProfilePage() {
             setIsLoadingMessages(true);
             setMessagesError(null);
             try {
-                const q = query(
-                    collection(firestore, 'messages'),
-                    where('userId', '==', member.id),
-                    orderBy('createdAt', 'desc')
-                );
-                const querySnapshot = await getDocs(q);
-                const fetchedMessages = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Message));
+                const messagePromises = member.messageIds!.map(id => getDoc(doc(firestore, 'messages', id)));
+                const messageSnapshots = await Promise.all(messagePromises);
+                
+                const fetchedMessages = messageSnapshots
+                    .filter(snap => snap.exists())
+                    .map(snap => ({ id: snap.id, ...snap.data() } as Message));
+
+                // Sort messages by creation date, descending
+                fetchedMessages.sort((a, b) => {
+                    const dateA = a.createdAt?.toMillis() || 0;
+                    const dateB = b.createdAt?.toMillis() || 0;
+                    return dateB - dateA;
+                });
+
                 setMessages(fetchedMessages);
             } catch (err: any) {
                 console.error("Error fetching member messages:", err);
-                if (err.code === 'permission-denied') {
-                    const contextualError = new FirestorePermissionError({
-                        operation: 'list',
-                        path: `messages where userId == ${member.id}`,
-                    });
-                    setMessagesError(contextualError);
-                } else {
-                    setMessagesError(err);
-                }
+                // For getDoc, a permission error on a single doc is more specific
+                setMessagesError(new Error("Não foi possível carregar uma ou mais mensagens. Verifique suas permissões."));
             } finally {
                 setIsLoadingMessages(false);
             }
@@ -812,7 +817,7 @@ export default function MemberProfilePage() {
                 {isLoadingMessages ? (
                     <div className="flex justify-center items-center py-10"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
                 ) : messagesError ? (
-                     <Card><CardContent className="p-8 text-center text-destructive">Não foi possível carregar suas mensagens. Verifique suas permissões ou tente novamente.</CardContent></Card>
+                     <Card><CardContent className="p-8 text-center text-destructive">{messagesError.message}</CardContent></Card>
                 ) : messages && messages.length > 0 ? (
                     <Accordion type="single" collapsible className="w-full">
                         {messages.map(message => {
@@ -907,7 +912,7 @@ export default function MemberProfilePage() {
     );
   };
 
-  const PrintableReadingPlan = React.forwardRef<HTMLDivElement>((props, ref) => {
+  const PrintableReadingPlan = React.forwardRef<HTMLDivElement, {}>((props, ref) => {
     const { data: churchInfo } = useDoc<{ fichaLogoUrl?: string }>(useMemoFirebase(() => (firestore ? doc(firestore, 'churchInfo', 'main') : null), [firestore]));
     
     return (

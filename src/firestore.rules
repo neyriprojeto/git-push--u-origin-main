@@ -108,13 +108,20 @@ service cloud.firestore {
      *   Stores messages. Access is based on sender/recipient and role.
      */
     match /messages/{messageId} {
-      // READ: A member can read their own messages. Admins/Pastors can read messages for their inbox.
-      allow read: if (isSignedIn() && resource.data.userId == request.auth.uid) || isAdmin() || isPastor();
+      // READ:
+      // - Admins/pastors can get/list messages.
+      // - A member can 'get' a message if its ID is in their 'messageIds' array.
+      allow get: if isSignedIn() && (
+                    isAdmin() || 
+                    isPastor() || 
+                    (messageId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.messageIds)
+                  );
+      allow list: if isAdmin() || isPastor();
       
       // CREATE: Any signed-in user can create a message and must set themselves as the sender.
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
 
-      // UPDATE (reply): Admins and Pastors can update any message they can read.
+      // UPDATE (reply): Admins and Pastors can update any message.
       allow update: if isAdmin() || isPastor();
       
       // DELETE: Only admins can delete messages from the collection.

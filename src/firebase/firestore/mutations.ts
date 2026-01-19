@@ -209,14 +209,29 @@ export const addMessage = async (firestore: Firestore, messageData: any) => {
     if (!firestore) throw new Error('Firestore is not initialized');
     const messagesRef = collection(firestore, 'messages');
 
-    addDoc(messagesRef, { ...messageData, createdAt: serverTimestamp() })
-        .catch(error => {
-             errorEmitter.emit('permission-error', new FirestorePermissionError({
-                path: messagesRef.path,
-                operation: 'create',
-                requestResourceData: messageData,
-            }));
-        });
+    try {
+        // Await the creation of the message document to get its reference
+        const messageDocRef = await addDoc(messagesRef, { ...messageData, createdAt: serverTimestamp() });
+        
+        // After successfully creating the message, update the user's document
+        if (messageData.userId) {
+            const userRef = doc(firestore, 'users', messageData.userId);
+            // Use updateDoc with arrayUnion to add the new message ID. This is idempotent.
+            await updateDoc(userRef, {
+                messageIds: arrayUnion(messageDocRef.id)
+            });
+        }
+    } catch (error: any) {
+        // Handle potential errors during message creation or user doc update
+        const path = (error.code === 'permission-denied' && error.target?.path) ? error.target.path : messagesRef.path;
+        errorEmitter.emit('permission-error', new FirestorePermissionError({
+            path: path,
+            operation: 'create', // or 'update' depending on where it failed
+            requestResourceData: messageData,
+        }));
+        // Re-throw the error so the UI can be notified
+        throw error;
+    }
 };
 
 

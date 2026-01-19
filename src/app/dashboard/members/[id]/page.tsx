@@ -53,7 +53,7 @@ import { FirestorePermissionError } from "@/firebase";
 type ElementStyle = { position: { top: number; left: number }; size: { width?: number; height?: number; fontSize?: number }; text?: string; fontWeight?: 'normal' | 'bold'; src?: string; textAlign?: 'left' | 'center' | 'right'; };
 type CardElements = { [key: string]: ElementStyle };
 type CardTemplateData = { elements: CardElements; cardStyles: { frontBackground: string; backBackground: string; frontBackgroundImage: string; backBackgroundImage: string; }; textColors: { title: string; personalData: string; backText: string; }; };
-interface Member { id: string; nome: string; email?: string; avatar?: string; recordNumber?: string; status: 'Ativo' | 'Inativo' | 'Pendente'; gender?: 'Masculino' | 'Feminino'; dataNascimento?: string | { seconds: number; nanoseconds: number }; dataBatismo?: string | { seconds: number; nanoseconds: number }; maritalStatus?: 'Solteiro(a)' | 'Casado(a)' | 'Divorciado(a)' | 'Viúvo(a)'; cpf?: string; rg?: string; naturalness?: string; nationality?: string; phone?: string; whatsapp?: string; cargo: string; dataMembro?: string | { seconds: number; nanoseconds: number }; cep?: string; logradouro?: string; numero?: string; bairro?: string; cidade?: string; estado?: string; complemento?: string; congregacao?: string; responsiblePastor?: string; bibleReadingProgress?: number[]; }
+interface Member { id: string; nome: string; email?: string; avatar?: string; recordNumber?: string; status: 'Ativo' | 'Inativo' | 'Pendente'; gender?: 'Masculino' | 'Feminino'; dataNascimento?: string | { seconds: number; nanoseconds: number }; dataBatismo?: string | { seconds: number; nanoseconds: number }; maritalStatus?: 'Solteiro(a)' | 'Casado(a)' | 'Divorciado(a)' | 'Viúvo(a)'; cpf?: string; rg?: string; naturalness?: string; nationality?: string; phone?: string; whatsapp?: string; cargo: string; dataMembro?: string | { seconds: number; nanoseconds: number }; cep?: string; logradouro?: string; numero?: string; bairro?: string; cidade?: string; estado?: string; complemento?: string; congregacao?: string; responsiblePastor?: string; bibleReadingProgress?: number[]; messageIds?: string[] }
 type Congregacao = { id: string; nome: string; pastorId?: string; pastorName?: string; };
 type Post = { id: string; title: string; content: string; authorId: string; authorName: string; authorAvatar?: string; imageUrl?: string; createdAt: Timestamp; };
 type ChurchInfo = { radioUrl?: string; fichaLogoUrl?: string; };
@@ -316,7 +316,23 @@ export default function MemberProfilePage() {
     catch (error: any) { deletingToast.dismiss(); console.error("Delete error: ", error); toast({ variant: "destructive", title: "Erro ao Excluir", description: error.message || "Não foi possível excluir o membro.", duration: 9000 }); }
   }
 
-  const getAvatar = useCallback((avatarId?: string): { imageUrl: string } | undefined => { if (!avatarId) { return PlaceHolderImages.find((p) => p.id === 'member-avatar-1'); } if(avatarId.startsWith('http')) { return { imageUrl: avatarId }; } return PlaceHolderImages.find((p) => p.id === avatarId); }, []);
+  const getAvatar = useCallback(
+    (avatarId?: any): { imageUrl: string } | undefined => {
+        // Default avatar
+        if (!avatarId || typeof avatarId !== 'string') {
+            return PlaceHolderImages.find((p) => p.id === 'member-avatar-1');
+        }
+
+        // External URL
+        if (avatarId.startsWith('http')) {
+            return { imageUrl: avatarId };
+        }
+
+        // Local placeholder ID
+        return PlaceHolderImages.find((p) => p.id === avatarId);
+    },
+    []
+  );
 
   const onSelectFile = (e: React.ChangeEvent<HTMLInputElement>) => { const file = e.target.files?.[0]; if (file) { setCrop(undefined); setCurrentFile(file); const reader = new FileReader(); reader.addEventListener('load', () => { setImageToCrop(reader.result?.toString() || ''); setIsCropping(true); }); reader.readAsDataURL(file) } }
   function onImageLoad(e: React.SyntheticEvent<HTMLImageElement>) { const aspect = 1; const { width, height } = e.currentTarget; setCrop(centerAspectCrop(width, height, aspect)) }
@@ -370,11 +386,6 @@ export default function MemberProfilePage() {
       router.push('/');
     } catch (error) {
       console.error("Error signing out: ", error);
-      toast({
-        variant: "destructive",
-        title: "Erro ao Sair",
-        description: "Não foi possível encerrar a sessão.",
-      });
     }
   };
 
@@ -630,7 +641,7 @@ export default function MemberProfilePage() {
     <ViewContainer title="Mural de Avisos">
         <div className="space-y-4">
             {isLoadingPosts ? (<div className="flex justify-center items-center py-10"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>) 
-            : posts && posts.length > 0 ? (posts.map((post) => { const avatar = getAvatar(post as any); return (
+            : posts && posts.length > 0 ? (posts.map((post) => { const avatar = getAvatar(post.authorAvatar); return (
                 <Card key={post.id}>
                     <CardHeader>
                         <div className="flex items-start gap-4">
@@ -703,7 +714,7 @@ export default function MemberProfilePage() {
             }
         }
         
-        await addMessage(firestore, { 
+        const messageId = await addMessage(firestore, { 
             userId: authUser.uid, 
             senderName: currentUserData.nome, 
             recipientId,
@@ -712,6 +723,13 @@ export default function MemberProfilePage() {
             body,
             attachmentUrl,
         });
+
+        if (messageId) {
+            await updateMember(firestore, authUser.uid, {
+                messageIds: arrayUnion(messageId)
+            });
+        }
+
         toast({ title: 'Sucesso!', description: 'Sua mensagem foi enviada.' });
         setRecipient(''); 
         setSubject(''); 
@@ -762,36 +780,43 @@ export default function MemberProfilePage() {
   };
 
   const MyMessagesView = () => {
-    const [messages, setMessages] = useState<Message[] | null>(null);
+    const [messages, setMessages] = useState<Message[]>([]);
     const [isLoadingMessages, setIsLoadingMessages] = useState(true);
-    const [messagesError, setMessagesError] = useState<Error | null>(null);
-  
+    const [error, setError] = useState<string | null>(null);
+
     useEffect(() => {
         const fetchMessages = async () => {
-            if (!firestore || !authUser) {
+            if (!firestore || !member || !member.messageIds || member.messageIds.length === 0) {
                 setIsLoadingMessages(false);
+                setMessages([]);
                 return;
             }
 
             setIsLoadingMessages(true);
-            setMessagesError(null);
+            setError(null);
             try {
-                const q = query(collection(firestore, 'messages'), where('userId', '==', authUser.uid), orderBy('createdAt', 'desc'));
-                const querySnapshot = await getDocs(q);
-                
-                const fetchedMessages = querySnapshot.docs.map(snap => ({ id: snap.id, ...snap.data() } as Message));
-
+                const fetchedMessages: Message[] = [];
+                // Fetch each message document by its ID
+                for (const msgId of member.messageIds) {
+                    const msgRef = doc(firestore, 'messages', msgId);
+                    const docSnap = await getDoc(msgRef);
+                    if (docSnap.exists()) {
+                        fetchedMessages.push({ id: docSnap.id, ...docSnap.data() } as Message);
+                    }
+                }
+                // Sort messages by creation date, most recent first
+                fetchedMessages.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
                 setMessages(fetchedMessages);
-            } catch (err: any) {
+            } catch (err) {
                 console.error("Error fetching member messages:", err);
-                setMessagesError(new Error("Não foi possível carregar suas mensagens. Verifique suas permissões."));
+                setError("Não foi possível carregar suas mensagens.");
             } finally {
                 setIsLoadingMessages(false);
             }
         };
 
         fetchMessages();
-    }, [firestore, authUser]);
+    }, [firestore, member]);
 
 
     return (
@@ -799,8 +824,8 @@ export default function MemberProfilePage() {
             <div className="space-y-4">
                 {isLoadingMessages ? (
                     <div className="flex justify-center items-center py-10"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
-                ) : messagesError ? (
-                     <Card><CardContent className="p-8 text-center text-destructive">{messagesError.message}</CardContent></Card>
+                ) : error ? (
+                     <Card><CardContent className="p-8 text-center text-destructive">{error}</CardContent></Card>
                 ) : messages && messages.length > 0 ? (
                     <Accordion type="single" collapsible className="w-full">
                         {messages.map(message => {

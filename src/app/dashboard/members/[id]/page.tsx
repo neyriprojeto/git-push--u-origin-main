@@ -208,7 +208,7 @@ export default function MemberProfilePage() {
   
   const [activeView, setActiveView] = useState<'panel' | 'profile' | 'mural' | 'card' | 'contact' | 'my-messages' | 'reading-plan'>('panel');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [permission, setPermission] = useState<{ canView: boolean, canEdit: boolean, canManage: boolean, hasChecked: boolean }>({ canView: false, canEdit: false, canManage: false, hasChecked: false, });
+  const [permission, setPermission] = useState<{ canView: boolean, canEdit: boolean, canManage: boolean, hasChecked: boolean }>({ canView: false, canEdit: false, canManage: false, hasChecked: true, });
   const isOwner = authUser?.uid === memberId;
 
   // State for image cropping
@@ -268,13 +268,10 @@ export default function MemberProfilePage() {
   useEffect(() => { if (!addressState) { setAddressCities([]); return; } setIsLoadingAddressCities(true); fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${addressState}/municipios?orderBy=nome`).then(res => res.json()).then(setAddressCities).catch(err => console.error("Failed to fetch address cities", err)).finally(() => setIsLoadingAddressCities(false)); }, [addressState]);
   
   useEffect(() => {
-    // This effect should only run when data has finished loading and authUser is available.
-    if (isUserLoading || isCurrentUserLoading || memberLoading || !authUser) {
-      return;
-    }
+    if (isUserLoading || isCurrentUserLoading || !authUser) return;
   
-    // At this point, all loading is false, and authUser is available.
-    // We can now make a definitive permission check.
+    if (memberLoading) return;
+    
     if (!currentUserData || !member) {
       setPermission({ canView: false, canEdit: false, canManage: false, hasChecked: true });
       return;
@@ -642,7 +639,7 @@ export default function MemberProfilePage() {
     <ViewContainer title="Mural de Avisos">
         <div className="space-y-4">
             {isLoadingPosts ? (<div className="flex justify-center items-center py-10"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>) 
-            : posts && posts.length > 0 ? (posts.map((post) => { const avatar = getAvatar(post); return (
+            : posts && posts.length > 0 ? (posts.map((post) => { const avatar = getAvatar(post.authorAvatar); return (
                 <Card key={post.id}>
                     <CardHeader>
                         <div className="flex items-start gap-4">
@@ -715,9 +712,7 @@ export default function MemberProfilePage() {
             }
         }
         
-        const messageId = doc(collection(firestore, 'messages')).id;
-        
-        await addMessage(firestore, messageId, { 
+        await addMessage(firestore, { 
             userId: authUser.uid, 
             senderName: currentUserData.nome, 
             recipientId,
@@ -725,10 +720,6 @@ export default function MemberProfilePage() {
             subject, 
             body,
             attachmentUrl,
-        });
-
-        await updateMember(firestore, authUser.uid, {
-            messageIds: arrayUnion(messageId)
         });
 
         toast({ title: 'Sucesso!', description: 'Sua mensagem foi enviada.' });
@@ -921,17 +912,22 @@ export default function MemberProfilePage() {
   };
 
   const PrintableReadingPlan = React.forwardRef<HTMLDivElement, {}>((props, ref) => {
-    const { data: churchInfo } = useDoc<{ fichaLogoUrl?: string }>(useMemoFirebase(() => (firestore ? doc(firestore, 'churchInfo', 'main') : null), [firestore]));
+    const { data: churchInfo } = useDoc<{ baptismCertLogoUrl?: string }>(useMemoFirebase(() => (firestore ? doc(firestore, 'churchInfo', 'main') : null), [firestore]));
     const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
     
     return (
-        <div ref={ref} className="bg-white p-4 text-black w-[297mm]">
-            <div className="text-center mb-4">
-                {churchInfo?.fichaLogoUrl && (
-                    <img src={churchInfo.fichaLogoUrl} alt="Logo da Igreja" className="h-20 w-20 mx-auto mb-2" crossOrigin="anonymous"/>
-                )}
-                <p className="text-sm">Plano de leitura anual da</p>
-                <h1 className="text-4xl font-bold text-blue-700" style={{fontFamily: "'Times New Roman', serif"}}>BÍBLIA SAGRADA</h1>
+        <div ref={ref} className="bg-white p-6 text-black w-[297mm]">
+            <div className="flex justify-between items-start mb-4">
+                {churchInfo?.baptismCertLogoUrl ? (
+                    <img src={churchInfo.baptismCertLogoUrl} alt="Logo da Igreja" className="h-20 w-auto" crossOrigin="anonymous"/>
+                ) : <div className="h-20 w-20"></div>}
+                
+                <div className="text-center">
+                    <h1 className="text-4xl font-bold text-blue-700" style={{fontFamily: "'Great Vibes', cursive"}}>Plano de Leitura Bíblica Anual</h1>
+                    <p className="text-xs italic text-blue-800 mt-2">"Toda a Escritura é inspirada por Deus e útil para o ensino, para a repreensão, para a correção e para a instrução na justiça, para que o homem de Deus seja apto e plenamente preparado para toda boa obra." (2 Timóteo 3:16-17)</p>
+                </div>
+
+                <div className="h-20 w-20"></div> 
             </div>
 
             <table className="w-full text-[7px] border-collapse border border-blue-300">
@@ -956,10 +952,6 @@ export default function MemberProfilePage() {
                     ))}
                 </tbody>
             </table>
-
-            <div className="text-center mt-4">
-                <p className="text-xs italic text-blue-800">"Toda a Escritura é inspirada por Deus e útil para o ensino, para a repreensão, para a correção e para a instrução na justiça, para que o homem de Deus seja apto e plenamente preparado para toda boa obra." (2 Timóteo 3:16-17)</p>
-            </div>
         </div>
     );
   });

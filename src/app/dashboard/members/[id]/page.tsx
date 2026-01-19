@@ -53,7 +53,7 @@ import { FirestorePermissionError } from "@/firebase";
 type ElementStyle = { position: { top: number; left: number }; size: { width?: number; height?: number; fontSize?: number }; text?: string; fontWeight?: 'normal' | 'bold'; src?: string; textAlign?: 'left' | 'center' | 'right'; };
 type CardElements = { [key: string]: ElementStyle };
 type CardTemplateData = { elements: CardElements; cardStyles: { frontBackground: string; backBackground: string; frontBackgroundImage: string; backBackgroundImage: string; }; textColors: { title: string; personalData: string; backText: string; }; };
-interface Member { id: string; nome: string; email?: string; avatar?: string; recordNumber?: string; status: 'Ativo' | 'Inativo' | 'Pendente'; gender?: 'Masculino' | 'Feminino'; dataNascimento?: string | { seconds: number; nanoseconds: number }; dataBatismo?: string | { seconds: number; nanoseconds: number }; maritalStatus?: 'Solteiro(a)' | 'Casado(a)' | 'Divorciado(a)' | 'Viúvo(a)'; cpf?: string; rg?: string; naturalness?: string; nationality?: string; phone?: string; whatsapp?: string; cargo: string; dataMembro?: string | { seconds: number; nanoseconds: number }; cep?: string; logradouro?: string; numero?: string; bairro?: string; cidade?: string; estado?: string; complemento?: string; congregacao?: string; responsiblePastor?: string; bibleReadingProgress?: number[]; messageIds?: string[]; }
+interface Member { id: string; nome: string; email?: string; avatar?: string; recordNumber?: string; status: 'Ativo' | 'Inativo' | 'Pendente'; gender?: 'Masculino' | 'Feminino'; dataNascimento?: string | { seconds: number; nanoseconds: number }; dataBatismo?: string | { seconds: number; nanoseconds: number }; maritalStatus?: 'Solteiro(a)' | 'Casado(a)' | 'Divorciado(a)' | 'Viúvo(a)'; cpf?: string; rg?: string; naturalness?: string; nationality?: string; phone?: string; whatsapp?: string; cargo: string; dataMembro?: string | { seconds: number; nanoseconds: number }; cep?: string; logradouro?: string; numero?: string; bairro?: string; cidade?: string; estado?: string; complemento?: string; congregacao?: string; responsiblePastor?: string; bibleReadingProgress?: number[]; }
 type Congregacao = { id: string; nome: string; pastorId?: string; pastorName?: string; };
 type Post = { id: string; title: string; content: string; authorId: string; authorName: string; authorAvatar?: string; imageUrl?: string; createdAt: Timestamp; };
 type ChurchInfo = { radioUrl?: string; fichaLogoUrl?: string; };
@@ -767,48 +767,31 @@ export default function MemberProfilePage() {
     const [messagesError, setMessagesError] = useState<Error | null>(null);
   
     useEffect(() => {
-        if (!firestore || !member) {
-            setIsLoadingMessages(false);
-            return;
-        }
-
-        // Use the messageIds from the member's document to fetch messages
-        if (!member.messageIds || member.messageIds.length === 0) {
-            setMessages([]);
-            setIsLoadingMessages(false);
-            return;
-        }
-
         const fetchMessages = async () => {
+            if (!firestore || !authUser) {
+                setIsLoadingMessages(false);
+                return;
+            }
+
             setIsLoadingMessages(true);
             setMessagesError(null);
             try {
-                const messagePromises = member.messageIds!.map(id => getDoc(doc(firestore, 'messages', id)));
-                const messageSnapshots = await Promise.all(messagePromises);
+                const q = query(collection(firestore, 'messages'), where('userId', '==', authUser.uid), orderBy('createdAt', 'desc'));
+                const querySnapshot = await getDocs(q);
                 
-                const fetchedMessages = messageSnapshots
-                    .filter(snap => snap.exists())
-                    .map(snap => ({ id: snap.id, ...snap.data() } as Message));
-
-                // Sort messages by creation date, descending
-                fetchedMessages.sort((a, b) => {
-                    const dateA = a.createdAt?.toMillis() || 0;
-                    const dateB = b.createdAt?.toMillis() || 0;
-                    return dateB - dateA;
-                });
+                const fetchedMessages = querySnapshot.docs.map(snap => ({ id: snap.id, ...snap.data() } as Message));
 
                 setMessages(fetchedMessages);
             } catch (err: any) {
                 console.error("Error fetching member messages:", err);
-                // For getDoc, a permission error on a single doc is more specific
-                setMessagesError(new Error("Não foi possível carregar uma ou mais mensagens. Verifique suas permissões."));
+                setMessagesError(new Error("Não foi possível carregar suas mensagens. Verifique suas permissões."));
             } finally {
                 setIsLoadingMessages(false);
             }
         };
 
         fetchMessages();
-    }, [firestore, member]);
+    }, [firestore, authUser]);
 
 
     return (

@@ -51,7 +51,6 @@ interface Member {
     cargo: string;
     dataNascimento?: string | { seconds: number; nanoseconds: number };
     dataMembro?: string | { seconds: number; nanoseconds: number };
-    dataBatismo?: string | { seconds: number; nanoseconds: number };
     congregacao?: string;
 }
 
@@ -120,6 +119,19 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
         );
     }
     
+    // Mapeia todos os dados dinâmicos do membro em um único objeto para consulta fácil.
+    const fieldDataMap: Record<string, string | null> = {
+        'Valor Nome': member.nome ? `Nome: ${member.nome}` : null,
+        'Valor Nº Reg.': member.recordNumber ? `Nº Reg.: ${member.recordNumber}` : null,
+        'Valor Nascimento': member.dataNascimento ? `Nasc: ${formatDate(member.dataNascimento)}` : null,
+        'Valor RG': member.rg ? `RG: ${member.rg}` : null,
+        'Valor CPF': member.cpf ? `CPF: ${member.cpf}` : null,
+        'Valor Cargo': member.cargo ? `Cargo: ${member.cargo}` : null,
+        'Membro Desde': member.dataMembro ? `Membro desde: ${formatDate(member.dataMembro)}` : null,
+        'Validade': `Validade: ${format(new Date(new Date().setFullYear(new Date().getFullYear() + 1)), 'dd/MM/yyyy')}`,
+        'Congregação': member.congregacao || templateData.elements['Congregação']?.text || null
+    };
+    
     const renderElement = (id: string, el: ElementStyle) => {
         const isImage = 'src' in el;
         const isText = 'text' in el;
@@ -173,52 +185,23 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
                 );
             }
         } else if (isText) {
-            let textToRender: string | null = null;
-            
-            // Explicitly map member data to template fields
-            switch (id) {
-                case 'Valor Nome':
-                    textToRender = member.nome ? `Nome: ${member.nome}` : null;
-                    break;
-                case 'Valor Nº Reg.':
-                    textToRender = member.recordNumber ? `Nº Reg.: ${member.recordNumber}` : null;
-                    break;
-                case 'Valor Nascimento':
-                    textToRender = member.dataNascimento ? `Nasc: ${formatDate(member.dataNascimento)}` : null;
-                    break;
-                case 'Valor CPF':
-                    textToRender = member.cpf ? `CPF: ${member.cpf}` : null;
-                    break;
-                case 'Valor RG':
-                    textToRender = member.rg ? `RG: ${member.rg}` : null;
-                    break;
-                case 'Valor Cargo':
-                    textToRender = member.cargo ? `Cargo: ${member.cargo}` : null;
-                    break;
-                case 'Membro Desde':
-                    textToRender = member.dataMembro ? `Membro desde: ${formatDate(member.dataMembro)}` : null;
-                    break;
-                 case 'Validade': {
-                    const validityDate = new Date();
-                    validityDate.setFullYear(validityDate.getFullYear() + 1);
-                    textToRender = `Validade: ${format(validityDate, 'dd/MM/yyyy')}`;
-                    break;
-                }
-                case 'Congregação':
-                    textToRender = member.congregacao || el.text;
-                    break;
-                default:
-                    // For static text like 'Título 1', 'Endereço', etc.
-                    textToRender = el.text || null;
-            }
-            
-            // Absolutely do not render 'Batismo' on the front
-            if (id.includes('Batismo')) return null;
+            const dynamicText = fieldDataMap[id];
+            let textToRender: string | null;
 
+            if (dynamicText !== undefined) {
+                // Se o campo existe no mapa (é dinâmico), use seu valor.
+                // Se o valor for null, não renderize nada.
+                textToRender = dynamicText;
+            } else {
+                // Se não está no mapa, é um texto estático do template (ex: Título 1).
+                textToRender = el.text || null;
+            }
+
+            // Não renderiza o elemento se o texto final for nulo.
             if (textToRender === null) {
                 return null;
             }
-
+            
             style.fontSize = el.size.fontSize ? `${el.size.fontSize}px` : undefined;
             style.color = color;
             style.fontWeight = el.fontWeight;

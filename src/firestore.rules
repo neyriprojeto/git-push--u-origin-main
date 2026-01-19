@@ -107,29 +107,19 @@ service cloud.firestore {
      *   Stores messages. Access is based on sender/recipient and role.
      */
     match /messages/{messageId} {
-      // READ (get):
-      // - The sender can read it.
-      // - An Admin can read it.
-      // - A Pastor can read it if they are the recipient OR if the message is for the admin group.
-      allow get: if isAdmin() || 
-                   (isSignedIn() && request.auth.uid == resource.data.userId) || 
-                   (isPastor() && (request.auth.uid == resource.data.recipientId || resource.data.recipientId == 'ADMIN_GROUP'));
+      // READ (get): A user can read a message if they sent it, or if they are a pastor/admin.
+      allow get: if (isSignedIn() && request.auth.uid == resource.data.userId) || isPastor() || isAdmin();
       
-      // LIST:
-      // Admins and Pastors can issue list queries. The `get` rule will secure the results.
-      allow list: if isAdmin() || isPastor();
+      // LIST: Only Admins and Pastors can list messages.
+      allow list: if isPastor() || isAdmin();
       
-      // CREATE:
-      // Any authenticated user can create a message, but they must be the sender.
+      // CREATE: Any signed-in user can create a message for themselves.
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
 
-      // UPDATE (reply):
-      // - An Admin can update it.
-      // - A Pastor can update it if they are the recipient OR if the message is for the admin group.
-      allow update: if isAdmin() || (isPastor() && (request.auth.uid == resource.data.recipientId || resource.data.recipientId == 'ADMIN_GROUP'));
+      // UPDATE (reply): Admins and Pastors can update (add replies to) any message.
+      allow update: if isPastor() || isAdmin();
       
-      // DELETE:
-      // Only admins can delete.
+      // DELETE: Only admins can delete messages.
       allow delete: if isAdmin();
     }
 

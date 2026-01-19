@@ -134,12 +134,15 @@ export default function MessagesPage() {
                 attachmentUrl = await uploadArquivo(attachment);
             }
 
-            const replyData = {
+            const replyData: { authorId: string; authorName: string; body: string; attachmentUrl?: string; } = {
                 authorId: authUser.uid,
                 authorName: userData.nome || 'Admin',
                 body: replyBody,
-                attachmentUrl,
             };
+
+            if (attachmentUrl) {
+                replyData.attachmentUrl = attachmentUrl;
+            }
 
             await addReplyToMessage(firestore, message.id, replyData);
             

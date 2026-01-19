@@ -74,7 +74,7 @@ const defaultElements: CardElements = {
 
     'Valor Nome': { position: { top: 58, left: 40 }, size: { fontSize: 11 }, text: `Nome: ${memberSample.name}`, fontWeight: 'normal', textAlign: 'left' },
     'Valor Nº Reg.': { position: { top: 66, left: 40 }, size: { fontSize: 10 }, text: `Nº Reg.: ${memberSample.recordNumber}`, textAlign: 'left' },
-    'Valor RG': { position: { top: 72, left: 40 }, size: { fontSize: 10 }, text: `RG: ${memberSample.rg}`, textAlign: 'left' },
+    'Valor Nascimento': { position: { top: 72, left: 40 }, size: { fontSize: 10 }, text: `Nasc: ${new Date(memberSample.birthDate).toLocaleDateString('pt-BR')}`, textAlign: 'left' },
     'Valor CPF': { position: { top: 78, left: 40 }, size: { fontSize: 10 }, text: `CPF: ${memberSample.cpf}`, textAlign: 'left' },
     'Valor Cargo': { position: { top: 84, left: 40 }, size: { fontSize: 10 }, text: `Cargo: ${memberSample.role}`, textAlign: 'left' },
     

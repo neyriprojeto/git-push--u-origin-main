@@ -87,17 +87,20 @@ const formatDate = (dateValue?: string | { seconds: number; nanoseconds: number 
 };
 
 const getMemberDataForField = (currentMember: Member, fieldId: string): string | null => {
-    const dataMap: Record<string, string | undefined> = {
+    const dataMap: Record<string, string | null> = {
         'Valor Nome': `Nome: ${currentMember.nome || ''}`,
-        'Valor Nº Reg.': `Nº Reg.: ${currentMember.recordNumber || ''}`,
-        'Valor CPF': `CPF: ${currentMember.cpf || ''}`,
+        'Valor Nº Reg.': currentMember.recordNumber ? `Nº Reg.: ${currentMember.recordNumber}` : null,
+        'Valor Nascimento': currentMember.dataNascimento ? `Nasc: ${formatDate(currentMember.dataNascimento, 'dd/MM/yyyy')}` : null,
+        'Valor CPF': currentMember.cpf ? `CPF: ${currentMember.cpf}` : null,
         'Valor Cargo': `Cargo: ${currentMember.cargo || ''}`,
-        'Valor Data de Batismo': `Data de Batismo: ${formatDate(currentMember.dataBatismo, 'dd/MM/yyyy') || ''}`,
-        'Membro Desde': `Membro desde: ${formatDate(currentMember.dataMembro, 'dd/MM/yyyy') || ''}`,
-        'Congregação': currentMember.congregacao
+        'Membro Desde': currentMember.dataMembro ? `Membro desde: ${formatDate(currentMember.dataMembro, 'dd/MM/yyyy')}` : null,
+        'Congregação': currentMember.congregacao || null,
     };
 
-    return dataMap[fieldId] ?? null;
+    if (fieldId in dataMap) {
+        return dataMap[fieldId];
+    }
+    return null;
 };
 
 
@@ -105,6 +108,7 @@ const renderElement = (currentMember: Member, id: string, el: ElementStyle, text
     if (!el) return null;
     const isImage = 'src' in el;
     const isText = 'text' in el;
+
     let color = '#000000';
     if (isText && textColors) {
         const isTitle = id.includes('Título') || id === 'Congregação' || id === 'Endereço';
@@ -113,34 +117,57 @@ const renderElement = (currentMember: Member, id: string, el: ElementStyle, text
         else if (isBackText) color = textColors.backText;
         else color = textColors.personalData;
     }
-    const style: React.CSSProperties = { position: 'absolute', top: `${el.position.top}%`, left: `${el.position.left}%`, };
+
+    const style: React.CSSProperties = { position: 'absolute', top: `${el.position.top}%`, left: `${el.position.left}%` };
     if (el.textAlign === 'center') style.transform = 'translateX(-50%)';
     else if (el.textAlign === 'right') style.transform = 'translateX(-100%)';
+
     if (isImage) {
         style.width = el.size.width ? `${el.size.width}px` : 'auto';
         style.height = el.size.height ? `${el.size.height}px` : 'auto';
         let src = el.src;
-        if (id === 'Foto do Membro') { const memberAvatar = getAvatarFn(currentMember.avatar); if (memberAvatar?.imageUrl) src = memberAvatar.imageUrl; }
-        if (!src) { return <div key={id} style={{...style, border: '1px dashed #ccc'}} className="bg-gray-200/50 flex items-center justify-center text-xs text-gray-500">{id}</div>; } 
-        else { const objectFitStyle: React.CSSProperties = { objectFit: id === 'Foto do Membro' ? 'cover' : 'contain' }; return ( <div key={id} style={style} className="relative"> <Image src={src} alt={id} fill style={objectFitStyle} className={cn({ 'rounded-md': id !== 'Assinatura'})} /> </div> ); }
-    } 
+        if (id === 'Foto do Membro') {
+            const memberAvatar = getAvatarFn(currentMember.avatar);
+            if (memberAvatar?.imageUrl) src = memberAvatar.imageUrl;
+        }
+        if (!src) {
+            return <div key={id} style={{ ...style, border: '1px dashed #ccc' }} className="bg-gray-200/50 flex items-center justify-center text-xs text-gray-500">{id}</div>;
+        } else {
+            const objectFitStyle: React.CSSProperties = { objectFit: id === 'Foto do Membro' ? 'cover' : 'contain' };
+            return (
+                <div key={id} style={style} className="relative">
+                    <Image src={src} alt={id} fill style={objectFitStyle} className={cn({ 'rounded-md': id !== 'Assinatura' })} />
+                </div>
+            );
+        }
+    }
+
     if (isText) {
         style.fontSize = el.size.fontSize ? `${el.size.fontSize}px` : undefined;
         style.color = color;
         style.fontWeight = el.fontWeight;
         style.textAlign = el.textAlign;
         style.whiteSpace = 'pre-wrap';
-        
-        let dynamicText;
-        if (id.includes('Valor') || id.includes('Membro Desde') || id === 'Congregação') {
-            dynamicText = getMemberDataForField(currentMember, id);
-        } else {
-            dynamicText = el.text;
+        if (id.includes('Título') || id.includes('Valor') || id.includes('Assinatura Pastor') || id.includes('Validade') || id.includes('Membro Desde')) {
+            style.whiteSpace = 'nowrap';
         }
 
-        if (id.includes('Título') || id.includes('Valor') || id.includes('Assinatura Pastor') || id.includes('Validade') || id.includes('Membro Desde')) { style.whiteSpace = 'nowrap'; }
-        return <p key={id} style={style}>{dynamicText ?? el.text}</p>;
+        let textToRender: string | null = null;
+        const isDynamicField = id.includes('Valor') || id.includes('Membro Desde') || id === 'Congregação';
+
+        if (isDynamicField) {
+            textToRender = getMemberDataForField(currentMember, id);
+        } else {
+            textToRender = el.text || null;
+        }
+
+        if (textToRender === null) {
+            return null;
+        }
+
+        return <p key={id} style={style}>{textToRender}</p>;
     }
+    
     return null;
 };
 
@@ -156,7 +183,7 @@ const StudioCard = ({ isFront, currentMember, templateData, getAvatarFn }: { isF
             {isFront ? ( frontElements.map(id => elements[id] ? renderElement(currentMember, id, elements[id], textColors, getAvatarFn) : null) ) : (
                 <>
                     {backElements.map(id => elements[id] ? renderElement(currentMember, id, elements[id], textColors, getAvatarFn) : null)}
-                    {signatureLineElement && ( <div style={{ position: 'absolute', borderTop: '1px solid black', width: '40%', top: '85%', left: '50%', transform: 'translateX(-50%)' }} /> )}
+                    {signatureLineElement && ( <div style={{ position: 'absolute', borderTop: '1px solid black', width: '40%', top: `calc(${signatureLineElement.position.top}% - 2px)`, left: `${signatureLineElement.position.left}%`, transform: 'translateX(-50%)' }} /> )}
                 </>
             )}
         </Card>
@@ -1154,5 +1181,3 @@ export default function MemberProfilePage() {
     </div>
   );
 }
-
-    

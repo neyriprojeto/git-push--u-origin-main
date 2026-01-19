@@ -116,11 +116,6 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
         const isImage = 'src' in el;
         const isText = 'text' in el;
 
-        // Explicitly remove baptism date field from rendering
-        if (id === 'Valor Data de Batismo') {
-            return null;
-        }
-
         let color = '#000000';
         if (isText && templateData) {
             const { textColors } = templateData;
@@ -173,7 +168,7 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
             const dataMap: { [key: string]: string | null } = {
                 'Valor Nome': `Nome: ${member.nome || ''}`,
                 'Valor Nº Reg.': member.recordNumber ? `Nº Reg.: ${member.recordNumber}` : null,
-                'Valor RG': member.rg ? `RG: ${member.rg}` : null,
+                'Valor Nascimento': member.dataNascimento ? `Nasc: ${formatDate(member.dataNascimento)}` : null,
                 'Valor CPF': member.cpf ? `CPF: ${member.cpf}` : null,
                 'Valor Cargo': `Cargo: ${member.cargo || ''}`,
                 'Membro Desde': member.dataMembro ? `Membro desde: ${formatDate(member.dataMembro)}` : null,
@@ -184,7 +179,6 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
                 textToRender = dataMap[id];
             }
             
-            // If text is null (meaning optional field has no data), don't render anything.
             if (textToRender === null) {
                 return null;
             }

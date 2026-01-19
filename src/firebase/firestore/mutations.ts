@@ -208,26 +208,17 @@ export const deletePost = async (firestore: Firestore, postId: string) => {
 export const addMessage = async (firestore: Firestore, messageData: any) => {
     if (!firestore) throw new Error('Firestore is not initialized');
     const messagesRef = collection(firestore, 'messages');
-    
-    try {
-        const docRef = await addDoc(messagesRef, { ...messageData, createdAt: serverTimestamp() });
-        
-        // After successfully creating the message, update the user's document
-        // to include the ID of the newly created message.
-        if (messageData.userId) {
-            const userRef = doc(firestore, 'users', messageData.userId);
-            await updateDoc(userRef, {
-                messageIds: arrayUnion(docRef.id)
-            });
-        }
-    } catch (error) {
-         errorEmitter.emit('permission-error', new FirestorePermissionError({
-            path: messagesRef.path,
-            operation: 'create',
-            requestResourceData: messageData,
-        }));
-    }
+
+    addDoc(messagesRef, { ...messageData, createdAt: serverTimestamp() })
+        .catch(error => {
+             errorEmitter.emit('permission-error', new FirestorePermissionError({
+                path: messagesRef.path,
+                operation: 'create',
+                requestResourceData: messageData,
+            }));
+        });
 };
+
 
 export const addReplyToMessage = async (firestore: Firestore, messageId: string, replyData: any) => {
     if (!firestore) throw new Error('Firestore is not initialized');
@@ -265,23 +256,3 @@ export const deleteMessage = async (firestore: Firestore, messageId: string) => 
         throw error;
     }
 };
-
-export const removeMessageFromMember = async (firestore: Firestore, userId: string, messageId: string) => {
-    if (!firestore) throw new Error('Firestore is not initialized');
-    const userRef = doc(firestore, 'users', userId);
-
-    try {
-        await updateDoc(userRef, {
-            messageIds: arrayRemove(messageId)
-        });
-    } catch (error) {
-        errorEmitter.emit('permission-error', new FirestorePermissionError({
-            path: userRef.path,
-            operation: 'update',
-            requestResourceData: { messageIds: `remove ${messageId}` },
-        }));
-        throw error;
-    }
-};
-
-    

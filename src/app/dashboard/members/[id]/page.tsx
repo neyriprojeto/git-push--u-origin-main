@@ -31,7 +31,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { addMessage, updateMember, removeMessageFromMember } from "@/firebase/firestore/mutations";
+import { addMessage, updateMember } from "@/firebase/firestore/mutations";
 import { deleteUser } from '@/ai/flows/delete-user-flow';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
@@ -763,68 +763,16 @@ export default function MemberProfilePage() {
   };
 
   const MyMessagesView = () => {
-    const [messages, setMessages] = useState<Message[] | null>(null);
-    const [isLoadingMessages, setIsLoadingMessages] = useState(true);
-    const [messagesError, setMessagesError] = useState<string | null>(null);
+    const messagesQuery = useMemoFirebase(() => (
+        firestore && member ?
+        query(
+            collection(firestore, 'messages'), 
+            where('userId', '==', member.id), 
+            orderBy('createdAt', 'desc')
+        ) : null
+    ), [firestore, member]);
 
-    const handleMemberDeleteMessage = async (messageId: string) => {
-        if (!firestore || !authUser) return;
-
-        try {
-            await removeMessageFromMember(firestore, authUser.uid, messageId);
-            setMessages(prev => prev ? prev.filter(m => m.id !== messageId) : null);
-            toast({ title: 'Sucesso', description: 'Conversa removida da sua visualização.' });
-        } catch (error) {
-            console.error("Error removing message:", error);
-            toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível remover a conversa.' });
-        }
-    };
-
-    useEffect(() => {
-        const fetchMessages = async () => {
-            if (!firestore || !member) {
-                setMessages([]);
-                setIsLoadingMessages(false);
-                return;
-            }
-            
-            setIsLoadingMessages(true);
-            setMessagesError(null);
-            try {
-                const messageIds = member.messageIds || [];
-                
-                if (messageIds.length === 0) {
-                    setMessages([]);
-                    setIsLoadingMessages(false);
-                    return;
-                }
-                
-                const messagePromises = messageIds.map(id => getDoc(doc(firestore, 'messages', id)));
-                const messageDocs = await Promise.all(messagePromises);
-                
-                const fetchedMessages = messageDocs
-                    .filter(docSnap => docSnap.exists())
-                    .map(docSnap => ({ id: docSnap.id, ...docSnap.data() } as Message));
-                
-                fetchedMessages.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
-                
-                setMessages(fetchedMessages);
-
-            } catch (error) {
-                console.error("Error fetching member messages:", error);
-                setMessagesError("Não foi possível buscar suas mensagens. Tente novamente mais tarde.");
-                toast({
-                    variant: "destructive",
-                    title: "Erro ao Carregar Mensagens",
-                    description: "Não foi possível buscar suas mensagens."
-                });
-            } finally {
-                setIsLoadingMessages(false);
-            }
-        };
-    
-        fetchMessages();
-    }, [firestore, member]);
+    const { data: messages, isLoading: isLoadingMessages, error: messagesError } = useCollection<Message>(messagesQuery);
 
     return (
         <ViewContainer title="Minhas Mensagens">
@@ -832,7 +780,7 @@ export default function MemberProfilePage() {
                 {isLoadingMessages ? (
                     <div className="flex justify-center items-center py-10"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
                 ) : messagesError ? (
-                     <Card><CardContent className="p-8 text-center text-destructive">{messagesError}</CardContent></Card>
+                     <Card><CardContent className="p-8 text-center text-destructive">Não foi possível carregar suas mensagens. Verifique suas permissões ou tente novamente.</CardContent></Card>
                 ) : messages && messages.length > 0 ? (
                     <Accordion type="single" collapsible className="w-full">
                         {messages.map(message => {
@@ -913,32 +861,6 @@ export default function MemberProfilePage() {
                                     ) : (
                                         <div className="text-center text-sm text-muted-foreground pt-4 border-t">
                                             Nenhuma resposta ainda.
-                                        </div>
-                                    )}
-
-                                    {isOwner && (
-                                        <div className="pt-4 border-t">
-                                            <AlertDialog>
-                                                <AlertDialogTrigger asChild>
-                                                    <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
-                                                        <Trash2 className="mr-2 h-4 w-4" /> Remover Conversa
-                                                    </Button>
-                                                </AlertDialogTrigger>
-                                                <AlertDialogContent>
-                                                    <AlertDialogHeader>
-                                                        <AlertDialogTitle>Remover Conversa?</AlertDialogTitle>
-                                                        <AlertDialogDescription>
-                                                            Esta ação removerá a conversa da sua caixa de entrada, mas ela poderá continuar visível para a administração. Deseja continuar?
-                                                        </AlertDialogDescription>
-                                                    </AlertDialogHeader>
-                                                    <AlertDialogFooter>
-                                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                                        <AlertDialogAction onClick={() => handleMemberDeleteMessage(message.id)} className="bg-destructive hover:bg-destructive/90">
-                                                            Remover
-                                                        </AlertDialogAction>
-                                                    </AlertDialogFooter>
-                                                </AlertDialogContent>
-                                            </AlertDialog>
                                         </div>
                                     )}
                                 </AccordionContent>
@@ -1188,7 +1110,3 @@ export default function MemberProfilePage() {
     </div>
   );
 }
-
-
-
-

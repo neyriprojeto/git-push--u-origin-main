@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect, useState, useRef } from 'react';
@@ -56,21 +57,24 @@ interface Member {
 const formatDate = (dateValue?: string | { seconds: number; nanoseconds: number } | Date, outputFormat: string = 'dd/MM/yyyy') => {
     if (!dateValue) return '';
     try {
-        let date;
-        if (typeof dateValue === 'string') {
-            date = new Date(dateValue);
+        let date: Date;
+        if (typeof dateValue === 'object' && dateValue !== null && 'seconds' in dateValue) {
+            date = new Date(dateValue.seconds * 1000);
         } else if (dateValue instanceof Date) {
             date = dateValue;
-        } else if (typeof dateValue === 'object' && dateValue !== null && 'seconds' in dateValue) {
-            date = new Date(dateValue.seconds * 1000);
+        } else if (typeof dateValue === 'string') {
+            // Tratar 'YYYY-MM-DD' como data local, não UTC
+            const dateString = dateValue.includes('T') ? dateValue : dateValue.replace(/-/g, '/');
+            date = new Date(dateString);
         } else {
            return '';
         }
-        // Ajuste para problemas de fuso horário que podem fazer a data voltar um dia
-        const timeZoneOffset = date.getTimezoneOffset() * 60000;
-        const adjustedDate = new Date(date.getTime() + timeZoneOffset);
+        
+        if (isNaN(date.getTime())) {
+            return '';
+        }
 
-        return format(adjustedDate, outputFormat);
+        return format(date, outputFormat);
     } catch {
         return '';
     }
@@ -117,19 +121,6 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
             </div>
         );
     }
-
-    // Mapa de dados dinâmicos do membro para garantir a sincronização
-    const dynamicDataMap: Record<string, string | null> = {
-        'Valor Nome': member.nome ? `Nome: ${member.nome}` : null,
-        'Valor Nº Reg.': member.recordNumber ? `Nº Reg.: ${member.recordNumber}` : null,
-        'Valor Nascimento': member.dataNascimento ? `Nasc: ${formatDate(member.dataNascimento)}` : null,
-        'Valor RG': member.rg ? `RG: ${member.rg}` : null,
-        'Valor CPF': member.cpf ? `CPF: ${member.cpf}` : null,
-        'Valor Cargo': member.cargo ? `Cargo: ${member.cargo}` : null,
-        'Membro Desde': member.dataMembro ? `Membro desde: ${formatDate(member.dataMembro)}` : null,
-        'Validade': `Validade: ${format(new Date(new Date().setFullYear(new Date().getFullYear() + 1)), 'dd/MM/yyyy')}`,
-        'Congregação': member.congregacao || null, // Se for nulo, usará o texto do template
-    };
     
     const renderElement = (id: string, el: ElementStyle) => {
         const isImage = 'src' in el;
@@ -184,22 +175,25 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
                 );
             }
         } else if (isText) {
-            let textToRender: string | null;
+            let textToRender: string | null = el.text || null;
 
-            if (id in dynamicDataMap) {
-                // É um campo dinâmico. Use o valor do mapa (que pode ser null).
-                textToRender = dynamicDataMap[id];
-                // A exceção é a 'Congregação', que pode usar o texto do template como fallback.
-                if (id === 'Congregação' && textToRender === null) {
-                    textToRender = el.text || null;
-                }
-            } else {
-                // É um campo estático (ex: 'Título 1'). Use o texto do template.
-                textToRender = el.text || null;
+            // Override with dynamic data if applicable
+            if (id === 'Valor Nome' && member.nome) textToRender = `Nome: ${member.nome}`;
+            else if (id === 'Valor Nº Reg.' && member.recordNumber) textToRender = `Nº Reg.: ${member.recordNumber}`;
+            else if (id === 'Valor Nascimento' && member.dataNascimento) textToRender = `Nasc: ${formatDate(member.dataNascimento)}`;
+            else if (id === 'Valor RG' && member.rg) textToRender = `RG: ${member.rg}`;
+            else if (id === 'Valor CPF' && member.cpf) textToRender = `CPF: ${member.cpf}`;
+            else if (id === 'Valor Cargo' && member.cargo) textToRender = `Cargo: ${member.cargo}`;
+            else if (id === 'Membro Desde' && member.dataMembro) textToRender = `Membro desde: ${formatDate(member.dataMembro)}`;
+            else if (id === 'Congregação') textToRender = member.congregacao || el.text || null;
+            else if (id === 'Validade') textToRender = `Validade: ${format(new Date(new Date().setFullYear(new Date().getFullYear() + 1)), 'dd/MM/yyyy')}`;
+            else if (id.startsWith('Valor ')) {
+                // If it's a dynamic field but the data is missing, render nothing.
+                textToRender = null;
             }
             
-            // Se o resultado final for nulo (ex: um campo dinâmico sem dados), não renderize nada.
-            if (textToRender === null) {
+            // If textToRender is null or empty after checks, don't render the element.
+            if (!textToRender) {
                 return null;
             }
             
@@ -420,3 +414,6 @@ export default function MemberCardPage() {
         </div>
     );
 }
+
+
+  

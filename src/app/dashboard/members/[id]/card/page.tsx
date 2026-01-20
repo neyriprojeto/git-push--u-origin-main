@@ -175,53 +175,42 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
                 );
             }
         } else if (isText) {
-             let textToRender: string | undefined;
+            const dynamicTextMap: Record<string, string | undefined> = {
+                'Valor Nome': member.nome ? `Nome: ${member.nome}` : undefined,
+                'Valor Nº Reg.': member.recordNumber ? `Nº Reg.: ${member.recordNumber}` : undefined,
+                'Valor Nascimento': member.dataNascimento ? `Nasc: ${formatDate(member.dataNascimento, 'dd/MM/yyyy')}` : undefined,
+                'Valor RG': member.rg ? `RG: ${member.rg}` : undefined,
+                'Valor CPF': member.cpf ? `CPF: ${member.cpf}` : undefined,
+                'Valor Cargo': member.cargo ? `Cargo: ${member.cargo}` : undefined,
+                'Membro Desde': member.dataMembro ? `Membro desde: ${formatDate(member.dataMembro, 'dd/MM/yyyy')}` : undefined,
+                'Congregação': member.congregacao,
+                'Validade': `Validade: ${format(new Date(new Date().setFullYear(new Date().getFullYear() + 1)), 'dd/MM/yyyy')}`
+            };
 
-            switch (id) {
-                case 'Valor Nome':
-                    if (member.nome) textToRender = `Nome: ${member.nome}`;
-                    break;
-                case 'Valor Nº Reg.':
-                    if (member.recordNumber) textToRender = `Nº Reg.: ${member.recordNumber}`;
-                    break;
-                case 'Valor Nascimento':
-                    if (member.dataNascimento) textToRender = `Nasc: ${formatDate(member.dataNascimento)}`;
-                    break;
-                case 'Valor RG':
-                    if (member.rg) textToRender = `RG: ${member.rg}`;
-                    break;
-                case 'Valor CPF':
-                    if (member.cpf) textToRender = `CPF: ${member.cpf}`;
-                    break;
-                case 'Valor Cargo':
-                    if (member.cargo) textToRender = `Cargo: ${member.cargo}`;
-                    break;
-                case 'Membro Desde':
-                    if (member.dataMembro) textToRender = `Membro desde: ${formatDate(member.dataMembro)}`;
-                    break;
-                case 'Congregação':
-                    textToRender = member.congregacao || el.text;
-                    break;
-                case 'Validade':
-                    textToRender = `Validade: ${format(new Date(new Date().setFullYear(new Date().getFullYear() + 1)), 'dd/MM/yyyy')}`;
-                    break;
-                default:
-                    // For static elements like 'Título 1', use their text from the template
-                    textToRender = el.text;
+            let textToRender: string | undefined = el.text; // Default to template text
+
+            if (id in dynamicTextMap) {
+                textToRender = dynamicTextMap[id];
             }
 
+            // For congregation, fall back to template if member has no congregation
+            if (id === 'Congregação' && !member.congregacao) {
+                textToRender = el.text;
+            }
+            
             if (textToRender === undefined || textToRender === null) {
-                return null; // Explicitly don't render if data is missing for dynamic fields
+                return null; // Don't render if dynamic data is missing and it's a dynamic field
             }
             
             style.fontSize = el.size.fontSize ? `${el.size.fontSize}px` : undefined;
             style.color = color;
             style.fontWeight = el.fontWeight;
             style.textAlign = el.textAlign;
-            style.whiteSpace = 'pre-wrap';
-
-            if (id.includes('Título') || id.includes('Valor') || id.includes('Assinatura Pastor') || id.includes('Validade') || id.includes('Membro Desde')) {
+            
+            if (id.includes('Nº Reg') || id.includes('Nascimento') || id.includes('RG') || id.includes('CPF') || id.includes('Validade') || id.includes('Membro Desde')) {
                 style.whiteSpace = 'nowrap';
+            } else {
+                style.whiteSpace = 'pre-wrap'; // Default for other text, allowing wrapping and respecting '\n'
             }
 
             elementContent = <p style={style}>{textToRender}</p>;
@@ -431,4 +420,3 @@ export default function MemberCardPage() {
         </div>
     );
 }
-

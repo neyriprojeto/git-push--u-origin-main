@@ -125,51 +125,43 @@ const renderElement = (currentMember: Member, id: string, el: ElementStyle, text
     }
 
     if (isText) {
+        const dynamicTextMap: Record<string, string | undefined> = {
+            'Valor Nome': currentMember.nome ? `Nome: ${currentMember.nome}` : undefined,
+            'Valor Nº Reg.': currentMember.recordNumber ? `Nº Reg.: ${currentMember.recordNumber}` : undefined,
+            'Valor Nascimento': currentMember.dataNascimento ? `Nasc: ${formatDate(currentMember.dataNascimento, 'dd/MM/yyyy')}` : undefined,
+            'Valor RG': currentMember.rg ? `RG: ${currentMember.rg}` : undefined,
+            'Valor CPF': currentMember.cpf ? `CPF: ${currentMember.cpf}` : undefined,
+            'Valor Cargo': currentMember.cargo ? `Cargo: ${currentMember.cargo}` : undefined,
+            'Membro Desde': currentMember.dataMembro ? `Membro desde: ${formatDate(currentMember.dataMembro, 'dd/MM/yyyy')}` : undefined,
+            'Congregação': currentMember.congregacao,
+            'Validade': `Validade: ${format(new Date(new Date().setFullYear(new Date().getFullYear() + 1)), 'dd/MM/yyyy')}`
+        };
+
+        let textToRender: string | undefined = el.text; // Default to template text
+
+        if (id in dynamicTextMap) {
+            textToRender = dynamicTextMap[id];
+        }
+
+        // For congregation, fall back to template if member has no congregation
+        if (id === 'Congregação' && !currentMember.congregacao) {
+            textToRender = el.text;
+        }
+        
+        if (textToRender === undefined || textToRender === null) {
+            return null; // Don't render if dynamic data is missing and it's a dynamic field
+        }
+        
         style.fontSize = el.size.fontSize ? `${el.size.fontSize}px` : undefined;
         style.color = color;
         style.fontWeight = el.fontWeight;
         style.textAlign = el.textAlign;
-        style.whiteSpace = 'pre-wrap';
-        if (id.includes('Título') || id.includes('Valor') || id.includes('Assinatura Pastor') || id.includes('Validade') || id.includes('Membro Desde')) {
+        
+        // Apply 'nowrap' only to specific, short fields. Others will wrap by default.
+        if (id.includes('Nº Reg') || id.includes('Nascimento') || id.includes('RG') || id.includes('CPF') || id.includes('Validade') || id.includes('Membro Desde')) {
             style.whiteSpace = 'nowrap';
-        }
-
-        let textToRender: string | undefined;
-
-        switch (id) {
-            case 'Valor Nome':
-                if (currentMember.nome) textToRender = `Nome: ${currentMember.nome}`;
-                break;
-            case 'Valor Nº Reg.':
-                if (currentMember.recordNumber) textToRender = `Nº Reg.: ${currentMember.recordNumber}`;
-                break;
-            case 'Valor Nascimento':
-                if (currentMember.dataNascimento) textToRender = `Nasc: ${formatDate(currentMember.dataNascimento, 'dd/MM/yyyy')}`;
-                break;
-            case 'Valor RG':
-                if (currentMember.rg) textToRender = `RG: ${currentMember.rg}`;
-                break;
-            case 'Valor CPF':
-                if (currentMember.cpf) textToRender = `CPF: ${currentMember.cpf}`;
-                break;
-            case 'Valor Cargo':
-                if (currentMember.cargo) textToRender = `Cargo: ${currentMember.cargo}`;
-                break;
-            case 'Membro Desde':
-                if (currentMember.dataMembro) textToRender = `Membro desde: ${formatDate(currentMember.dataMembro, 'dd/MM/yyyy')}`;
-                break;
-            case 'Congregação':
-                textToRender = currentMember.congregacao || el.text;
-                break;
-            case 'Validade':
-                textToRender = `Validade: ${format(new Date(new Date().setFullYear(new Date().getFullYear() + 1)), 'dd/MM/yyyy')}`;
-                break;
-            default:
-                textToRender = el.text;
-        }
-
-        if (textToRender === undefined || textToRender === null) {
-            return null;
+        } else {
+            style.whiteSpace = 'pre-wrap'; // Default for other text, allowing wrapping and respecting '\n'
         }
         
         return <p key={id} style={style}>{textToRender}</p>;

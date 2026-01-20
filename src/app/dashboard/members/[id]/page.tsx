@@ -328,6 +328,7 @@ export default function MemberProfilePage() {
 
   // State for image cropping
   const [crop, setCrop] = useState<Crop>();
+  const [completedCrop, setCompletedCrop] = useState<Crop>();
   const [aspect, setAspect] = useState<number | undefined>();
   const [imageToCrop, setImageToCrop] = useState('');
   const [isCropping, setIsCropping] = useState(false);
@@ -481,15 +482,15 @@ export default function MemberProfilePage() {
   const saveCroppedImage = async () => {
     const image = imgRef.current;
     const canvas = previewCanvasRef.current;
-    if (!image || !canvas || !crop || !firestore) {
+    if (!image || !canvas || !completedCrop || !firestore) {
       toast({ variant: 'destructive', title: 'Erro de Corte', description: 'Não foi possível processar a imagem.' });
       return;
     }
     setIsUploading(true);
     const scaleX = image.naturalWidth / image.width;
     const scaleY = image.naturalHeight / image.height;
-    canvas.width = Math.floor(crop.width * scaleX);
-    canvas.height = Math.floor(crop.height * scaleY);
+    canvas.width = Math.floor(completedCrop.width * scaleX);
+    canvas.height = Math.floor(completedCrop.height * scaleY);
     const ctx = canvas.getContext('2d');
     if (!ctx) {
       toast({ variant: 'destructive', title: 'Erro', description: 'Could not get 2d context' });
@@ -500,7 +501,7 @@ export default function MemberProfilePage() {
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    ctx.drawImage(image, crop.x * scaleX, crop.y * scaleY, crop.width * scaleX, crop.height * scaleY, 0, 0, canvas.width, canvas.height);
+    ctx.drawImage(image, completedCrop.x * scaleX, completedCrop.y * scaleY, completedCrop.width * scaleX, completedCrop.height * scaleY, 0, 0, canvas.width, canvas.height);
     
     canvas.toBlob(async (blob) => {
       if (!blob || !currentFile) {
@@ -509,7 +510,7 @@ export default function MemberProfilePage() {
         return;
       }
       try {
-        const croppedFile = new File([blob], currentFile.name, { type: blob.type });
+        const croppedFile = new File([blob], currentFile.name, { type: 'image/png' });
         const src = await uploadArquivo(croppedFile);
         memberForm.setValue('avatar', src);
         await onMemberSubmit(memberForm.getValues());
@@ -1229,7 +1230,31 @@ export default function MemberProfilePage() {
   return (
     <div className="flex-1 space-y-4 bg-secondary">
        <Dialog open={isCropping} onOpenChange={setIsCropping}>
-            <DialogContent className="max-w-md"><DialogHeader><DialogTitle>Editar Foto de Perfil</DialogTitle></DialogHeader><div className='flex items-center justify-center p-4 bg-muted/20'>{!!imageToCrop && (<ReactCrop crop={crop} onChange={(_, percentCrop) => setCrop(percentCrop)} onComplete={(c) => memberForm.setValue('avatar', c.width > 0 ? 'new' : '')} aspect={aspect} className='max-w-full'><Image ref={imgRef} alt="Recortar imagem" src={imageToCrop} onLoad={onImageLoad} width={400} height={400} className="max-h-[60vh] object-contain" /></ReactCrop>)}</div><DialogFooter><Button variant="outline" onClick={() => setIsCropping(false)}>Cancelar</Button><Button onClick={saveCroppedImage} disabled={isUploading}>{isUploading ? <Loader2 className="animate-spin mr-2"/> : <Save className="mr-2 h-4 w-4"/>}{isUploading ? 'Salvando...' : 'Salvar Foto'}</Button></DialogFooter></DialogContent>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Editar Foto de Perfil</DialogTitle>
+              </DialogHeader>
+              <div className='flex items-center justify-center p-4 bg-muted/20'>
+                {!!imageToCrop && (
+                  <ReactCrop
+                    crop={crop}
+                    onChange={(_, percentCrop) => setCrop(percentCrop)}
+                    onComplete={(c) => setCompletedCrop(c)}
+                    aspect={aspect}
+                    className='max-w-full'
+                  >
+                    <Image ref={imgRef} alt="Recortar imagem" src={imageToCrop} onLoad={onImageLoad} width={400} height={400} className="max-h-[60vh] object-contain" />
+                  </ReactCrop>
+                )}
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsCropping(false)}>Cancelar</Button>
+                <Button onClick={saveCroppedImage} disabled={isUploading}>
+                  {isUploading ? <Loader2 className="animate-spin mr-2"/> : <Save className="mr-2 h-4 w-4"/>}
+                  {isUploading ? 'Salvando...' : 'Salvar Foto'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
         </Dialog>
         <canvas ref={previewCanvasRef} style={{ display: 'none' }} />
 

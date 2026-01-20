@@ -100,7 +100,8 @@ const calculateValidityDate = (memberSince?: string | { seconds: number; nanosec
     }
 
     const today = new Date();
-    const currentYear = today.getFullYear();
+    // Assuming today is in 2026 for testing as per user request
+    const currentYear = 2026;
     
     // The user wants the validity year to be the next year if we are in the current year.
     // This logic sets the validity to the member's anniversary in the year AFTER the current one.

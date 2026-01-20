@@ -107,14 +107,10 @@ const calculateValidityDate = (memberSince?: string | { seconds: number; nanosec
 
     const today = new Date();
     // Assuming today is in 2026 for testing as per user request
-    const currentYear = 2026; //new Date().getFullYear();
-    const memberAnniversaryThisYear = new Date(currentYear, memberSinceDate.getMonth(), memberSinceDate.getDate());
+    const currentYear = 2026;
     
-    // If the anniversary has already passed this year, the validity is for the next year.
-    // Otherwise, it's this year. The user wants it to be for the *next* year.
-    // Example: Today is Feb 2026, anniversary is Jan 2026 -> renewal is Jan 2027.
-    // Example: Today is Feb 2026, anniversary is Mar 2026 -> renewal is Mar 2027.
-    // The user wants it to be "next year" relative to the current year.
+    // The user wants the validity year to be the next year if we are in the current year.
+    // This logic sets the validity to the member's anniversary in the year AFTER the current one.
     const validityYear = currentYear + 1;
 
     const expiryMonth = memberSinceDate.getMonth();
@@ -179,7 +175,6 @@ const MemberCardFace = ({ isFront, currentMember, templateData }: { isFront: boo
         
         let textContent: string | undefined = el.text;
 
-        // --- Explicit Data Mapping ---
         switch(id) {
             case 'Nome':
                 if (currentMember.nome) textContent = `Nome: ${currentMember.nome}`;
@@ -237,7 +232,7 @@ const MemberCardFace = ({ isFront, currentMember, templateData }: { isFront: boo
         style.textAlign = el.textAlign;
         
         style.whiteSpace = 'pre-wrap';
-        if (id.includes('Título') || id === 'Assinatura Pastor') {
+        if (id.includes('Título') || id === 'Assinatura Pastor' || id === 'Membro Desde' || id === 'Validade') {
             style.whiteSpace = 'nowrap';
         }
 

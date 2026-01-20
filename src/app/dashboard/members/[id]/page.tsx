@@ -86,6 +86,45 @@ const formatDate = (dateValue?: string | { seconds: number; nanoseconds: number 
     }
 };
 
+const calculateValidityDate = (memberSince?: string | { seconds: number; nanoseconds: number } | Date): string => {
+    if (!memberSince) return '__/__/____';
+
+    let memberSinceDate: Date;
+    if (typeof memberSince === 'object' && memberSince !== null && 'seconds' in memberSince) {
+        memberSinceDate = new Date(memberSince.seconds * 1000);
+    } else if (memberSince instanceof Date) {
+        memberSinceDate = memberSince;
+    } else if (typeof memberSince === 'string') {
+        const dateString = memberSince.includes('T') ? memberSince : memberSince.replace(/-/g, '/');
+        memberSinceDate = new Date(dateString);
+    } else {
+        return '__/__/____';
+    }
+
+    if (isNaN(memberSinceDate.getTime())) {
+        return '__/__/____';
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Normalize today's date
+    const currentYear = today.getFullYear();
+    
+    const expiryMonth = memberSinceDate.getMonth();
+    const expiryDay = memberSinceDate.getDate();
+
+    // Create the potential expiry date for the current year
+    let expiryDate = new Date(currentYear, expiryMonth, expiryDay);
+    expiryDate.setHours(0, 0, 0, 0);
+
+    // If the expiry date for this year has already passed, set it to next year
+    if (expiryDate < today) {
+        expiryDate.setFullYear(currentYear + 1);
+    }
+
+    return format(expiryDate, 'dd/MM/yyyy');
+};
+
+
 const renderElement = (currentMember: Member, id: string, el: ElementStyle, textColors: CardTemplateData['textColors'], qrCodeUrl: string): React.ReactNode => {
     if (!el) return null;
     const isImage = 'src' in el;
@@ -127,32 +166,27 @@ const renderElement = (currentMember: Member, id: string, el: ElementStyle, text
     }
 
     if (isText) {
-        let textToRender: string | undefined;
+        const dynamicDataMap: Record<string, string | undefined> = {
+            'Valor Nome': currentMember.nome ? `Nome: ${currentMember.nome}` : undefined,
+            'Valor Nº Reg.': currentMember.recordNumber ? `Nº Reg.: ${currentMember.recordNumber}` : undefined,
+            'Valor Nascimento': currentMember.dataNascimento ? `Nasc: ${formatDate(currentMember.dataNascimento, 'dd/MM/yyyy')}` : undefined,
+            'Valor RG': currentMember.rg ? `RG: ${currentMember.rg}` : undefined,
+            'Valor CPF': currentMember.cpf ? `CPF: ${currentMember.cpf}` : undefined,
+            'Valor Cargo': currentMember.cargo ? `Cargo: ${currentMember.cargo}` : undefined,
+            'Membro Desde': currentMember.dataMembro ? `Membro desde: ${formatDate(currentMember.dataMembro, 'dd/MM/yyyy')}` : undefined,
+            'Validade': `Validade: ${calculateValidityDate(currentMember.dataMembro)}`,
+            'Congregação': currentMember.congregacao,
+        };
 
-        if (id === 'Valor Nome') {
-            textToRender = currentMember.nome ? `Nome: ${currentMember.nome}` : undefined;
-        } else if (id === 'Valor Nº Reg.') {
-            textToRender = currentMember.recordNumber ? `Nº Reg.: ${currentMember.recordNumber}` : undefined;
-        } else if (id === 'Valor Nascimento') {
-            textToRender = currentMember.dataNascimento ? `Nasc: ${formatDate(currentMember.dataNascimento, 'dd/MM/yyyy')}` : undefined;
-        } else if (id === 'Valor RG') {
-            textToRender = currentMember.rg ? `RG: ${currentMember.rg}` : undefined;
-        } else if (id === 'Valor CPF') {
-            textToRender = currentMember.cpf ? `CPF: ${currentMember.cpf}` : undefined;
-        } else if (id === 'Valor Cargo') {
-            textToRender = currentMember.cargo ? `Cargo: ${currentMember.cargo}` : undefined;
-        } else if (id === 'Membro Desde') {
-            textToRender = currentMember.dataMembro ? `Membro desde: ${formatDate(currentMember.dataMembro, 'dd/MM/yyyy')}` : undefined;
-        } else if (id === 'Validade') {
-            textToRender = `Validade: ${format(new Date(new Date().setFullYear(new Date().getFullYear() + 1)), 'dd/MM/yyyy')}`;
-        } else if (id === 'Congregação') {
-            textToRender = currentMember.congregacao || el.text;
-        } else {
-            textToRender = el.text;
-        }
-        
-        if (textToRender === undefined || textToRender === null) {
-            return null;
+        let textToRender = el.text;
+
+        if (dynamicDataMap.hasOwnProperty(id)) {
+            const dynamicValue = dynamicDataMap[id];
+            if (dynamicValue) {
+                textToRender = dynamicValue;
+            } else {
+                return null; // Don't render if the dynamic data is missing
+            }
         }
         
         style.fontSize = el.size.fontSize ? `${el.size.fontSize}px` : undefined;
@@ -161,7 +195,7 @@ const renderElement = (currentMember: Member, id: string, el: ElementStyle, text
         style.textAlign = el.textAlign;
         
         style.whiteSpace = 'pre-wrap';
-        if (id.includes('Título') || id.includes('Assinatura Pastor') || id.includes('Validade') || id.includes('Membro Desde') || id.includes('Nº Reg') || id.includes('Nascimento') || id.includes('RG') || id.includes('CPF')) {
+        if (id.includes('Título') || id === 'Assinatura Pastor' || id === 'Validade' || id === 'Membro Desde' || id.includes('Nº Reg') || id.includes('Nascimento') || id.includes('RG') || id.includes('CPF')) {
             style.whiteSpace = 'nowrap';
         }
         

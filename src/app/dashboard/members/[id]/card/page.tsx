@@ -100,18 +100,15 @@ const calculateValidityDate = (memberSince?: string | { seconds: number; nanosec
     }
 
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
     const currentYear = today.getFullYear();
     
     const expiryMonth = memberSinceDate.getMonth();
     const expiryDay = memberSinceDate.getDate();
 
-    // The card is valid until the anniversary in the current year...
     let expiryDateThisYear = new Date(currentYear, expiryMonth, expiryDay);
-    expiryDateThisYear.setHours(0, 0, 0, 0);
 
-    // If that date has already passed or is today, the card is valid until the NEXT year's anniversary.
-    if (expiryDateThisYear <= today) {
+    // If anniversary has already passed this year, set validity for next year
+    if (expiryDateThisYear < today) {
         return format(new Date(currentYear + 1, expiryMonth, expiryDay), 'dd/MM/yyyy');
     } else {
         return format(expiryDateThisYear, 'dd/MM/yyyy');
@@ -200,24 +197,44 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
             }
         }
         
-        const dynamicDataMap: Record<string, string | undefined> = {
-            'Valor Nome': member.nome ? `Nome: ${member.nome}` : undefined,
-            'Valor Nº Reg.': member.recordNumber ? `Nº Reg.: ${member.recordNumber}` : undefined,
-            'Valor Nascimento': member.dataNascimento ? `Nasc: ${formatDate(member.dataNascimento, 'dd/MM/yyyy')}` : undefined,
-            'Valor RG': member.rg ? `RG: ${member.rg}` : undefined,
-            'Valor CPF': member.cpf ? `CPF: ${member.cpf}` : undefined,
-            'Valor Cargo': member.cargo ? `Cargo: ${member.cargo}` : undefined,
-            'Congregação': member.congregacao,
-            'Membro Desde': member.dataMembro ? `Membro desde: ${formatDate(member.dataMembro, 'dd/MM/yyyy')}` : undefined,
-            'Validade': `Validade: ${calculateValidityDate(member.dataMembro)}`,
-        };
-        
-        let textContent: string | undefined = undefined;
+        let textContent: string | undefined = el.text;
 
-        if (id in dynamicDataMap) {
-            textContent = dynamicDataMap[id];
-        } else {
-            textContent = el.text;
+        switch(id) {
+            case 'Valor Nome':
+                if (member.nome) textContent = `Nome: ${member.nome}`;
+                else return null;
+                break;
+            case 'Valor Nº Reg.':
+                if (member.recordNumber) textContent = `Nº Reg.: ${member.recordNumber}`;
+                else return null;
+                break;
+            case 'Valor Nascimento':
+                if (member.dataNascimento) textContent = `Nasc: ${formatDate(member.dataNascimento, 'dd/MM/yyyy')}`;
+                else return null;
+                break;
+            case 'Valor RG':
+                if (member.rg) textContent = `RG: ${member.rg}`;
+                else return null;
+                break;
+            case 'Valor CPF':
+                if (member.cpf) textContent = `CPF: ${member.cpf}`;
+                else return null;
+                break;
+            case 'Valor Cargo':
+                if (member.cargo) textContent = `Cargo: ${member.cargo}`;
+                else return null;
+                break;
+            case 'Congregação':
+                if (member.congregacao) textContent = member.congregacao;
+                else return null;
+                break;
+            case 'Membro Desde':
+                if (member.dataMembro) textContent = `Membro desde: ${formatDate(member.dataMembro, 'dd/MM/yyyy')}`;
+                else return null;
+                break;
+            case 'Validade':
+                textContent = `Validade: ${calculateValidityDate(member.dataMembro)}`;
+                break;
         }
 
         if (!textContent) {
@@ -238,7 +255,7 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
         style.textAlign = el.textAlign;
         
         style.whiteSpace = 'pre-wrap';
-        if (id.includes('Título') || id === 'Assinatura Pastor' || id === 'Validade' || id.includes('Membro Desde') || id.includes('Nº Reg') || id.includes('Nascimento') || id.includes('RG') || id.includes('CPF')) {
+        if (id.includes('Título') || id === 'Assinatura Pastor') {
             style.whiteSpace = 'nowrap';
         }
 

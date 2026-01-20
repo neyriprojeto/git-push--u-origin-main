@@ -518,7 +518,7 @@ export default function CardStudioPage() {
             style.textAlign = el.textAlign;
             style.whiteSpace = 'pre-wrap';
 
-            if (id.includes('Título') || id === 'Assinatura Pastor' || id === 'Validade' || id === 'Membro Desde' || id.includes('Nº Reg') || id.includes('Nascimento') || id.includes('RG') || id.includes('CPF')) {
+            if (id.includes('Título') || id === 'Assinatura Pastor') {
                 style.whiteSpace = 'nowrap';
             }
         } else { // isImage
@@ -746,7 +746,7 @@ export default function CardStudioPage() {
                                   </div>
                                   <div className="grid grid-cols-3 items-center gap-4">
                                       <Label htmlFor="address">Endereço</Label>
-                                      <Input id="address" value={elements['Endereço']?.text || ''} onChange={(e) => handleElementChange('Endereço', e.target.value)} className="col-span-2 h-8" />
+                                      <Textarea id="address" value={elements['Endereço']?.text || ''} onChange={(e) => handleElementChange('Endereço', e.target.value)} className="col-span-2 h-8" />
                                   </div>
                               </div>
                           </div>

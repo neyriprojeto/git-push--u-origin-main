@@ -106,16 +106,14 @@ const calculateValidityDate = (memberSince?: string | { seconds: number; nanosec
     }
     
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
     const currentYear = today.getFullYear();
     
     const expiryMonth = memberSinceDate.getMonth();
     const expiryDay = memberSinceDate.getDate();
 
     let expiryDateThisYear = new Date(currentYear, expiryMonth, expiryDay);
-    expiryDateThisYear.setHours(0, 0, 0, 0);
 
-    if (expiryDateThisYear <= today) {
+    if (expiryDateThisYear < today) {
         return format(new Date(currentYear + 1, expiryMonth, expiryDay), 'dd/MM/yyyy');
     } else {
         return format(expiryDateThisYear, 'dd/MM/yyyy');
@@ -157,24 +155,44 @@ const renderElement = (currentMember: Member, id: string, el: ElementStyle, text
         }
     }
     
-    const dynamicDataMap: Record<string, string | undefined> = {
-        'Valor Nome': currentMember.nome ? `Nome: ${currentMember.nome}` : undefined,
-        'Valor Nº Reg.': currentMember.recordNumber ? `Nº Reg.: ${currentMember.recordNumber}` : undefined,
-        'Valor Nascimento': currentMember.dataNascimento ? `Nasc: ${formatDate(currentMember.dataNascimento, 'dd/MM/yyyy')}` : undefined,
-        'Valor RG': currentMember.rg ? `RG: ${currentMember.rg}` : undefined,
-        'Valor CPF': currentMember.cpf ? `CPF: ${currentMember.cpf}` : undefined,
-        'Valor Cargo': currentMember.cargo ? `Cargo: ${currentMember.cargo}` : undefined,
-        'Congregação': currentMember.congregacao,
-        'Membro Desde': currentMember.dataMembro ? `Membro desde: ${formatDate(currentMember.dataMembro, 'dd/MM/yyyy')}` : undefined,
-        'Validade': `Validade: ${calculateValidityDate(currentMember.dataMembro)}`,
-    };
+    let textContent: string | undefined = el.text;
 
-    let textContent: string | undefined = undefined;
-
-    if (id in dynamicDataMap) {
-        textContent = dynamicDataMap[id];
-    } else {
-        textContent = el.text;
+    switch(id) {
+        case 'Valor Nome':
+            if (currentMember.nome) textContent = `Nome: ${currentMember.nome}`;
+            else return null;
+            break;
+        case 'Valor Nº Reg.':
+            if (currentMember.recordNumber) textContent = `Nº Reg.: ${currentMember.recordNumber}`;
+            else return null;
+            break;
+        case 'Valor Nascimento':
+            if (currentMember.dataNascimento) textContent = `Nasc: ${formatDate(currentMember.dataNascimento, 'dd/MM/yyyy')}`;
+            else return null;
+            break;
+        case 'Valor RG':
+            if (currentMember.rg) textContent = `RG: ${currentMember.rg}`;
+            else return null;
+            break;
+        case 'Valor CPF':
+            if (currentMember.cpf) textContent = `CPF: ${currentMember.cpf}`;
+            else return null;
+            break;
+        case 'Valor Cargo':
+            if (currentMember.cargo) textContent = `Cargo: ${currentMember.cargo}`;
+            else return null;
+            break;
+        case 'Congregação':
+            if (currentMember.congregacao) textContent = currentMember.congregacao;
+            else return null;
+            break;
+        case 'Membro Desde':
+             if (currentMember.dataMembro) textContent = `Membro desde: ${formatDate(currentMember.dataMembro, 'dd/MM/yyyy')}`;
+             else return null;
+             break;
+        case 'Validade':
+             textContent = `Validade: ${calculateValidityDate(currentMember.dataMembro)}`;
+             break;
     }
     
     if (!textContent) {
@@ -194,7 +212,7 @@ const renderElement = (currentMember: Member, id: string, el: ElementStyle, text
     style.textAlign = el.textAlign;
     
     style.whiteSpace = 'pre-wrap';
-    if (id.includes('Título') || id === 'Assinatura Pastor' || id === 'Validade' || id.includes('Membro Desde') || id.includes('Nº Reg') || id.includes('Nascimento') || id.includes('RG') || id.includes('CPF')) {
+    if (id.includes('Título') || id === 'Assinatura Pastor') {
         style.whiteSpace = 'nowrap';
     }
     

@@ -104,20 +104,18 @@ const calculateValidityDate = (memberSince?: string | { seconds: number; nanosec
     if (isNaN(memberSinceDate.getTime())) {
         return '__/__/____';
     }
-    
+
     const today = new Date();
     const currentYear = today.getFullYear();
     
+    // The user wants the validity year to be the next year if we are in the current year.
+    // This logic sets the validity to the member's anniversary in the year AFTER the current one.
+    const validityYear = currentYear + 1;
+
     const expiryMonth = memberSinceDate.getMonth();
     const expiryDay = memberSinceDate.getDate();
 
-    let expiryDateThisYear = new Date(currentYear, expiryMonth, expiryDay);
-
-    if (expiryDateThisYear < today) {
-        return format(new Date(currentYear + 1, expiryMonth, expiryDay), 'dd/MM/yyyy');
-    } else {
-        return format(expiryDateThisYear, 'dd/MM/yyyy');
-    }
+    return format(new Date(validityYear, expiryMonth, expiryDay), 'dd/MM/yyyy');
 };
 
 
@@ -213,7 +211,7 @@ const renderElement = (currentMember: Member, id: string, el: ElementStyle, text
     style.textAlign = el.textAlign;
     
     style.whiteSpace = 'pre-wrap';
-    if (id.includes('Título') || id === 'Assinatura Pastor') {
+    if (id.includes('Título') || id === 'Assinatura Pastor' || id === 'Membro Desde' || id === 'Validade') {
         style.whiteSpace = 'nowrap';
     }
     

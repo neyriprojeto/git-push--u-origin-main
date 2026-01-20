@@ -104,42 +104,34 @@ const calculateValidityDate = (memberSince?: string | { seconds: number; nanosec
     if (isNaN(memberSinceDate.getTime())) {
         return '__/__/____';
     }
-
+    
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Normalize today's date
+    today.setHours(0, 0, 0, 0);
     const currentYear = today.getFullYear();
     
     const expiryMonth = memberSinceDate.getMonth();
     const expiryDay = memberSinceDate.getDate();
 
-    // Create the potential expiry date for the current year
-    let expiryDate = new Date(currentYear, expiryMonth, expiryDay);
-    expiryDate.setHours(0, 0, 0, 0);
+    let expiryDateThisYear = new Date(currentYear, expiryMonth, expiryDay);
+    expiryDateThisYear.setHours(0, 0, 0, 0);
 
-    // If the expiry date for this year has already passed, set it to next year
-    if (expiryDate < today) {
-        expiryDate.setFullYear(currentYear + 1);
+    if (expiryDateThisYear < today) {
+        return format(new Date(currentYear + 1, expiryMonth, expiryDay), 'dd/MM/yyyy');
+    } else {
+        return format(expiryDateThisYear, 'dd/MM/yyyy');
     }
-
-    return format(expiryDate, 'dd/MM/yyyy');
 };
 
 
 const renderElement = (currentMember: Member, id: string, el: ElementStyle, textColors: CardTemplateData['textColors'], qrCodeUrl: string): React.ReactNode => {
-    if (!el) return null;
     const isImage = 'src' in el;
-    const isText = 'text' in el;
-
-    let color = '#000000';
-    if (isText && textColors) {
-        const isTitle = id.includes('Título') || id === 'Congregação' || id === 'Endereço';
-        const isBackText = id.includes('Assinatura') || id.includes('Validade') || id.includes('Membro Desde');
-        if (isTitle) color = textColors.title;
-        else if (isBackText) color = textColors.backText;
-        else color = textColors.personalData;
-    }
-
-    const style: React.CSSProperties = { position: 'absolute', top: `${el.position.top}%`, left: `${el.position.left}%` };
+    
+    const style: React.CSSProperties = {
+        position: 'absolute',
+        top: `${el.position.top}%`,
+        left: `${el.position.left}%`,
+        lineHeight: 1.2,
+    };
     if (el.textAlign === 'center') style.transform = 'translateX(-50%)';
     else if (el.textAlign === 'right') style.transform = 'translateX(-100%)';
 
@@ -147,8 +139,8 @@ const renderElement = (currentMember: Member, id: string, el: ElementStyle, text
         style.width = el.size.width ? `${el.size.width}px` : 'auto';
         style.height = el.size.height ? `${el.size.height}px` : 'auto';
         let src = el.src;
-        if (id === 'Foto do Membro') {
-            if (currentMember.avatar) src = currentMember.avatar;
+        if (id === 'Foto do Membro' && currentMember.avatar) {
+            src = currentMember.avatar;
         }
         if (id === 'QR Code') {
             src = qrCodeUrl;
@@ -164,45 +156,45 @@ const renderElement = (currentMember: Member, id: string, el: ElementStyle, text
             );
         }
     }
+    
+    let textContent: string | null = null;
+    let isDynamic = false;
 
-    if (isText) {
-        const dynamicDataMap: Record<string, string | undefined> = {
-            'Valor Nome': currentMember.nome ? `Nome: ${currentMember.nome}` : undefined,
-            'Valor Nº Reg.': currentMember.recordNumber ? `Nº Reg.: ${currentMember.recordNumber}` : undefined,
-            'Valor Nascimento': currentMember.dataNascimento ? `Nasc: ${formatDate(currentMember.dataNascimento, 'dd/MM/yyyy')}` : undefined,
-            'Valor RG': currentMember.rg ? `RG: ${currentMember.rg}` : undefined,
-            'Valor CPF': currentMember.cpf ? `CPF: ${currentMember.cpf}` : undefined,
-            'Valor Cargo': currentMember.cargo ? `Cargo: ${currentMember.cargo}` : undefined,
-            'Membro Desde': currentMember.dataMembro ? `Membro desde: ${formatDate(currentMember.dataMembro, 'dd/MM/yyyy')}` : undefined,
-            'Validade': `Validade: ${calculateValidityDate(currentMember.dataMembro)}`,
-            'Congregação': currentMember.congregacao,
-        };
-
-        let textToRender = el.text;
-
-        if (dynamicDataMap.hasOwnProperty(id)) {
-            const dynamicValue = dynamicDataMap[id];
-            if (dynamicValue) {
-                textToRender = dynamicValue;
-            } else {
-                return null; // Don't render if the dynamic data is missing
-            }
-        }
-        
-        style.fontSize = el.size.fontSize ? `${el.size.fontSize}px` : undefined;
-        style.color = color;
-        style.fontWeight = el.fontWeight;
-        style.textAlign = el.textAlign;
-        
-        style.whiteSpace = 'pre-wrap';
-        if (id.includes('Título') || id === 'Assinatura Pastor' || id === 'Validade' || id === 'Membro Desde' || id.includes('Nº Reg') || id.includes('Nascimento') || id.includes('RG') || id.includes('CPF')) {
-            style.whiteSpace = 'nowrap';
-        }
-        
-        return <p key={id} style={style}>{textToRender}</p>;
+    switch (id) {
+        case 'Valor Nome': textContent = currentMember.nome ? `Nome: ${currentMember.nome}` : null; isDynamic = true; break;
+        case 'Valor Nº Reg.': textContent = currentMember.recordNumber ? `Nº Reg.: ${currentMember.recordNumber}` : null; isDynamic = true; break;
+        case 'Valor Nascimento': textContent = currentMember.dataNascimento ? `Nasc: ${formatDate(currentMember.dataNascimento, 'dd/MM/yyyy')}` : null; isDynamic = true; break;
+        case 'Valor RG': textContent = currentMember.rg ? `RG: ${currentMember.rg}` : null; isDynamic = true; break;
+        case 'Valor CPF': textContent = currentMember.cpf ? `CPF: ${currentMember.cpf}` : null; isDynamic = true; break;
+        case 'Valor Cargo': textContent = currentMember.cargo ? `Cargo: ${currentMember.cargo}` : null; isDynamic = true; break;
+        case 'Congregação': textContent = currentMember.congregacao || null; isDynamic = true; break;
+        case 'Membro Desde': textContent = currentMember.dataMembro ? `Membro desde: ${formatDate(currentMember.dataMembro, 'dd/MM/yyyy')}` : null; isDynamic = true; break;
+        case 'Validade': textContent = `Validade: ${calculateValidityDate(currentMember.dataMembro)}`; isDynamic = true; break;
+        default: textContent = el.text || null; break;
     }
     
-    return null;
+    if ((isDynamic && !textContent) || !textContent) {
+        return null;
+    }
+
+    let color = textColors.personalData;
+    const isTitle = id.includes('Título') || id === 'Congregação' || id === 'Endereço';
+    const isBackText = id.includes('Assinatura') || id.includes('Validade') || id.includes('Membro Desde');
+    
+    if (isTitle) color = textColors.title;
+    else if (isBackText) color = textColors.backText;
+
+    style.fontSize = el.size.fontSize ? `${el.size.fontSize}px` : undefined;
+    style.color = color;
+    style.fontWeight = el.fontWeight;
+    style.textAlign = el.textAlign;
+    
+    style.whiteSpace = 'pre-wrap';
+    if (id.includes('Título') || id === 'Assinatura Pastor' || id === 'Validade' || id === 'Membro Desde' || id.includes('Nº Reg') || id.includes('Nascimento') || id.includes('RG') || id.includes('CPF')) {
+        style.whiteSpace = 'nowrap';
+    }
+    
+    return <p key={id} style={style}>{textContent}</p>;
 };
 
 const StudioCard = ({ isFront, currentMember, templateData }: { isFront: boolean, currentMember: Member | null, templateData: CardTemplateData | null }) => {

@@ -72,12 +72,12 @@ const defaultElements: CardElements = {
     'Endereço': { position: { top: 23, left: 50 }, size: { fontSize: 8 }, text: 'Rua Presidente Prudente, N°28\nEldorado, Diadema-SP', textAlign: 'center' },
     'Foto do Membro': { position: { top: 40, left: 15 }, size: { width: 80, height: 100 }, src: '' },
 
-    'Valor Nome': { position: { top: 58, left: 40 }, size: { fontSize: 11 }, text: `Nome: ${memberSample.name}`, fontWeight: 'normal', textAlign: 'left' },
-    'Valor Nº Reg.': { position: { top: 66, left: 40 }, size: { fontSize: 10 }, text: `Nº Reg.: ${memberSample.recordNumber}`, textAlign: 'left' },
-    'Valor Nascimento': { position: { top: 72, left: 40 }, size: { fontSize: 10 }, text: `Nasc: ${new Date(memberSample.birthDate).toLocaleDateString('pt-BR')}`, textAlign: 'left' },
-    'Valor RG': { position: { top: 78, left: 40 }, size: { fontSize: 10 }, text: `RG: ${memberSample.rg}`, textAlign: 'left' },
-    'Valor CPF': { position: { top: 84, left: 40 }, size: { fontSize: 10 }, text: `CPF: ${memberSample.cpf}`, textAlign: 'left' },
-    'Valor Cargo': { position: { top: 90, left: 40 }, size: { fontSize: 10 }, text: `Cargo: ${memberSample.role}`, textAlign: 'left' },
+    'Valor Nome': { position: { top: 58, left: 40 }, size: { fontSize: 11 }, text: `Nome: NOME DO MEMBRO`, fontWeight: 'normal', textAlign: 'left' },
+    'Valor Nº Reg.': { position: { top: 66, left: 40 }, size: { fontSize: 10 }, text: `Nº Reg.: 0000`, textAlign: 'left' },
+    'Valor Nascimento': { position: { top: 72, left: 40 }, size: { fontSize: 10 }, text: `Nasc: 00/00/0000`, textAlign: 'left' },
+    'Valor RG': { position: { top: 78, left: 40 }, size: { fontSize: 10 }, text: `RG: 00.000.000-0`, textAlign: 'left' },
+    'Valor CPF': { position: { top: 84, left: 40 }, size: { fontSize: 10 }, text: `CPF: 000.000.000-00`, textAlign: 'left' },
+    'Valor Cargo': { position: { top: 90, left: 40 }, size: { fontSize: 10 }, text: `Cargo: Membro`, textAlign: 'left' },
     
     'Logo Igreja': { position: { top: 38, left: 80 }, size: { width: 70, height: 70 }, src: churchLogoPlaceholder?.imageUrl || '', textAlign: 'center' },
     
@@ -86,7 +86,7 @@ const defaultElements: CardElements = {
     'Logo Convenção 2': { position: { top: 10, left: 75 }, size: { width: 70, height: 70 }, src: '', textAlign: 'center' },
     'QR Code': { position: { top: 40, left: 25 }, size: { width: 70, height: 70 }, src: '', textAlign: 'center' },
     'Validade': { position: { top: 40, left: 75 }, size: { fontSize: 10 }, text: 'Validade: DD/MM/AAAA', fontWeight: 'bold', textAlign: 'center' },
-    'Membro Desde': { position: { top: 50, left: 75 }, size: { fontSize: 10 }, text: `Membro desde: ${new Date(memberSample.memberSince).toLocaleDateString('pt-BR')}`, fontWeight: 'bold', textAlign: 'center' },
+    'Membro Desde': { position: { top: 50, left: 75 }, size: { fontSize: 10 }, text: `Membro desde: DD/MM/AAAA`, fontWeight: 'bold', textAlign: 'center' },
     'Assinatura': { position: { top: 68, left: 50 }, size: { width: 120, height: 30 }, src: '', textAlign: 'center' },
     'Assinatura Pastor': { position: { top: 90, left: 50 }, size: { fontSize: 10 }, text: 'Assinatura Pastor Presidente', textAlign: 'center' },
 };

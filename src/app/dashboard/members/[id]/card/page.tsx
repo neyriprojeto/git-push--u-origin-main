@@ -100,22 +100,22 @@ const calculateValidityDate = (memberSince?: string | { seconds: number; nanosec
     }
 
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Normalize today's date
+    today.setHours(0, 0, 0, 0);
     const currentYear = today.getFullYear();
     
     const expiryMonth = memberSinceDate.getMonth();
     const expiryDay = memberSinceDate.getDate();
 
-    // Create the potential expiry date for the current year
-    let expiryDate = new Date(currentYear, expiryMonth, expiryDay);
-    expiryDate.setHours(0, 0, 0, 0);
+    // The card is valid until the anniversary in the current year...
+    let expiryDateThisYear = new Date(currentYear, expiryMonth, expiryDay);
+    expiryDateThisYear.setHours(0, 0, 0, 0);
 
-    // If the expiry date for this year has already passed, set it to next year
-    if (expiryDate < today) {
-        expiryDate.setFullYear(currentYear + 1);
+    // If that date has already passed, the card is valid until the anniversary in the NEXT year.
+    if (expiryDateThisYear < today) {
+        return format(new Date(currentYear + 1, expiryMonth, expiryDay), 'dd/MM/yyyy');
+    } else {
+        return format(expiryDateThisYear, 'dd/MM/yyyy');
     }
-
-    return format(expiryDate, 'dd/MM/yyyy');
 };
 
 
@@ -162,30 +162,16 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
     
     const renderElement = (id: string, el: ElementStyle) => {
         const isImage = 'src' in el;
-        const isText = 'text' in el;
-
-        let color = '#000000';
-        if (isText && templateData) {
-            const { textColors } = templateData;
-            const isTitle = id.includes('Título') || id === 'Congregação' || id === 'Endereço';
-            const isBackText = id.includes('Assinatura') || id.includes('Validade') || id.includes('Membro Desde');
-            
-            if (isTitle) color = textColors.title;
-            else if (isBackText) color = textColors.backText;
-            else color = textColors.personalData;
-        }
-
+        
         const style: React.CSSProperties = {
             position: 'absolute',
             top: `${el.position.top}%`,
             left: `${el.position.left}%`,
             lineHeight: 1.2
         };
-        
+
         if (el.textAlign === 'center') style.transform = 'translateX(-50%)';
         else if (el.textAlign === 'right') style.transform = 'translateX(-100%)';
-        
-        let elementContent: React.ReactNode;
 
         if (isImage) {
             style.width = el.size.width ? `${el.size.width}px` : 'auto';
@@ -200,10 +186,10 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
             }
 
             if (!src) {
-                 elementContent = <div style={{...style, border: '1px dashed #ccc'}} className="bg-gray-200/50 flex items-center justify-center text-xs text-gray-500">{id}</div>;
+                 return <div key={id} style={{...style, border: '1px dashed #ccc'}} className="bg-gray-200/50 flex items-center justify-center text-xs text-gray-500">{id}</div>;
             } else {
-                elementContent = (
-                    <div style={style} className={cn("relative", {'rounded-md overflow-hidden': id !== 'Assinatura' })}>
+                return (
+                    <div key={id} style={style} className={cn("relative", {'rounded-md overflow-hidden': id !== 'Assinatura' })}>
                          <img src={src} alt={id} style={{
                             width: '100%',
                             height: '100%',
@@ -212,44 +198,47 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
                     </div>
                 );
             }
-        } else if (isText) {
-             const dynamicDataMap: Record<string, string | undefined> = {
-                'Valor Nome': member.nome ? `Nome: ${member.nome}` : undefined,
-                'Valor Nº Reg.': member.recordNumber ? `Nº Reg.: ${member.recordNumber}` : undefined,
-                'Valor Nascimento': member.dataNascimento ? `Nasc: ${formatDate(member.dataNascimento, 'dd/MM/yyyy')}` : undefined,
-                'Valor RG': member.rg ? `RG: ${member.rg}` : undefined,
-                'Valor CPF': member.cpf ? `CPF: ${member.cpf}` : undefined,
-                'Valor Cargo': member.cargo ? `Cargo: ${member.cargo}` : undefined,
-                'Membro Desde': member.dataMembro ? `Membro desde: ${formatDate(member.dataMembro, 'dd/MM/yyyy')}` : undefined,
-                'Validade': `Validade: ${calculateValidityDate(member.dataMembro)}`,
-                'Congregação': member.congregacao,
-            };
+        }
+        
+        let textContent: string | null = null;
+        let isDynamic = false;
 
-            let textToRender = el.text;
-
-            if (dynamicDataMap.hasOwnProperty(id)) {
-                const dynamicValue = dynamicDataMap[id];
-                if (dynamicValue) {
-                    textToRender = dynamicValue;
-                } else {
-                    return null; // Don't render if the dynamic data is missing
-                }
-            }
-            
-            style.fontSize = el.size.fontSize ? `${el.size.fontSize}px` : undefined;
-            style.color = color;
-            style.fontWeight = el.fontWeight;
-            style.textAlign = el.textAlign;
-            
-            style.whiteSpace = 'pre-wrap';
-            if (id.includes('Título') || id === 'Assinatura Pastor' || id === 'Validade' || id === 'Membro Desde' || id.includes('Nº Reg') || id.includes('Nascimento') || id.includes('RG') || id.includes('CPF')) {
-                style.whiteSpace = 'nowrap';
-            }
-
-            elementContent = <p style={style}>{textToRender}</p>;
+        switch (id) {
+            case 'Valor Nome': textContent = member.nome ? `Nome: ${member.nome}` : null; isDynamic = true; break;
+            case 'Valor Nº Reg.': textContent = member.recordNumber ? `Nº Reg.: ${member.recordNumber}` : null; isDynamic = true; break;
+            case 'Valor Nascimento': textContent = member.dataNascimento ? `Nasc: ${formatDate(member.dataNascimento, 'dd/MM/yyyy')}` : null; isDynamic = true; break;
+            case 'Valor RG': textContent = member.rg ? `RG: ${member.rg}` : null; isDynamic = true; break;
+            case 'Valor CPF': textContent = member.cpf ? `CPF: ${member.cpf}` : null; isDynamic = true; break;
+            case 'Valor Cargo': textContent = member.cargo ? `Cargo: ${member.cargo}` : null; isDynamic = true; break;
+            case 'Congregação': textContent = member.congregacao || null; isDynamic = true; break;
+            case 'Membro Desde': textContent = member.dataMembro ? `Membro desde: ${formatDate(member.dataMembro, 'dd/MM/yyyy')}` : null; isDynamic = true; break;
+            case 'Validade': textContent = `Validade: ${calculateValidityDate(member.dataMembro)}`; isDynamic = true; break;
+            default: textContent = el.text || null; break;
         }
 
-        return <React.Fragment key={id}>{elementContent}</React.Fragment>;
+        if ((isDynamic && !textContent) || !textContent) {
+            return null;
+        }
+        
+        const { textColors } = templateData;
+        let color = textColors.personalData;
+        const isTitle = id.includes('Título') || id === 'Congregação' || id === 'Endereço';
+        const isBackText = id.includes('Assinatura') || id.includes('Validade') || id.includes('Membro Desde');
+        
+        if (isTitle) color = textColors.title;
+        else if (isBackText) color = textColors.backText;
+
+        style.fontSize = el.size.fontSize ? `${el.size.fontSize}px` : undefined;
+        style.color = color;
+        style.fontWeight = el.fontWeight;
+        style.textAlign = el.textAlign;
+        
+        style.whiteSpace = 'pre-wrap';
+        if (id.includes('Título') || id === 'Assinatura Pastor' || id === 'Validade' || id === 'Membro Desde' || id.includes('Nº Reg') || id.includes('Nascimento') || id.includes('RG') || id.includes('CPF')) {
+            style.whiteSpace = 'nowrap';
+        }
+
+        return <p key={id} style={style}>{textContent}</p>;
     };
 
     const { elements, cardStyles } = templateData;

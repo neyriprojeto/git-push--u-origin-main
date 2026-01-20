@@ -35,6 +35,7 @@ const formSchema = z.object({
   dataNascimento: z.string().optional(),
   
   // Dados de Membro
+  recordNumber: z.string().optional(),
   cargo: z.string({ required_error: 'O cargo é obrigatório.' }),
   congregacao: z.string({ required_error: 'A congregação é obrigatória.' }),
   dataBatismo: z.string().optional(),
@@ -111,6 +112,7 @@ export default function NewMemberPage() {
       rg: '',
       cpf: '',
       dataNascimento: '',
+      recordNumber: '',
       cargo: 'Membro',
       congregacao: '',
       dataBatismo: '',
@@ -293,6 +295,20 @@ export default function NewMemberPage() {
                     <div className="space-y-4">
                         <h3 className="text-lg font-medium">Dados de Membro</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="recordNumber"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Nº da Ficha (Opcional)</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Ex: 1234" {...field} />
+                                        </FormControl>
+                                        <FormDescription>Se deixado em branco, um número aleatório será gerado.</FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                             <FormField
                             control={form.control}
                             name="cargo"

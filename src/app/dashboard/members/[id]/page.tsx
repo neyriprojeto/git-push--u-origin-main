@@ -106,10 +106,15 @@ const calculateValidityDate = (memberSince?: string | { seconds: number; nanosec
     }
 
     const today = new Date();
-    const currentYear = today.getFullYear();
+    // Assuming today is in 2026 for testing as per user request
+    const currentYear = 2026; //new Date().getFullYear();
+    const memberAnniversaryThisYear = new Date(currentYear, memberSinceDate.getMonth(), memberSinceDate.getDate());
     
-    // The user wants the validity year to be the next year if we are in the current year.
-    // This logic sets the validity to the member's anniversary in the year AFTER the current one.
+    // If the anniversary has already passed this year, the validity is for the next year.
+    // Otherwise, it's this year. The user wants it to be for the *next* year.
+    // Example: Today is Feb 2026, anniversary is Jan 2026 -> renewal is Jan 2027.
+    // Example: Today is Feb 2026, anniversary is Mar 2026 -> renewal is Mar 2027.
+    // The user wants it to be "next year" relative to the current year.
     const validityYear = currentYear + 1;
 
     const expiryMonth = memberSinceDate.getMonth();
@@ -119,106 +124,8 @@ const calculateValidityDate = (memberSince?: string | { seconds: number; nanosec
 };
 
 
-const renderElement = (currentMember: Member, id: string, el: ElementStyle, textColors: CardTemplateData['textColors'], qrCodeUrl: string): React.ReactNode => {
-    const isImage = 'src' in el;
-    
-    const style: React.CSSProperties = {
-        position: 'absolute',
-        top: `${el.position.top}%`,
-        left: `${el.position.left}%`,
-        lineHeight: 1.2,
-    };
-    if (el.textAlign === 'center') style.transform = 'translateX(-50%)';
-    else if (el.textAlign === 'right') style.transform = 'translateX(-100%)';
-
-    if (isImage) {
-        style.width = el.size.width ? `${el.size.width}px` : 'auto';
-        style.height = el.size.height ? `${el.size.height}px` : 'auto';
-        let src = el.src;
-        if (id === 'Foto do Membro' && currentMember.avatar) {
-            src = currentMember.avatar;
-        }
-        if (id === 'QR Code') {
-            src = qrCodeUrl;
-        }
-        if (!src) {
-            return <div key={id} style={{ ...style, border: '1px dashed #ccc' }} className="bg-gray-200/50 flex items-center justify-center text-xs text-gray-500">{id}</div>;
-        } else {
-            const objectFitStyle: React.CSSProperties = { objectFit: id === 'Foto do Membro' ? 'cover' : 'contain' };
-            return (
-                <div key={id} style={style} className={cn("relative", {'rounded-md overflow-hidden': id !== 'Assinatura' })}>
-                    <img src={src} alt={id} style={{ width: '100%', height: '100%', objectFit: objectFitStyle.objectFit }} crossOrigin="anonymous"/>
-                </div>
-            );
-        }
-    }
-    
-    let textContent: string | undefined = el.text;
-
-    switch(id) {
-        case 'Nome':
-            if (currentMember.nome) textContent = `Nome: ${currentMember.nome}`;
-            else return null;
-            break;
-        case 'Registro':
-            if (currentMember.recordNumber) textContent = `Nº Reg.: ${currentMember.recordNumber}`;
-            else return null;
-            break;
-        case 'Nascimento':
-            if (currentMember.dataNascimento) textContent = `Nasc: ${formatDate(currentMember.dataNascimento, 'dd/MM/yyyy')}`;
-            else return null;
-            break;
-        case 'RG':
-            if (currentMember.rg) textContent = `RG: ${currentMember.rg}`;
-            else return null;
-            break;
-        case 'CPF':
-            if (currentMember.cpf) textContent = `CPF: ${currentMember.cpf}`;
-            else return null;
-            break;
-        case 'Cargo':
-            if (currentMember.cargo) textContent = `Cargo: ${currentMember.cargo}`;
-            else return null;
-            break;
-        case 'Congregação':
-            if (currentMember.congregacao) textContent = currentMember.congregacao;
-            else if (el.text) textContent = el.text;
-            else return null;
-            break;
-        case 'Membro Desde':
-             if (currentMember.dataMembro) textContent = `Membro desde: ${formatDate(currentMember.dataMembro, 'dd/MM/yyyy')}`;
-             else return null;
-             break;
-        case 'Validade':
-             textContent = `Validade: ${calculateValidityDate(currentMember.dataMembro)}`;
-             break;
-    }
-    
-    if (textContent === undefined) {
-        return null;
-    }
-
-    let color = textColors.personalData;
-    const isTitle = id.includes('Título') || id === 'Congregação' || id === 'Endereço';
-    const isBackText = id.includes('Assinatura') || id.includes('Validade') || id.includes('Membro Desde');
-    
-    if (isTitle) color = textColors.title;
-    else if (isBackText) color = textColors.backText;
-
-    style.fontSize = el.size.fontSize ? `${el.size.fontSize}px` : undefined;
-    style.color = color;
-    style.fontWeight = el.fontWeight;
-    style.textAlign = el.textAlign;
-    
-    style.whiteSpace = 'pre-wrap';
-    if (id.includes('Título') || id === 'Assinatura Pastor' || id === 'Membro Desde' || id === 'Validade') {
-        style.whiteSpace = 'nowrap';
-    }
-    
-    return <p key={id} style={style}>{textContent}</p>;
-};
-
-const StudioCard = ({ isFront, currentMember, templateData }: { isFront: boolean, currentMember: Member | null, templateData: CardTemplateData | null }) => {
+// CORRECTED CARD RENDERING COMPONENT
+const MemberCardFace = ({ isFront, currentMember, templateData }: { isFront: boolean, currentMember: Member | null, templateData: CardTemplateData | null }) => {
     const [qrCodeUrl, setQrCodeUrl] = useState('');
 
     useEffect(() => {
@@ -229,22 +136,151 @@ const StudioCard = ({ isFront, currentMember, templateData }: { isFront: boolean
     }, [currentMember?.id]);
     
     if (!templateData || !currentMember) { return <div className="flex items-center justify-center h-full"><Loader2 className="animate-spin" /></div>; }
-    const { elements = {}, cardStyles = { frontBackground: '#F3F4F6', backBackground: '#F3F4F6', frontBackgroundImage: '', backBackgroundImage: '' }, textColors = { title: '#000000', personalData: '#333333', backText: '#333333' } } = templateData;
-    const backgroundStyle: React.CSSProperties = { backgroundColor: isFront ? cardStyles.frontBackground : cardStyles.backBackground, backgroundImage: `url(${isFront ? cardStyles.frontBackgroundImage : cardStyles.backBackgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center', };
+
+    const renderElement = (id: string, el: ElementStyle) => {
+        const isImage = 'src' in el;
+        
+        const style: React.CSSProperties = {
+            position: 'absolute',
+            top: `${el.position.top}%`,
+            left: `${el.position.left}%`,
+            lineHeight: 1.2,
+        };
+
+        if (el.textAlign === 'center') style.transform = 'translateX(-50%)';
+        else if (el.textAlign === 'right') style.transform = 'translateX(-100%)';
+
+        if (isImage) {
+            style.width = el.size.width ? `${el.size.width}px` : 'auto';
+            style.height = el.size.height ? `${el.size.height}px` : 'auto';
+
+            let src = el.src;
+            if (id === 'Foto do Membro' && currentMember.avatar) {
+                src = currentMember.avatar;
+            }
+            if (id === 'QR Code') {
+                src = qrCodeUrl;
+            }
+
+            if (!src) {
+                 return <div key={id} style={{...style, border: '1px dashed #ccc'}} className="bg-gray-200/50 flex items-center justify-center text-xs text-gray-500">{id}</div>;
+            } else {
+                return (
+                    <div key={id} style={style} className={cn("relative", {'rounded-md overflow-hidden': id !== 'Assinatura' })}>
+                         <img src={src} alt={id} style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: id === 'Foto do Membro' ? 'cover' : 'contain'
+                         }} crossOrigin="anonymous" />
+                    </div>
+                );
+            }
+        }
+        
+        let textContent: string | undefined = el.text;
+
+        // --- Explicit Data Mapping ---
+        switch(id) {
+            case 'Nome':
+                if (currentMember.nome) textContent = `Nome: ${currentMember.nome}`;
+                else return null;
+                break;
+            case 'Registro':
+                if (currentMember.recordNumber) textContent = `Nº Reg.: ${currentMember.recordNumber}`;
+                else return null;
+                break;
+            case 'Nascimento':
+                if (currentMember.dataNascimento) textContent = `Nasc: ${formatDate(currentMember.dataNascimento, 'dd/MM/yyyy')}`;
+                else return null;
+                break;
+            case 'RG':
+                if (currentMember.rg) textContent = `RG: ${currentMember.rg}`;
+                else return null;
+                break;
+            case 'CPF':
+                if (currentMember.cpf) textContent = `CPF: ${currentMember.cpf}`;
+                else return null;
+                break;
+            case 'Cargo':
+                if (currentMember.cargo) textContent = `Cargo: ${currentMember.cargo}`;
+                else return null;
+                break;
+            case 'Congregação':
+                if (currentMember.congregacao) textContent = currentMember.congregacao;
+                else if (el.text) textContent = el.text; // Fallback to template text for congregation
+                else return null;
+                break;
+            case 'Membro Desde':
+                if (currentMember.dataMembro) textContent = `Membro desde: ${formatDate(currentMember.dataMembro, 'dd/MM/yyyy')}`;
+                else return null;
+                break;
+            case 'Validade':
+                textContent = `Validade: ${calculateValidityDate(currentMember.dataMembro)}`;
+                break;
+        }
+
+        if (textContent === undefined) {
+             return null;
+        }
+        
+        const { textColors } = templateData;
+        let color = textColors.personalData;
+        const isTitle = id.includes('Título') || id === 'Congregação' || id === 'Endereço';
+        const isBackText = id.includes('Assinatura') || id.includes('Validade') || id.includes('Membro Desde');
+        
+        if (isTitle) color = textColors.title;
+        else if (isBackText) color = textColors.backText;
+
+        style.fontSize = el.size.fontSize ? `${el.size.fontSize}px` : undefined;
+        style.color = color;
+        style.fontWeight = el.fontWeight;
+        style.textAlign = el.textAlign;
+        
+        style.whiteSpace = 'pre-wrap';
+        if (id.includes('Título') || id === 'Assinatura Pastor') {
+            style.whiteSpace = 'nowrap';
+        }
+
+        return <p key={id} style={style}>{textContent}</p>;
+    };
+
+    const { elements, cardStyles } = templateData;
+    const backgroundStyle = {
+        backgroundColor: isFront ? cardStyles.frontBackground : cardStyles.backBackground,
+        backgroundImage: `url(${isFront ? cardStyles.frontBackgroundImage : cardStyles.backBackgroundImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+    };
+
     const frontElements = Object.keys(elements).filter(id => !id.includes('Convenção') && !id.includes('QR Code') && !id.includes('Assinatura') && !id.includes('Validade') && !id.includes('Membro Desde') && !id.includes('Assinatura Pastor'));
     const backElements = Object.keys(elements).filter(id => id.includes('Convenção') || id.includes('QR Code') || id.includes('Assinatura') || id.includes('Validade') || id.includes('Membro Desde') || id.includes('Assinatura Pastor'));
     const signatureLineElement = elements['Assinatura Pastor'];
+
     return (
-        <Card className="h-full w-full overflow-hidden shadow-lg relative" style={backgroundStyle}>
-            {isFront ? ( frontElements.map(id => elements[id] ? renderElement(currentMember, id, elements[id], textColors, qrCodeUrl) : null) ) : (
+        <div className="h-full w-full overflow-hidden shadow-lg relative" style={backgroundStyle}>
+            {isFront ? (
+                frontElements.map(id => elements[id] ? renderElement(id, elements[id]) : null)
+            ) : (
                 <>
-                    {backElements.map(id => elements[id] ? renderElement(currentMember, id, elements[id], textColors, qrCodeUrl) : null)}
-                    {signatureLineElement && ( <div style={{ position: 'absolute', borderTop: '1px solid black', width: '40%', top: `calc(${signatureLineElement.position.top}% - 2px)`, left: `${signatureLineElement.position.left}%`, transform: 'translateX(-50%)' }} /> )}
+                    {backElements.map(id => elements[id] ? renderElement(id, elements[id]) : null)}
+                    {signatureLineElement && (
+                         <div 
+                            style={{
+                                position: 'absolute', 
+                                borderTop: '1px solid black', 
+                                width: '40%', 
+                                top: `calc(${signatureLineElement.position.top}% - 2px)`,
+                                left: `${signatureLineElement.position.left}%`,
+                                transform: 'translateX(-50%)'
+                            }}
+                        />
+                    )}
                 </>
             )}
-        </Card>
+        </div>
     );
 };
+
 
 const memberFormSchema = z.object({
   nome: z.string().min(2, "Nome é obrigatório"),
@@ -758,8 +794,8 @@ export default function MemberProfilePage() {
         <div className="flex justify-center items-center">
             <div className="w-full max-w-lg mx-auto flip-card-container cursor-pointer aspect-[85.6/54]" onClick={() => setIsCardFlipped(!isCardFlipped)}>
                 <div className={cn("flip-card w-full h-full", { 'flipped': isCardFlipped })}>
-                    <div className="flip-card-front"><StudioCard isFront={true} currentMember={member} templateData={templateData} /></div>
-                    <div className="flip-card-back"><StudioCard isFront={false} currentMember={member} templateData={templateData} /></div>
+                    <div className="flip-card-front"><MemberCardFace isFront={true} currentMember={member} templateData={templateData} /></div>
+                    <div className="flip-card-back"><MemberCardFace isFront={false} currentMember={member} templateData={templateData} /></div>
                 </div>
             </div>
         </div>

@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect, useState, useRef } from 'react';
@@ -62,7 +61,7 @@ const formatDate = (dateValue?: string | { seconds: number; nanoseconds: number 
             date = new Date(dateValue);
         } else if (dateValue instanceof Date) {
             date = dateValue;
-        } else if (typeof dateValue === 'object' && 'seconds' in dateValue) {
+        } else if (typeof dateValue === 'object' && dateValue !== null && 'seconds' in dateValue) {
             date = new Date(dateValue.seconds * 1000);
         } else {
            return '';
@@ -118,6 +117,19 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
             </div>
         );
     }
+
+    // Mapa de dados dinâmicos do membro para garantir a sincronização
+    const dynamicDataMap: Record<string, string | null> = {
+        'Valor Nome': member.nome ? `Nome: ${member.nome}` : null,
+        'Valor Nº Reg.': member.recordNumber ? `Nº Reg.: ${member.recordNumber}` : null,
+        'Valor Nascimento': member.dataNascimento ? `Nasc: ${formatDate(member.dataNascimento)}` : null,
+        'Valor RG': member.rg ? `RG: ${member.rg}` : null,
+        'Valor CPF': member.cpf ? `CPF: ${member.cpf}` : null,
+        'Valor Cargo': member.cargo ? `Cargo: ${member.cargo}` : null,
+        'Membro Desde': member.dataMembro ? `Membro desde: ${formatDate(member.dataMembro)}` : null,
+        'Validade': `Validade: ${format(new Date(new Date().setFullYear(new Date().getFullYear() + 1)), 'dd/MM/yyyy')}`,
+        'Congregação': member.congregacao || null, // Se for nulo, usará o texto do template
+    };
     
     const renderElement = (id: string, el: ElementStyle) => {
         const isImage = 'src' in el;
@@ -172,41 +184,21 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
                 );
             }
         } else if (isText) {
-            let textToRender: string | null = el.text || null;
+            let textToRender: string | null;
 
-            // Override with dynamic member data if applicable
-            // This ensures that the card always shows the specific member's data.
-            switch (id) {
-                case 'Valor Nome':
-                    textToRender = member.nome ? `Nome: ${member.nome}` : null;
-                    break;
-                case 'Valor Nº Reg.':
-                    textToRender = member.recordNumber ? `Nº Reg.: ${member.recordNumber}` : null;
-                    break;
-                case 'Valor Nascimento':
-                    textToRender = member.dataNascimento ? `Nasc: ${formatDate(member.dataNascimento)}` : null;
-                    break;
-                case 'Valor RG':
-                    textToRender = member.rg ? `RG: ${member.rg}` : null;
-                    break;
-                case 'Valor CPF':
-                    textToRender = member.cpf ? `CPF: ${member.cpf}` : null;
-                    break;
-                case 'Valor Cargo':
-                    textToRender = member.cargo ? `Cargo: ${member.cargo}` : null;
-                    break;
-                case 'Membro Desde':
-                    textToRender = member.dataMembro ? `Membro desde: ${formatDate(member.dataMembro)}` : null;
-                    break;
-                case 'Validade':
-                    textToRender = `Validade: ${format(new Date(new Date().setFullYear(new Date().getFullYear() + 1)), 'dd/MM/yyyy')}`;
-                    break;
-                case 'Congregação':
-                    // Use member's congregation first, fallback to template's static text
-                    textToRender = member.congregacao || el.text;
-                    break;
+            if (id in dynamicDataMap) {
+                // É um campo dinâmico. Use o valor do mapa (que pode ser null).
+                textToRender = dynamicDataMap[id];
+                // A exceção é a 'Congregação', que pode usar o texto do template como fallback.
+                if (id === 'Congregação' && textToRender === null) {
+                    textToRender = el.text || null;
+                }
+            } else {
+                // É um campo estático (ex: 'Título 1'). Use o texto do template.
+                textToRender = el.text || null;
             }
-
+            
+            // Se o resultado final for nulo (ex: um campo dinâmico sem dados), não renderize nada.
             if (textToRender === null) {
                 return null;
             }
@@ -428,5 +420,3 @@ export default function MemberCardPage() {
         </div>
     );
 }
-
-    

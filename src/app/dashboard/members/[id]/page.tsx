@@ -49,6 +49,7 @@ import bibleReadingPlanGrid from '@/data/bible-plan-grid.json';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FirestorePermissionError } from "@/firebase";
+import { Slider } from "@/components/ui/slider";
 
 // --- Types ---
 type ElementStyle = { position: { top: number; left: number }; size: { width?: number; height?: number; fontSize?: number }; text?: string; fontWeight?: 'normal' | 'bold'; src?: string; textAlign?: 'left' | 'center' | 'right'; };
@@ -107,7 +108,7 @@ const calculateValidityDate = (memberSince?: string | { seconds: number; nanosec
 
     const today = new Date();
     // Assuming today is in 2026 for testing as per user request
-    const currentYear = 2026;
+    const currentYear = new Date().getFullYear();
     
     // Check if the membership anniversary for the current year has already passed
     const anniversaryThisYear = new Date(currentYear, memberSinceDate.getMonth(), memberSinceDate.getDate());
@@ -164,9 +165,11 @@ const MemberCardFace = ({ isFront, currentMember, templateData }: { isFront: boo
             } else {
                 return (
                     <div key={id} style={style} className={cn("relative", {'rounded-md overflow-hidden': id !== 'Assinatura' })}>
-                         <Image src={src} alt={id} fill style={{
+                         <img src={src} alt={id} style={{
+                            width: '100%',
+                            height: '100%',
                             objectFit: id === 'Foto do Membro' ? 'cover' : 'contain'
-                         }} />
+                         }} crossOrigin="anonymous" />
                     </div>
                 );
             }
@@ -334,6 +337,8 @@ export default function MemberProfilePage() {
   const imgRef = useRef<HTMLImageElement>(null);
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const [currentFile, setCurrentFile] = useState<File | null>(null);
+  const [scale, setScale] = useState(1);
+  const [rotate, setRotate] = useState(0);
 
   // State for inner components
   const [isCardFlipped, setIsCardFlipped] = useState(false);
@@ -465,6 +470,8 @@ export default function MemberProfilePage() {
       setAspect(photoAspect);
       
       setCrop(undefined);
+      setScale(1);
+      setRotate(0);
       setCurrentFile(file);
       const reader = new FileReader();
       reader.addEventListener('load', () => {
@@ -492,8 +499,10 @@ export default function MemberProfilePage() {
     setIsUploading(true);
     const scaleX = image.naturalWidth / image.width;
     const scaleY = image.naturalHeight / image.height;
+    
     canvas.width = Math.floor(completedCrop.width * scaleX);
     canvas.height = Math.floor(completedCrop.height * scaleY);
+
     const ctx = canvas.getContext('2d');
     if (!ctx) {
       toast({ variant: 'destructive', title: 'Erro', description: 'Could not get 2d context' });
@@ -503,8 +512,29 @@ export default function MemberProfilePage() {
 
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    const cropX = completedCrop.x * scaleX;
+    const cropY = completedCrop.y * scaleY;
+    
+    ctx.save();
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate((rotate * Math.PI) / 180);
+    ctx.scale(scale, scale);
+    ctx.translate(-canvas.width / 2, -canvas.height / 2);
 
-    ctx.drawImage(image, completedCrop.x * scaleX, completedCrop.y * scaleY, completedCrop.width * scaleX, completedCrop.height * scaleY, 0, 0, canvas.width, canvas.height);
+    ctx.drawImage(
+        image,
+        cropX,
+        cropY,
+        completedCrop.width * scaleX,
+        completedCrop.height * scaleY,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+    ctx.restore();
     
     canvas.toBlob(async (blob) => {
       if (!blob || !currentFile) {
@@ -1246,9 +1276,21 @@ export default function MemberProfilePage() {
                     aspect={aspect}
                     className='max-w-full'
                   >
-                    <Image ref={imgRef} alt="Recortar imagem" src={imageToCrop} onLoad={onImageLoad} width={400} height={400} className="max-h-[60vh] object-contain" />
+                    <Image ref={imgRef} alt="Recortar imagem" src={imageToCrop} onLoad={onImageLoad} width={400} height={400} 
+                      style={{ transform: `scale(${scale}) rotate(${rotate}deg)` }}
+                      className="max-h-[60vh] object-contain" />
                   </ReactCrop>
                 )}
+              </div>
+               <div>
+                  <Label>Zoom</Label>
+                  <Slider
+                      defaultValue={[1]}
+                      min={1}
+                      max={3}
+                      step={0.1}
+                      onValueChange={(value) => setScale(value[0])}
+                  />
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsCropping(false)}>Cancelar</Button>

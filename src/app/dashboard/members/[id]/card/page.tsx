@@ -175,24 +175,41 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
                 );
             }
         } else if (isText) {
-            let textToRender: string | null = el.text || null;
+            let textToRender: string | null;
 
-            // Override with dynamic data if applicable
-            if (id === 'Valor Nome' && member.nome) textToRender = `Nome: ${member.nome}`;
-            else if (id === 'Valor Nº Reg.' && member.recordNumber) textToRender = `Nº Reg.: ${member.recordNumber}`;
-            else if (id === 'Valor Nascimento' && member.dataNascimento) textToRender = `Nasc: ${formatDate(member.dataNascimento)}`;
-            else if (id === 'Valor RG' && member.rg) textToRender = `RG: ${member.rg}`;
-            else if (id === 'Valor CPF' && member.cpf) textToRender = `CPF: ${member.cpf}`;
-            else if (id === 'Valor Cargo' && member.cargo) textToRender = `Cargo: ${member.cargo}`;
-            else if (id === 'Membro Desde' && member.dataMembro) textToRender = `Membro desde: ${formatDate(member.dataMembro)}`;
-            else if (id === 'Congregação') textToRender = member.congregacao || el.text || null;
-            else if (id === 'Validade') textToRender = `Validade: ${format(new Date(new Date().setFullYear(new Date().getFullYear() + 1)), 'dd/MM/yyyy')}`;
-            else if (id.startsWith('Valor ')) {
-                // If it's a dynamic field but the data is missing, render nothing.
-                textToRender = null;
+            const getDynamicText = (fieldId: string): string | null | 'NOT_DYNAMIC' => {
+                switch (fieldId) {
+                    case 'Valor Nome':
+                        return member.nome ? `Nome: ${member.nome}` : null;
+                    case 'Valor Nº Reg.':
+                        return member.recordNumber ? `Nº Reg.: ${member.recordNumber}` : null;
+                    case 'Valor Nascimento':
+                        return member.dataNascimento ? `Nasc: ${formatDate(member.dataNascimento)}` : null;
+                    case 'Valor RG':
+                        return member.rg ? `RG: ${member.rg}` : null;
+                    case 'Valor CPF':
+                        return member.cpf ? `CPF: ${member.cpf}` : null;
+                    case 'Valor Cargo':
+                        return member.cargo ? `Cargo: ${member.cargo}` : null;
+                    case 'Membro Desde':
+                        return member.dataMembro ? `Membro desde: ${formatDate(member.dataMembro)}` : null;
+                    case 'Congregação':
+                        return member.congregacao || el.text || null;
+                    case 'Validade':
+                        return `Validade: ${format(new Date(new Date().setFullYear(new Date().getFullYear() + 1)), 'dd/MM/yyyy')}`;
+                    default:
+                        return 'NOT_DYNAMIC'; 
+                }
+            };
+            
+            const dynamicText = getDynamicText(id);
+
+            if (dynamicText !== 'NOT_DYNAMIC') {
+                textToRender = dynamicText;
+            } else {
+                textToRender = el.text || null;
             }
             
-            // If textToRender is null or empty after checks, don't render the element.
             if (!textToRender) {
                 return null;
             }
@@ -417,3 +434,5 @@ export default function MemberCardPage() {
 
 
   
+
+    

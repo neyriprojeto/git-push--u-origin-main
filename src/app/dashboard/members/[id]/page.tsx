@@ -518,7 +518,7 @@ export default function MemberProfilePage() {
       } finally {
         setIsUploading(false);
       }
-    }, 'image/jpeg');
+    }, 'image/png');
   };
 
   const handleLogout = async () => {

@@ -522,7 +522,7 @@ export default function CardStudioPage() {
             style.textAlign = el.textAlign;
             style.whiteSpace = 'pre-wrap';
 
-            if (id.includes('Título') || id === 'Assinatura Pastor') {
+            if (id.includes('Título') || id === 'Assinatura Pastor' || id === 'Membro Desde' || id === 'Validade') {
                 style.whiteSpace = 'nowrap';
             }
         } else { // isImage

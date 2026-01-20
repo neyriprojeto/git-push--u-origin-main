@@ -164,11 +164,9 @@ const MemberCardFace = ({ isFront, currentMember, templateData }: { isFront: boo
             } else {
                 return (
                     <div key={id} style={style} className={cn("relative", {'rounded-md overflow-hidden': id !== 'Assinatura' })}>
-                         <img src={src} alt={id} style={{
-                            width: '100%',
-                            height: '100%',
+                         <Image src={src} alt={id} fill style={{
                             objectFit: id === 'Foto do Membro' ? 'cover' : 'contain'
-                         }} crossOrigin="anonymous" />
+                         }} />
                     </div>
                 );
             }
@@ -416,14 +414,19 @@ export default function MemberProfilePage() {
   const onMemberSubmit: SubmitHandler<MemberFormData> = async (data) => {
     if (!firestore || !memberId) return;
     setIsSubmitting(true);
-    try { 
-        await updateMember(firestore, memberId, data); 
-        toast({ title: "Sucesso!", description: "Os dados do membro foram atualizados." }); 
-    } 
-    catch (error) { 
-        console.error("Update error: ", error); 
-        toast({ variant: "destructive", title: "Erro", description: "Não foi possível atualizar os dados do membro." }); 
-    } 
+    try {
+        const dataToUpdate = { ...data };
+        // If the current member data from Firestore doesn't have a record number, generate one.
+        if (!member?.recordNumber) {
+            dataToUpdate.recordNumber = Math.floor(1000 + Math.random() * 9000).toString();
+        }
+        await updateMember(firestore, memberId, dataToUpdate);
+        toast({ title: "Sucesso!", description: "Os dados do membro foram atualizados." });
+    }
+    catch (error) {
+        console.error("Update error: ", error);
+        toast({ variant: "destructive", title: "Erro", description: "Não foi possível atualizar os dados do membro." });
+    }
     finally { setIsSubmitting(false); }
   };
   

@@ -109,9 +109,10 @@ const calculateValidityDate = (memberSince?: string | { seconds: number; nanosec
     // Assuming today is in 2026 for testing as per user request
     const currentYear = 2026;
     
-    // The user wants the validity year to be the next year if we are in the current year.
-    // This logic sets the validity to the member's anniversary in the year AFTER the current one.
-    const validityYear = currentYear + 1;
+    // Check if the membership anniversary for the current year has already passed
+    const anniversaryThisYear = new Date(currentYear, memberSinceDate.getMonth(), memberSinceDate.getDate());
+    
+    const validityYear = today > anniversaryThisYear ? currentYear + 1 : currentYear;
 
     const expiryMonth = memberSinceDate.getMonth();
     const expiryDay = memberSinceDate.getDate();
@@ -327,6 +328,7 @@ export default function MemberProfilePage() {
 
   // State for image cropping
   const [crop, setCrop] = useState<Crop>();
+  const [aspect, setAspect] = useState<number | undefined>();
   const [imageToCrop, setImageToCrop] = useState('');
   const [isCropping, setIsCropping] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -449,8 +451,33 @@ export default function MemberProfilePage() {
     []
   );
 
-  const onSelectFile = (e: React.ChangeEvent<HTMLInputElement>) => { const file = e.target.files?.[0]; if (file) { setCrop(undefined); setCurrentFile(file); const reader = new FileReader(); reader.addEventListener('load', () => { setImageToCrop(reader.result?.toString() || ''); setIsCropping(true); }); reader.readAsDataURL(file) } }
-  function onImageLoad(e: React.SyntheticEvent<HTMLImageElement>) { const aspect = 1; const { width, height } = e.currentTarget; setCrop(centerAspectCrop(width, height, aspect)) }
+  const onSelectFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const photoElement = templateData?.elements?.['Foto do Membro'];
+      const photoAspect = (photoElement?.size?.width && photoElement?.size?.height)
+        ? photoElement.size.width / photoElement.size.height
+        : 4 / 5; // Default aspect ratio for member photo (e.g. 80x100px -> 0.8)
+      setAspect(photoAspect);
+      
+      setCrop(undefined);
+      setCurrentFile(file);
+      const reader = new FileReader();
+      reader.addEventListener('load', () => {
+        setImageToCrop(reader.result?.toString() || '');
+        setIsCropping(true);
+      });
+      reader.readAsDataURL(file);
+    }
+  }
+
+  function onImageLoad(e: React.SyntheticEvent<HTMLImageElement>) {
+      if (aspect) {
+          const { width, height } = e.currentTarget;
+          setCrop(centerAspectCrop(width, height, aspect));
+      }
+  }
+
   const saveCroppedImage = async () => {
     const image = imgRef.current;
     const canvas = previewCanvasRef.current;
@@ -1197,7 +1224,7 @@ export default function MemberProfilePage() {
   return (
     <div className="flex-1 space-y-4 bg-secondary">
        <Dialog open={isCropping} onOpenChange={setIsCropping}>
-            <DialogContent className="max-w-md"><DialogHeader><DialogTitle>Editar Foto de Perfil</DialogTitle></DialogHeader><div className='flex items-center justify-center p-4 bg-muted/20'>{!!imageToCrop && (<ReactCrop crop={crop} onChange={(_, percentCrop) => setCrop(percentCrop)} onComplete={(c) => memberForm.setValue('avatar', c.width > 0 ? 'new' : '')} aspect={1} className='max-w-full'><Image ref={imgRef} alt="Recortar imagem" src={imageToCrop} onLoad={onImageLoad} width={400} height={400} className="max-h-[60vh] object-contain" /></ReactCrop>)}</div><DialogFooter><Button variant="outline" onClick={() => setIsCropping(false)}>Cancelar</Button><Button onClick={saveCroppedImage} disabled={isUploading}>{isUploading ? <Loader2 className="animate-spin mr-2"/> : <Save className="mr-2 h-4 w-4"/>}{isUploading ? 'Salvando...' : 'Salvar Foto'}</Button></DialogFooter></DialogContent>
+            <DialogContent className="max-w-md"><DialogHeader><DialogTitle>Editar Foto de Perfil</DialogTitle></DialogHeader><div className='flex items-center justify-center p-4 bg-muted/20'>{!!imageToCrop && (<ReactCrop crop={crop} onChange={(_, percentCrop) => setCrop(percentCrop)} onComplete={(c) => memberForm.setValue('avatar', c.width > 0 ? 'new' : '')} aspect={aspect} className='max-w-full'><Image ref={imgRef} alt="Recortar imagem" src={imageToCrop} onLoad={onImageLoad} width={400} height={400} className="max-h-[60vh] object-contain" /></ReactCrop>)}</div><DialogFooter><Button variant="outline" onClick={() => setIsCropping(false)}>Cancelar</Button><Button onClick={saveCroppedImage} disabled={isUploading}>{isUploading ? <Loader2 className="animate-spin mr-2"/> : <Save className="mr-2 h-4 w-4"/>}{isUploading ? 'Salvando...' : 'Salvar Foto'}</Button></DialogFooter></DialogContent>
         </Dialog>
         <canvas ref={previewCanvasRef} style={{ display: 'none' }} />
 
@@ -1268,3 +1295,5 @@ export default function MemberProfilePage() {
     </div>
   );
 }
+
+    

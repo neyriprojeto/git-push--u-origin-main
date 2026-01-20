@@ -134,33 +134,44 @@ const renderElement = (currentMember: Member, id: string, el: ElementStyle, text
             style.whiteSpace = 'nowrap';
         }
 
-        let textToRender: string | null = null;
-        
-        // Mapa de dados dinâmicos para buscar dados reais do membro.
-        const dynamicDataMap: { [key: string]: string | undefined | null } = {
-            'Valor Nome': currentMember.nome ? `Nome: ${currentMember.nome}` : null,
-            'Valor Nº Reg.': currentMember.recordNumber ? `Nº Reg.: ${currentMember.recordNumber}` : null,
-            'Valor Nascimento': currentMember.dataNascimento ? `Nasc: ${formatDate(currentMember.dataNascimento, 'dd/MM/yyyy')}` : null,
-            'Valor RG': currentMember.rg ? `RG: ${currentMember.rg}` : null,
-            'Valor CPF': currentMember.cpf ? `CPF: ${currentMember.cpf}` : null,
-            'Valor Cargo': currentMember.cargo ? `Cargo: ${currentMember.cargo}` : null,
-            'Membro Desde': currentMember.dataMembro ? `Membro desde: ${formatDate(currentMember.dataMembro, 'dd/MM/yyyy')}` : null,
-            'Congregação': currentMember.congregacao || el.text, // Fallback para o texto do template
-            'Validade': `Validade: ${format(new Date(new Date().setFullYear(new Date().getFullYear() + 1)), 'dd/MM/yyyy')}`,
-        };
+        let textToRender: string | undefined;
 
-        if (id in dynamicDataMap) {
-            // Se o ID do elemento corresponde a um campo dinâmico, use o valor do mapa.
-            textToRender = dynamicDataMap[id] as string | null;
-        } else {
-            // Caso contrário, é um campo estático (como 'Título 1'), use o texto do template.
-            textToRender = el.text || null;
+        switch (id) {
+            case 'Valor Nome':
+                if (currentMember.nome) textToRender = `Nome: ${currentMember.nome}`;
+                break;
+            case 'Valor Nº Reg.':
+                if (currentMember.recordNumber) textToRender = `Nº Reg.: ${currentMember.recordNumber}`;
+                break;
+            case 'Valor Nascimento':
+                if (currentMember.dataNascimento) textToRender = `Nasc: ${formatDate(currentMember.dataNascimento, 'dd/MM/yyyy')}`;
+                break;
+            case 'Valor RG':
+                if (currentMember.rg) textToRender = `RG: ${currentMember.rg}`;
+                break;
+            case 'Valor CPF':
+                if (currentMember.cpf) textToRender = `CPF: ${currentMember.cpf}`;
+                break;
+            case 'Valor Cargo':
+                if (currentMember.cargo) textToRender = `Cargo: ${currentMember.cargo}`;
+                break;
+            case 'Membro Desde':
+                if (currentMember.dataMembro) textToRender = `Membro desde: ${formatDate(currentMember.dataMembro, 'dd/MM/yyyy')}`;
+                break;
+            case 'Congregação':
+                textToRender = currentMember.congregacao || el.text;
+                break;
+            case 'Validade':
+                textToRender = `Validade: ${format(new Date(new Date().setFullYear(new Date().getFullYear() + 1)), 'dd/MM/yyyy')}`;
+                break;
+            default:
+                textToRender = el.text;
+        }
+
+        if (textToRender === undefined || textToRender === null) {
+            return null;
         }
         
-        if (textToRender === null) {
-            return null; // Don't render if there's no text
-        }
-
         return <p key={id} style={style}>{textToRender}</p>;
     }
     

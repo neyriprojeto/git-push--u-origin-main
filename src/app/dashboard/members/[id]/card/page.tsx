@@ -175,31 +175,43 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
                 );
             }
         } else if (isText) {
-             let textToRender: string | null = null;
+             let textToRender: string | undefined;
 
-            // Mapa de dados dinâmicos para buscar dados reais do membro.
-            const dynamicDataMap: { [key: string]: string | undefined | null } = {
-                'Valor Nome': member.nome ? `Nome: ${member.nome}` : null,
-                'Valor Nº Reg.': member.recordNumber ? `Nº Reg.: ${member.recordNumber}` : null,
-                'Valor Nascimento': member.dataNascimento ? `Nasc: ${formatDate(member.dataNascimento)}` : null,
-                'Valor RG': member.rg ? `RG: ${member.rg}` : null,
-                'Valor CPF': member.cpf ? `CPF: ${member.cpf}` : null,
-                'Valor Cargo': member.cargo ? `Cargo: ${member.cargo}` : null,
-                'Membro Desde': member.dataMembro ? `Membro desde: ${formatDate(member.dataMembro)}` : null,
-                'Congregação': member.congregacao || el.text, // Fallback para o texto do template
-                'Validade': `Validade: ${format(new Date(new Date().setFullYear(new Date().getFullYear() + 1)), 'dd/MM/yyyy')}`,
-            };
-            
-            if (id in dynamicDataMap) {
-                // Se o ID do elemento corresponde a um campo dinâmico, use o valor do mapa.
-                textToRender = dynamicDataMap[id] as string | null;
-            } else {
-                // Caso contrário, é um campo estático (como 'Título 1'), use o texto do template.
-                textToRender = el.text || null;
+            switch (id) {
+                case 'Valor Nome':
+                    if (member.nome) textToRender = `Nome: ${member.nome}`;
+                    break;
+                case 'Valor Nº Reg.':
+                    if (member.recordNumber) textToRender = `Nº Reg.: ${member.recordNumber}`;
+                    break;
+                case 'Valor Nascimento':
+                    if (member.dataNascimento) textToRender = `Nasc: ${formatDate(member.dataNascimento)}`;
+                    break;
+                case 'Valor RG':
+                    if (member.rg) textToRender = `RG: ${member.rg}`;
+                    break;
+                case 'Valor CPF':
+                    if (member.cpf) textToRender = `CPF: ${member.cpf}`;
+                    break;
+                case 'Valor Cargo':
+                    if (member.cargo) textToRender = `Cargo: ${member.cargo}`;
+                    break;
+                case 'Membro Desde':
+                    if (member.dataMembro) textToRender = `Membro desde: ${formatDate(member.dataMembro)}`;
+                    break;
+                case 'Congregação':
+                    textToRender = member.congregacao || el.text;
+                    break;
+                case 'Validade':
+                    textToRender = `Validade: ${format(new Date(new Date().setFullYear(new Date().getFullYear() + 1)), 'dd/MM/yyyy')}`;
+                    break;
+                default:
+                    // For static elements like 'Título 1', use their text from the template
+                    textToRender = el.text;
             }
-            
-            if (!textToRender) {
-                return null; // Não renderiza o elemento se não houver texto.
+
+            if (textToRender === undefined || textToRender === null) {
+                return null; // Explicitly don't render if data is missing for dynamic fields
             }
             
             style.fontSize = el.size.fontSize ? `${el.size.fontSize}px` : undefined;

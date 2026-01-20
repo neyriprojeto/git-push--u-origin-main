@@ -34,7 +34,7 @@ import { useToast } from "@/hooks/use-toast";
 import { addMessage, updateMember } from "@/firebase/firestore/mutations";
 import { deleteUser } from '@/ai/flows/delete-user-flow';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
+import ReactCrop, { type Crop, centerCrop, makeAspectCrop, PixelCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { uploadArquivo } from "@/lib/cloudinary";
@@ -96,7 +96,7 @@ const calculateValidityDate = (memberSince?: string | { seconds: number; nanosec
     } else if (memberSince instanceof Date) {
         memberSinceDate = memberSince;
     } else if (typeof memberSince === 'string') {
-        const dateString = memberSince.includes('T') ? memberSince : memberSince.replace(/-/g, '/');
+        const dateString = memberSince.includes('T') ? dateValue : dateValue.replace(/-/g, '/');
         memberSinceDate = new Date(dateString);
     } else {
         return '__/__/____';
@@ -329,7 +329,7 @@ export default function MemberProfilePage() {
 
   // State for image cropping
   const [crop, setCrop] = useState<Crop>();
-  const [completedCrop, setCompletedCrop] = useState<Crop>();
+  const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
   const [aspect, setAspect] = useState<number | undefined>();
   const [imageToCrop, setImageToCrop] = useState('');
   const [isCropping, setIsCropping] = useState(false);
@@ -412,8 +412,78 @@ export default function MemberProfilePage() {
   
   }, [authUser, currentUserData, member, isUserLoading, isCurrentUserLoading, memberLoading]);
 
-  useEffect(() => { if (member) { memberForm.reset({ nome: member.nome || '', email: member.email || '', phone: member.phone || '', whatsapp: member.whatsapp || '', cep: member.cep || '', logradouro: member.logradouro || '', numero: member.numero || '', complemento: member.complemento || '', bairro: member.bairro || '', cidade: member.cidade || '', estado: member.estado || '', avatar: member.avatar || '', dataNascimento: formatDate(member.dataNascimento) || '', rg: member.rg || '', cpf: member.cpf || '', gender: member.gender || 'Masculino', maritalStatus: 'Solteiro(a)', naturalness: member.naturalness || '', nationality: member.nationality || '', cargo: member.cargo || '', status: member.status || 'Pendente', congregacao: member.congregacao || '', dataBatismo: formatDate(member.dataBatismo) || '', dataMembro: formatDate(member.dataMembro) || '', recordNumber: member.recordNumber || '', responsiblePastor: member.responsiblePastor || '', }); if (member.naturalness && member.naturalness.includes('/')) { const [city, state] = member.naturalness.split('/'); setSelectedState(state); setSelectedCity(city); } else { setSelectedState(''); setSelectedCity(''); } if (member.estado) { setAddressState(member.estado); } else { setAddressState(''); } } }, [member, memberForm]);
+  useEffect(() => { if (member) { memberForm.reset({ nome: member.nome || '', email: member.email || '', phone: member.phone || '', whatsapp: member.whatsapp || '', cep: member.cep || '', logradouro: member.logradouro || '', numero: member.numero || '', complemento: member.complemento || '', bairro: member.bairro || '', cidade: member.cidade || '', estado: member.estado || '', avatar: member.avatar || '', dataNascimento: formatDate(member.dataNascimento) || '', rg: member.rg || '', cpf: member.cpf || '', gender: 'Masculino', maritalStatus: 'Solteiro(a)', naturalness: '', nationality: '', cargo: member.cargo || '', status: 'Pendente', congregacao: member.congregacao || '', dataBatismo: formatDate(member.dataBatismo) || '', dataMembro: formatDate(member.dataMembro) || '', recordNumber: member.recordNumber || '', responsiblePastor: member.responsiblePastor || '', }); if (member.naturalness && member.naturalness.includes('/')) { const [city, state] = member.naturalness.split('/'); setSelectedState(state); setSelectedCity(city); } else { setSelectedState(''); setSelectedCity(''); } if (member.estado) { setAddressState(member.estado); } else { setAddressState(''); } } }, [member, memberForm]);
   useEffect(() => { if (member?.naturalness && cities.length > 0) { const [city] = member.naturalness.split('/'); const cityExists = cities.some(c => c.nome === city); if (cityExists) { setSelectedCity(city); } } }, [cities, member]);
+
+  function setCanvasPreview(
+    image: HTMLImageElement,
+    canvas: HTMLCanvasElement,
+    crop: PixelCrop,
+    scale = 1,
+    rotate = 0
+  ) {
+    const ctx = canvas.getContext("2d");
+  
+    if (!ctx) {
+      throw new Error("No 2d context");
+    }
+  
+    const scaleX = image.naturalWidth / image.width;
+    const scaleY = image.naturalHeight / image.height;
+    const pixelRatio = window.devicePixelRatio;
+  
+    canvas.width = Math.floor(crop.width * scaleX * pixelRatio);
+    canvas.height = Math.floor(crop.height * scaleY * pixelRatio);
+  
+    ctx.scale(pixelRatio, pixelRatio);
+    ctx.imageSmoothingQuality = "high";
+    ctx.fillStyle = "white";
+    ctx.fillRect(0, 0, canvas.width / pixelRatio, canvas.height / pixelRatio);
+  
+    const cropX = crop.x * scaleX;
+    const cropY = crop.y * scaleY;
+  
+    const rotateRads = (rotate * Math.PI) / 180;
+    const centerX = image.naturalWidth / 2;
+    const centerY = image.naturalHeight / 2;
+  
+    ctx.save();
+    ctx.translate(-cropX, -cropY);
+    ctx.translate(centerX, centerY);
+    ctx.rotate(rotateRads);
+    ctx.scale(scale, scale);
+    ctx.translate(-centerX, -centerY);
+    ctx.drawImage(
+      image,
+      0,
+      0,
+      image.naturalWidth,
+      image.naturalHeight,
+      0,
+      0,
+      image.naturalWidth,
+      image.naturalHeight
+    );
+  
+    ctx.restore();
+  }
+
+  useEffect(() => {
+    if (
+      completedCrop?.width &&
+      completedCrop?.height &&
+      imgRef.current &&
+      previewCanvasRef.current
+    ) {
+      setCanvasPreview(
+        imgRef.current,
+        previewCanvasRef.current,
+        completedCrop,
+        scale,
+        rotate
+      );
+    }
+  }, [completedCrop, scale, rotate]);
 
   // --- Handlers ---
   const onMemberSubmit: SubmitHandler<MemberFormData> = async (data) => {
@@ -490,54 +560,15 @@ export default function MemberProfilePage() {
   }
 
   const saveCroppedImage = async () => {
-    const image = imgRef.current;
     const canvas = previewCanvasRef.current;
-    if (!image || !canvas || !completedCrop || !firestore) {
-      toast({ variant: 'destructive', title: 'Erro de Corte', description: 'Não foi possível processar a imagem.' });
+    if (!canvas || !currentFile) {
+      toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível processar a imagem.' });
       return;
     }
     setIsUploading(true);
-    const scaleX = image.naturalWidth / image.width;
-    const scaleY = image.naturalHeight / image.height;
-    
-    canvas.width = Math.floor(completedCrop.width * scaleX);
-    canvas.height = Math.floor(completedCrop.height * scaleY);
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) {
-      toast({ variant: 'destructive', title: 'Erro', description: 'Could not get 2d context' });
-      setIsUploading(false);
-      return;
-    }
-
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    const cropX = completedCrop.x * scaleX;
-    const cropY = completedCrop.y * scaleY;
-    
-    ctx.save();
-    ctx.translate(canvas.width / 2, canvas.height / 2);
-    ctx.rotate((rotate * Math.PI) / 180);
-    ctx.scale(scale, scale);
-    ctx.translate(-canvas.width / 2, -canvas.height / 2);
-
-    ctx.drawImage(
-        image,
-        cropX,
-        cropY,
-        completedCrop.width * scaleX,
-        completedCrop.height * scaleY,
-        0,
-        0,
-        canvas.width,
-        canvas.height
-    );
-
-    ctx.restore();
     
     canvas.toBlob(async (blob) => {
-      if (!blob || !currentFile) {
+      if (!blob) {
         toast({ variant: 'destructive', title: 'Erro', description: 'Could not create blob' });
         setIsUploading(false);
         return;
@@ -553,7 +584,7 @@ export default function MemberProfilePage() {
         setCurrentFile(null);
       } catch (error: any) {
         console.error(error);
-        toast({ variant: 'destructive', title: 'Erro de Upload', description: `Não foi possível enviar a imagem. Erro: ${'\'\'\''}${error.message}${'\'\'\''}` });
+        toast({ variant: 'destructive', title: 'Erro de Upload', description: `Não foi possível enviar a imagem. Erro: ${'\'\''\''}${error.message}${'\'\''\''}` });
       } finally {
         setIsUploading(false);
       }
@@ -1106,7 +1137,7 @@ export default function MemberProfilePage() {
 
   const PrintableReadingPlan = React.forwardRef<HTMLDivElement, {}>((props, ref) => {
     const { data: churchInfo } = useDoc<{ baptismCertLogoUrl?: string }>(useMemoFirebase(() => (firestore ? doc(firestore, 'churchInfo', 'main') : null), [firestore]));
-    const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+    const months = ["Janeiro", "Fevereiro", "Março", "Abril", Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
     
     return (
         <div ref={ref} className="bg-white p-6 text-black w-[297mm]">
@@ -1275,9 +1306,16 @@ export default function MemberProfilePage() {
                     onComplete={(c) => setCompletedCrop(c)}
                     aspect={aspect}
                     className='max-w-full'
+                    scale={scale}
+                    rotate={rotate}
                   >
-                    <Image ref={imgRef} alt="Recortar imagem" src={imageToCrop} onLoad={onImageLoad} width={400} height={400} 
-                      style={{ transform: `scale(${scale}) rotate(${rotate}deg)` }}
+                    <Image 
+                      ref={imgRef} 
+                      alt="Recortar imagem" 
+                      src={imageToCrop} 
+                      onLoad={onImageLoad} 
+                      width={400} 
+                      height={400}
                       className="max-h-[60vh] object-contain" />
                   </ReactCrop>
                 )}
@@ -1301,7 +1339,7 @@ export default function MemberProfilePage() {
               </DialogFooter>
             </DialogContent>
         </Dialog>
-        <canvas ref={previewCanvasRef} style={{ display: 'none' }} />
+        <canvas ref={previewCanvasRef} style={{ display: 'none', objectFit: 'contain' }} />
 
       <div className="bg-card p-4 shadow-sm border-b">
         <div className="container mx-auto flex items-center justify-between">
@@ -1370,3 +1408,5 @@ export default function MemberProfilePage() {
     </div>
   );
 }
+
+    

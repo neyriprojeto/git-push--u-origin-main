@@ -158,32 +158,33 @@ const renderElement = (currentMember: Member, id: string, el: ElementStyle, text
     let textContent: string | undefined = el.text;
 
     switch(id) {
-        case 'Valor Nome':
+        case 'Nome':
             if (currentMember.nome) textContent = `Nome: ${currentMember.nome}`;
             else return null;
             break;
-        case 'Valor Nº Reg.':
+        case 'Registro':
             if (currentMember.recordNumber) textContent = `Nº Reg.: ${currentMember.recordNumber}`;
             else return null;
             break;
-        case 'Valor Nascimento':
+        case 'Nascimento':
             if (currentMember.dataNascimento) textContent = `Nasc: ${formatDate(currentMember.dataNascimento, 'dd/MM/yyyy')}`;
             else return null;
             break;
-        case 'Valor RG':
+        case 'RG':
             if (currentMember.rg) textContent = `RG: ${currentMember.rg}`;
             else return null;
             break;
-        case 'Valor CPF':
+        case 'CPF':
             if (currentMember.cpf) textContent = `CPF: ${currentMember.cpf}`;
             else return null;
             break;
-        case 'Valor Cargo':
+        case 'Cargo':
             if (currentMember.cargo) textContent = `Cargo: ${currentMember.cargo}`;
             else return null;
             break;
         case 'Congregação':
             if (currentMember.congregacao) textContent = currentMember.congregacao;
+            else if (el.text) textContent = el.text;
             else return null;
             break;
         case 'Membro Desde':
@@ -195,7 +196,7 @@ const renderElement = (currentMember: Member, id: string, el: ElementStyle, text
              break;
     }
     
-    if (!textContent) {
+    if (textContent === undefined) {
         return null;
     }
 
@@ -457,7 +458,7 @@ export default function MemberProfilePage() {
         setCurrentFile(null);
       } catch (error: any) {
         console.error(error);
-        toast({ variant: 'destructive', title: 'Erro de Upload', description: `Não foi possível enviar a imagem. Erro: ${error.message}` });
+        toast({ variant: 'destructive', title: 'Erro de Upload', description: `Não foi possível enviar a imagem. Erro: ${'\'\'\''}${error.message}${'\'\'\''}` });
       } finally {
         setIsUploading(false);
       }

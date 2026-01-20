@@ -200,32 +200,33 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
         let textContent: string | undefined = el.text;
 
         switch(id) {
-            case 'Valor Nome':
+            case 'Nome':
                 if (member.nome) textContent = `Nome: ${member.nome}`;
                 else return null;
                 break;
-            case 'Valor Nº Reg.':
+            case 'Registro':
                 if (member.recordNumber) textContent = `Nº Reg.: ${member.recordNumber}`;
                 else return null;
                 break;
-            case 'Valor Nascimento':
+            case 'Nascimento':
                 if (member.dataNascimento) textContent = `Nasc: ${formatDate(member.dataNascimento, 'dd/MM/yyyy')}`;
                 else return null;
                 break;
-            case 'Valor RG':
+            case 'RG':
                 if (member.rg) textContent = `RG: ${member.rg}`;
                 else return null;
                 break;
-            case 'Valor CPF':
+            case 'CPF':
                 if (member.cpf) textContent = `CPF: ${member.cpf}`;
                 else return null;
                 break;
-            case 'Valor Cargo':
+            case 'Cargo':
                 if (member.cargo) textContent = `Cargo: ${member.cargo}`;
                 else return null;
                 break;
             case 'Congregação':
                 if (member.congregacao) textContent = member.congregacao;
+                else if (el.text) textContent = el.text; // Fallback to template text for congregation
                 else return null;
                 break;
             case 'Membro Desde':
@@ -237,8 +238,8 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
                 break;
         }
 
-        if (!textContent) {
-            return null;
+        if (textContent === undefined) {
+             return null;
         }
         
         const { textColors } = templateData;

@@ -115,7 +115,7 @@ const calculateValidityDate = (memberSince?: string | { seconds: number; nanosec
     let expiryDateThisYear = new Date(currentYear, expiryMonth, expiryDay);
     expiryDateThisYear.setHours(0, 0, 0, 0);
 
-    if (expiryDateThisYear < today) {
+    if (expiryDateThisYear <= today) {
         return format(new Date(currentYear + 1, expiryMonth, expiryDay), 'dd/MM/yyyy');
     } else {
         return format(expiryDateThisYear, 'dd/MM/yyyy');
@@ -157,23 +157,27 @@ const renderElement = (currentMember: Member, id: string, el: ElementStyle, text
         }
     }
     
-    let textContent: string | null = null;
-    let isDynamic = false;
+    const dynamicDataMap: Record<string, string | undefined> = {
+        'Valor Nome': currentMember.nome ? `Nome: ${currentMember.nome}` : undefined,
+        'Valor Nº Reg.': currentMember.recordNumber ? `Nº Reg.: ${currentMember.recordNumber}` : undefined,
+        'Valor Nascimento': currentMember.dataNascimento ? `Nasc: ${formatDate(currentMember.dataNascimento, 'dd/MM/yyyy')}` : undefined,
+        'Valor RG': currentMember.rg ? `RG: ${currentMember.rg}` : undefined,
+        'Valor CPF': currentMember.cpf ? `CPF: ${currentMember.cpf}` : undefined,
+        'Valor Cargo': currentMember.cargo ? `Cargo: ${currentMember.cargo}` : undefined,
+        'Congregação': currentMember.congregacao,
+        'Membro Desde': currentMember.dataMembro ? `Membro desde: ${formatDate(currentMember.dataMembro, 'dd/MM/yyyy')}` : undefined,
+        'Validade': `Validade: ${calculateValidityDate(currentMember.dataMembro)}`,
+    };
 
-    switch (id) {
-        case 'Valor Nome': textContent = currentMember.nome ? `Nome: ${currentMember.nome}` : null; isDynamic = true; break;
-        case 'Valor Nº Reg.': textContent = currentMember.recordNumber ? `Nº Reg.: ${currentMember.recordNumber}` : null; isDynamic = true; break;
-        case 'Valor Nascimento': textContent = currentMember.dataNascimento ? `Nasc: ${formatDate(currentMember.dataNascimento, 'dd/MM/yyyy')}` : null; isDynamic = true; break;
-        case 'Valor RG': textContent = currentMember.rg ? `RG: ${currentMember.rg}` : null; isDynamic = true; break;
-        case 'Valor CPF': textContent = currentMember.cpf ? `CPF: ${currentMember.cpf}` : null; isDynamic = true; break;
-        case 'Valor Cargo': textContent = currentMember.cargo ? `Cargo: ${currentMember.cargo}` : null; isDynamic = true; break;
-        case 'Congregação': textContent = currentMember.congregacao || null; isDynamic = true; break;
-        case 'Membro Desde': textContent = currentMember.dataMembro ? `Membro desde: ${formatDate(currentMember.dataMembro, 'dd/MM/yyyy')}` : null; isDynamic = true; break;
-        case 'Validade': textContent = `Validade: ${calculateValidityDate(currentMember.dataMembro)}`; isDynamic = true; break;
-        default: textContent = el.text || null; break;
+    let textContent: string | undefined = undefined;
+
+    if (id in dynamicDataMap) {
+        textContent = dynamicDataMap[id];
+    } else {
+        textContent = el.text;
     }
     
-    if ((isDynamic && !textContent) || !textContent) {
+    if (!textContent) {
         return null;
     }
 
@@ -190,7 +194,7 @@ const renderElement = (currentMember: Member, id: string, el: ElementStyle, text
     style.textAlign = el.textAlign;
     
     style.whiteSpace = 'pre-wrap';
-    if (id.includes('Título') || id === 'Assinatura Pastor' || id === 'Validade' || id === 'Membro Desde' || id.includes('Nº Reg') || id.includes('Nascimento') || id.includes('RG') || id.includes('CPF')) {
+    if (id.includes('Título') || id === 'Assinatura Pastor' || id === 'Validade' || id.includes('Membro Desde') || id.includes('Nº Reg') || id.includes('Nascimento') || id.includes('RG') || id.includes('CPF')) {
         style.whiteSpace = 'nowrap';
     }
     

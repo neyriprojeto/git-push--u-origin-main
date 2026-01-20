@@ -110,8 +110,8 @@ const calculateValidityDate = (memberSince?: string | { seconds: number; nanosec
     let expiryDateThisYear = new Date(currentYear, expiryMonth, expiryDay);
     expiryDateThisYear.setHours(0, 0, 0, 0);
 
-    // If that date has already passed, the card is valid until the anniversary in the NEXT year.
-    if (expiryDateThisYear < today) {
+    // If that date has already passed or is today, the card is valid until the NEXT year's anniversary.
+    if (expiryDateThisYear <= today) {
         return format(new Date(currentYear + 1, expiryMonth, expiryDay), 'dd/MM/yyyy');
     } else {
         return format(expiryDateThisYear, 'dd/MM/yyyy');
@@ -200,23 +200,27 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
             }
         }
         
-        let textContent: string | null = null;
-        let isDynamic = false;
+        const dynamicDataMap: Record<string, string | undefined> = {
+            'Valor Nome': member.nome ? `Nome: ${member.nome}` : undefined,
+            'Valor Nº Reg.': member.recordNumber ? `Nº Reg.: ${member.recordNumber}` : undefined,
+            'Valor Nascimento': member.dataNascimento ? `Nasc: ${formatDate(member.dataNascimento, 'dd/MM/yyyy')}` : undefined,
+            'Valor RG': member.rg ? `RG: ${member.rg}` : undefined,
+            'Valor CPF': member.cpf ? `CPF: ${member.cpf}` : undefined,
+            'Valor Cargo': member.cargo ? `Cargo: ${member.cargo}` : undefined,
+            'Congregação': member.congregacao,
+            'Membro Desde': member.dataMembro ? `Membro desde: ${formatDate(member.dataMembro, 'dd/MM/yyyy')}` : undefined,
+            'Validade': `Validade: ${calculateValidityDate(member.dataMembro)}`,
+        };
+        
+        let textContent: string | undefined = undefined;
 
-        switch (id) {
-            case 'Valor Nome': textContent = member.nome ? `Nome: ${member.nome}` : null; isDynamic = true; break;
-            case 'Valor Nº Reg.': textContent = member.recordNumber ? `Nº Reg.: ${member.recordNumber}` : null; isDynamic = true; break;
-            case 'Valor Nascimento': textContent = member.dataNascimento ? `Nasc: ${formatDate(member.dataNascimento, 'dd/MM/yyyy')}` : null; isDynamic = true; break;
-            case 'Valor RG': textContent = member.rg ? `RG: ${member.rg}` : null; isDynamic = true; break;
-            case 'Valor CPF': textContent = member.cpf ? `CPF: ${member.cpf}` : null; isDynamic = true; break;
-            case 'Valor Cargo': textContent = member.cargo ? `Cargo: ${member.cargo}` : null; isDynamic = true; break;
-            case 'Congregação': textContent = member.congregacao || null; isDynamic = true; break;
-            case 'Membro Desde': textContent = member.dataMembro ? `Membro desde: ${formatDate(member.dataMembro, 'dd/MM/yyyy')}` : null; isDynamic = true; break;
-            case 'Validade': textContent = `Validade: ${calculateValidityDate(member.dataMembro)}`; isDynamic = true; break;
-            default: textContent = el.text || null; break;
+        if (id in dynamicDataMap) {
+            textContent = dynamicDataMap[id];
+        } else {
+            textContent = el.text;
         }
 
-        if ((isDynamic && !textContent) || !textContent) {
+        if (!textContent) {
             return null;
         }
         
@@ -234,7 +238,7 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
         style.textAlign = el.textAlign;
         
         style.whiteSpace = 'pre-wrap';
-        if (id.includes('Título') || id === 'Assinatura Pastor' || id === 'Validade' || id === 'Membro Desde' || id.includes('Nº Reg') || id.includes('Nascimento') || id.includes('RG') || id.includes('CPF')) {
+        if (id.includes('Título') || id === 'Assinatura Pastor' || id === 'Validade' || id.includes('Membro Desde') || id.includes('Nº Reg') || id.includes('Nascimento') || id.includes('RG') || id.includes('CPF')) {
             style.whiteSpace = 'nowrap';
         }
 

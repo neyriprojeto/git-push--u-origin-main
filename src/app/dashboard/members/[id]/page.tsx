@@ -86,24 +86,6 @@ const formatDate = (dateValue?: string | { seconds: number; nanoseconds: number 
     }
 };
 
-const getMemberDataForField = (currentMember: Member, fieldId: string): string | null => {
-    const dataMap: Record<string, string | null> = {
-        'Valor Nome': `Nome: ${currentMember.nome || ''}`,
-        'Valor Nº Reg.': currentMember.recordNumber ? `Nº Reg.: ${currentMember.recordNumber}` : null,
-        'Valor Nascimento': currentMember.dataNascimento ? `Nasc: ${formatDate(currentMember.dataNascimento, 'dd/MM/yyyy')}` : null,
-        'Valor CPF': currentMember.cpf ? `CPF: ${currentMember.cpf}` : null,
-        'Valor Cargo': `Cargo: ${currentMember.cargo || ''}`,
-        'Membro Desde': currentMember.dataMembro ? `Membro desde: ${formatDate(currentMember.dataMembro, 'dd/MM/yyyy')}` : null,
-        'Congregação': currentMember.congregacao || null,
-    };
-
-    if (fieldId in dataMap) {
-        return dataMap[fieldId];
-    }
-    return null;
-};
-
-
 const renderElement = (currentMember: Member, id: string, el: ElementStyle, textColors: CardTemplateData['textColors'], getAvatarFn: (avatarId?: string) => { imageUrl: string } | undefined): React.ReactNode => {
     if (!el) return null;
     const isImage = 'src' in el;
@@ -153,16 +135,30 @@ const renderElement = (currentMember: Member, id: string, el: ElementStyle, text
         }
 
         let textToRender: string | null = null;
-        const isDynamicField = id.includes('Valor') || id.includes('Membro Desde') || id === 'Congregação';
+        
+        // Mapa de dados dinâmicos para buscar dados reais do membro.
+        const dynamicDataMap: { [key: string]: string | undefined | null } = {
+            'Valor Nome': currentMember.nome ? `Nome: ${currentMember.nome}` : null,
+            'Valor Nº Reg.': currentMember.recordNumber ? `Nº Reg.: ${currentMember.recordNumber}` : null,
+            'Valor Nascimento': currentMember.dataNascimento ? `Nasc: ${formatDate(currentMember.dataNascimento, 'dd/MM/yyyy')}` : null,
+            'Valor RG': currentMember.rg ? `RG: ${currentMember.rg}` : null,
+            'Valor CPF': currentMember.cpf ? `CPF: ${currentMember.cpf}` : null,
+            'Valor Cargo': currentMember.cargo ? `Cargo: ${currentMember.cargo}` : null,
+            'Membro Desde': currentMember.dataMembro ? `Membro desde: ${formatDate(currentMember.dataMembro, 'dd/MM/yyyy')}` : null,
+            'Congregação': currentMember.congregacao || el.text, // Fallback para o texto do template
+            'Validade': `Validade: ${format(new Date(new Date().setFullYear(new Date().getFullYear() + 1)), 'dd/MM/yyyy')}`,
+        };
 
-        if (isDynamicField) {
-            textToRender = getMemberDataForField(currentMember, id);
+        if (id in dynamicDataMap) {
+            // Se o ID do elemento corresponde a um campo dinâmico, use o valor do mapa.
+            textToRender = dynamicDataMap[id] as string | null;
         } else {
+            // Caso contrário, é um campo estático (como 'Título 1'), use o texto do template.
             textToRender = el.text || null;
         }
-
+        
         if (textToRender === null) {
-            return null;
+            return null; // Don't render if there's no text
         }
 
         return <p key={id} style={style}>{textToRender}</p>;

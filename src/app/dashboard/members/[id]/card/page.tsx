@@ -175,43 +175,31 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
                 );
             }
         } else if (isText) {
-            let textToRender: string | null;
+             let textToRender: string | null = null;
 
-            const getDynamicText = (fieldId: string): string | null | 'NOT_DYNAMIC' => {
-                switch (fieldId) {
-                    case 'Valor Nome':
-                        return member.nome ? `Nome: ${member.nome}` : null;
-                    case 'Valor Nº Reg.':
-                        return member.recordNumber ? `Nº Reg.: ${member.recordNumber}` : null;
-                    case 'Valor Nascimento':
-                        return member.dataNascimento ? `Nasc: ${formatDate(member.dataNascimento)}` : null;
-                    case 'Valor RG':
-                        return member.rg ? `RG: ${member.rg}` : null;
-                    case 'Valor CPF':
-                        return member.cpf ? `CPF: ${member.cpf}` : null;
-                    case 'Valor Cargo':
-                        return member.cargo ? `Cargo: ${member.cargo}` : null;
-                    case 'Membro Desde':
-                        return member.dataMembro ? `Membro desde: ${formatDate(member.dataMembro)}` : null;
-                    case 'Congregação':
-                        return member.congregacao || el.text || null;
-                    case 'Validade':
-                        return `Validade: ${format(new Date(new Date().setFullYear(new Date().getFullYear() + 1)), 'dd/MM/yyyy')}`;
-                    default:
-                        return 'NOT_DYNAMIC'; 
-                }
+            // Mapa de dados dinâmicos para buscar dados reais do membro.
+            const dynamicDataMap: { [key: string]: string | undefined | null } = {
+                'Valor Nome': member.nome ? `Nome: ${member.nome}` : null,
+                'Valor Nº Reg.': member.recordNumber ? `Nº Reg.: ${member.recordNumber}` : null,
+                'Valor Nascimento': member.dataNascimento ? `Nasc: ${formatDate(member.dataNascimento)}` : null,
+                'Valor RG': member.rg ? `RG: ${member.rg}` : null,
+                'Valor CPF': member.cpf ? `CPF: ${member.cpf}` : null,
+                'Valor Cargo': member.cargo ? `Cargo: ${member.cargo}` : null,
+                'Membro Desde': member.dataMembro ? `Membro desde: ${formatDate(member.dataMembro)}` : null,
+                'Congregação': member.congregacao || el.text, // Fallback para o texto do template
+                'Validade': `Validade: ${format(new Date(new Date().setFullYear(new Date().getFullYear() + 1)), 'dd/MM/yyyy')}`,
             };
             
-            const dynamicText = getDynamicText(id);
-
-            if (dynamicText !== 'NOT_DYNAMIC') {
-                textToRender = dynamicText;
+            if (id in dynamicDataMap) {
+                // Se o ID do elemento corresponde a um campo dinâmico, use o valor do mapa.
+                textToRender = dynamicDataMap[id] as string | null;
             } else {
+                // Caso contrário, é um campo estático (como 'Título 1'), use o texto do template.
                 textToRender = el.text || null;
             }
             
             if (!textToRender) {
-                return null;
+                return null; // Não renderiza o elemento se não houver texto.
             }
             
             style.fontSize = el.size.fontSize ? `${el.size.fontSize}px` : undefined;
@@ -432,7 +420,3 @@ export default function MemberCardPage() {
     );
 }
 
-
-  
-
-    

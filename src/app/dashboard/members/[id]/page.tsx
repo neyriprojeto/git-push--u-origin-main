@@ -415,76 +415,6 @@ export default function MemberProfilePage() {
   useEffect(() => { if (member) { memberForm.reset({ nome: member.nome || '', email: member.email || '', phone: member.phone || '', whatsapp: member.whatsapp || '', cep: member.cep || '', logradouro: member.logradouro || '', numero: member.numero || '', complemento: member.complemento || '', bairro: member.bairro || '', cidade: member.cidade || '', estado: member.estado || '', avatar: member.avatar || '', dataNascimento: formatDate(member.dataNascimento) || '', rg: member.rg || '', cpf: member.cpf || '', gender: 'Masculino', maritalStatus: 'Solteiro(a)', naturalness: '', nationality: '', cargo: member.cargo || '', status: 'Pendente', congregacao: member.congregacao || '', dataBatismo: formatDate(member.dataBatismo) || '', dataMembro: formatDate(member.dataMembro) || '', recordNumber: member.recordNumber || '', responsiblePastor: member.responsiblePastor || '', }); if (member.naturalness && member.naturalness.includes('/')) { const [city, state] = member.naturalness.split('/'); setSelectedState(state); setSelectedCity(city); } else { setSelectedState(''); setSelectedCity(''); } if (member.estado) { setAddressState(member.estado); } else { setAddressState(''); } } }, [member, memberForm]);
   useEffect(() => { if (member?.naturalness && cities.length > 0) { const [city] = member.naturalness.split('/'); const cityExists = cities.some(c => c.nome === city); if (cityExists) { setSelectedCity(city); } } }, [cities, member]);
 
-  function setCanvasPreview(
-    image: HTMLImageElement,
-    canvas: HTMLCanvasElement,
-    crop: PixelCrop,
-    scale = 1,
-    rotate = 0
-  ) {
-    const ctx = canvas.getContext("2d");
-  
-    if (!ctx) {
-      throw new Error("No 2d context");
-    }
-  
-    const scaleX = image.naturalWidth / image.width;
-    const scaleY = image.naturalHeight / image.height;
-    const pixelRatio = window.devicePixelRatio;
-  
-    canvas.width = Math.floor(crop.width * scaleX * pixelRatio);
-    canvas.height = Math.floor(crop.height * scaleY * pixelRatio);
-  
-    ctx.scale(pixelRatio, pixelRatio);
-    ctx.imageSmoothingQuality = "high";
-    ctx.fillStyle = "white";
-    ctx.fillRect(0, 0, canvas.width / pixelRatio, canvas.height / pixelRatio);
-  
-    const cropX = crop.x * scaleX;
-    const cropY = crop.y * scaleY;
-  
-    const rotateRads = (rotate * Math.PI) / 180;
-    const centerX = image.naturalWidth / 2;
-    const centerY = image.naturalHeight / 2;
-  
-    ctx.save();
-    ctx.translate(-cropX, -cropY);
-    ctx.translate(centerX, centerY);
-    ctx.rotate(rotateRads);
-    ctx.scale(scale, scale);
-    ctx.translate(-centerX, -centerY);
-    ctx.drawImage(
-      image,
-      0,
-      0,
-      image.naturalWidth,
-      image.naturalHeight,
-      0,
-      0,
-      image.naturalWidth,
-      image.naturalHeight
-    );
-  
-    ctx.restore();
-  }
-
-  useEffect(() => {
-    if (
-      completedCrop?.width &&
-      completedCrop?.height &&
-      imgRef.current &&
-      previewCanvasRef.current
-    ) {
-      setCanvasPreview(
-        imgRef.current,
-        previewCanvasRef.current,
-        completedCrop,
-        scale,
-        rotate
-      );
-    }
-  }, [completedCrop, scale, rotate]);
-
   // --- Handlers ---
   const onMemberSubmit: SubmitHandler<MemberFormData> = async (data) => {
     if (!firestore || !memberId) return;
@@ -560,34 +490,81 @@ export default function MemberProfilePage() {
   }
 
   const saveCroppedImage = async () => {
+    const image = imgRef.current;
     const canvas = previewCanvasRef.current;
-    if (!canvas || !currentFile) {
-      toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível processar a imagem.' });
-      return;
+    if (!image || !canvas || !completedCrop || !currentFile) {
+        toast({
+            variant: 'destructive',
+            title: 'Erro de Corte',
+            description: 'Não foi possível processar a imagem cortada. Tente novamente.',
+        });
+        return;
     }
+
     setIsUploading(true);
+
+    const scaleX = image.naturalWidth / image.width;
+    const scaleY = image.naturalHeight / image.height;
     
-    canvas.toBlob(async (blob) => {
-      if (!blob) {
-        toast({ variant: 'destructive', title: 'Erro', description: 'Could not create blob' });
+    canvas.width = Math.floor(completedCrop.width);
+    canvas.height = Math.floor(completedCrop.height);
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+        toast({ variant: 'destructive', title: 'Erro', description: 'Could not get 2d context' });
         setIsUploading(false);
         return;
-      }
-      try {
-        const croppedFile = new File([blob], currentFile.name, { type: 'image/png' });
-        const src = await uploadArquivo(croppedFile);
-        memberForm.setValue('avatar', src);
-        await onMemberSubmit(memberForm.getValues());
-        toast({ title: 'Sucesso', description: 'Foto de perfil atualizada!' });
-        setIsCropping(false);
-        setImageToCrop('');
-        setCurrentFile(null);
-      } catch (error: any) {
-        console.error(error);
-        toast({ variant: 'destructive', title: 'Erro de Upload', description: `Não foi possível enviar a imagem. Erro: ${error.message}` });
-      } finally {
-        setIsUploading(false);
-      }
+    }
+
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const cropX = completedCrop.x * scaleX;
+    const cropY = completedCrop.y * scaleY;
+    const cropWidth = completedCrop.width * scaleX;
+    const cropHeight = completedCrop.height * scaleY;
+
+    ctx.save();
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate((rotate * Math.PI) / 180);
+    ctx.scale(scale, scale);
+    ctx.translate(-(canvas.width / 2), -(canvas.height / 2));
+
+    ctx.drawImage(
+      image,
+      cropX,
+      cropY,
+      cropWidth,
+      cropHeight,
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+
+    ctx.restore();
+    
+    canvas.toBlob(async (blob) => {
+        if (!blob) {
+            toast({ variant: 'destructive', title: 'Erro', description: 'Could not create blob' });
+            setIsUploading(false);
+            return;
+        }
+        try {
+            const croppedFile = new File([blob], currentFile.name, { type: 'image/png' });
+            const src = await uploadArquivo(croppedFile);
+            memberForm.setValue('avatar', src);
+            await onMemberSubmit(memberForm.getValues());
+            toast({ title: 'Sucesso', description: 'Foto de perfil atualizada!' });
+            setIsCropping(false);
+            setImageToCrop('');
+            setCurrentFile(null);
+        } catch (error: any) {
+            console.error(error);
+            toast({ variant: 'destructive', title: 'Erro de Upload', description: `Não foi possível enviar a imagem. Erro: ${error.message}` });
+        } finally {
+            setIsUploading(false);
+        }
     }, 'image/png');
   };
 
@@ -1306,13 +1283,12 @@ export default function MemberProfilePage() {
                     onComplete={(c) => setCompletedCrop(c)}
                     aspect={aspect}
                     className='max-w-full'
-                    scale={scale}
-                    rotate={rotate}
                   >
                     <Image 
                       ref={imgRef} 
                       alt="Recortar imagem" 
                       src={imageToCrop} 
+                      style={{ transform: `scale(${scale}) rotate(${rotate}deg)` }}
                       onLoad={onImageLoad} 
                       width={400} 
                       height={400}

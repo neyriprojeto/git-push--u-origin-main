@@ -493,78 +493,77 @@ export default function MemberProfilePage() {
     const image = imgRef.current;
     const canvas = previewCanvasRef.current;
     if (!image || !canvas || !completedCrop || !currentFile) {
-        toast({
-            variant: 'destructive',
-            title: 'Erro de Corte',
-            description: 'Não foi possível processar a imagem cortada. Tente novamente.',
-        });
-        return;
+      toast({
+        variant: 'destructive',
+        title: 'Erro de Corte',
+        description: 'Não foi possível processar a imagem cortada. Tente novamente.',
+      });
+      return;
     }
-
+  
     setIsUploading(true);
-
+  
     const scaleX = image.naturalWidth / image.width;
     const scaleY = image.naturalHeight / image.height;
-    
+  
     canvas.width = Math.floor(completedCrop.width);
     canvas.height = Math.floor(completedCrop.height);
-
+  
     const ctx = canvas.getContext('2d');
     if (!ctx) {
-        toast({ variant: 'destructive', title: 'Erro', description: 'Could not get 2d context' });
-        setIsUploading(false);
-        return;
+      toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível obter o contexto 2D.' });
+      setIsUploading(false);
+      return;
     }
-
+    
+    // Fill the background with white
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-
+  
     const cropX = completedCrop.x * scaleX;
     const cropY = completedCrop.y * scaleY;
-    const cropWidth = completedCrop.width * scaleX;
-    const cropHeight = completedCrop.height * scaleY;
-
+  
     ctx.save();
     ctx.translate(canvas.width / 2, canvas.height / 2);
     ctx.rotate((rotate * Math.PI) / 180);
     ctx.scale(scale, scale);
-    ctx.translate(-(canvas.width / 2), -(canvas.height / 2));
-
+    ctx.translate(-canvas.width / 2, -canvas.height / 2);
+  
     ctx.drawImage(
       image,
       cropX,
       cropY,
-      cropWidth,
-      cropHeight,
+      completedCrop.width * scaleX,
+      completedCrop.height * scaleY,
       0,
       0,
       canvas.width,
       canvas.height
     );
-
+  
     ctx.restore();
-    
+  
     canvas.toBlob(async (blob) => {
-        if (!blob) {
-            toast({ variant: 'destructive', title: 'Erro', description: 'Could not create blob' });
-            setIsUploading(false);
-            return;
-        }
-        try {
-            const croppedFile = new File([blob], currentFile.name, { type: 'image/png' });
-            const src = await uploadArquivo(croppedFile);
-            memberForm.setValue('avatar', src);
-            await onMemberSubmit(memberForm.getValues());
-            toast({ title: 'Sucesso', description: 'Foto de perfil atualizada!' });
-            setIsCropping(false);
-            setImageToCrop('');
-            setCurrentFile(null);
-        } catch (error: any) {
-            console.error(error);
-            toast({ variant: 'destructive', title: 'Erro de Upload', description: `Não foi possível enviar a imagem. Erro: ${error.message}` });
-        } finally {
-            setIsUploading(false);
-        }
+      if (!blob) {
+        toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível criar o blob da imagem.' });
+        setIsUploading(false);
+        return;
+      }
+      try {
+        const croppedFile = new File([blob], currentFile.name, { type: 'image/png' });
+        const src = await uploadArquivo(croppedFile);
+        memberForm.setValue('avatar', src);
+        await onMemberSubmit(memberForm.getValues());
+        toast({ title: 'Sucesso', description: 'Foto de perfil atualizada!' });
+        setIsCropping(false);
+        setImageToCrop('');
+        setCurrentFile(null);
+      } catch (error: any) {
+        console.error(error);
+        toast({ variant: 'destructive', title: 'Erro de Upload', description: `Não foi possível enviar a imagem. Erro: ${error.message}` });
+      } finally {
+        setIsUploading(false);
+      }
     }, 'image/png');
   };
 
@@ -1120,7 +1119,7 @@ export default function MemberProfilePage() {
 
   const PrintableReadingPlan = React.forwardRef<HTMLDivElement, {}>((props, ref) => {
     const { data: churchInfo } = useDoc<{ baptismCertLogoUrl?: string }>(useMemoFirebase(() => (firestore ? doc(firestore, 'churchInfo', 'main') : null), [firestore]));
-    const months = ["Janeiro", "Fevereiro", "Março", "Abril", Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+    const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
     
     return (
         <div ref={ref} className="bg-white p-6 text-black w-[297mm]">
@@ -1390,3 +1389,5 @@ export default function MemberProfilePage() {
     </div>
   );
 }
+
+    

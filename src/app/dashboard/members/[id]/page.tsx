@@ -96,7 +96,7 @@ const calculateValidityDate = (memberSince?: string | { seconds: number; nanosec
     } else if (memberSince instanceof Date) {
         memberSinceDate = memberSince;
     } else if (typeof memberSince === 'string') {
-        const dateString = memberSince.includes('T') ? dateValue : dateValue.replace(/-/g, '/');
+        const dateString = memberSince.includes('T') ? memberSince : memberSince.replace(/-/g, '/');
         memberSinceDate = new Date(dateString);
     } else {
         return '__/__/____';
@@ -584,7 +584,7 @@ export default function MemberProfilePage() {
         setCurrentFile(null);
       } catch (error: any) {
         console.error(error);
-        toast({ variant: 'destructive', title: 'Erro de Upload', description: `Não foi possível enviar a imagem. Erro: ${'\'\''\''}${error.message}${'\'\''\''}` });
+        toast({ variant: 'destructive', title: 'Erro de Upload', description: `Não foi possível enviar a imagem. Erro: ${error.message}` });
       } finally {
         setIsUploading(false);
       }
@@ -1137,7 +1137,7 @@ export default function MemberProfilePage() {
 
   const PrintableReadingPlan = React.forwardRef<HTMLDivElement, {}>((props, ref) => {
     const { data: churchInfo } = useDoc<{ baptismCertLogoUrl?: string }>(useMemoFirebase(() => (firestore ? doc(firestore, 'churchInfo', 'main') : null), [firestore]));
-    const months = ["Janeiro", "Fevereiro", "Março", "Abril", Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+    const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
     
     return (
         <div ref={ref} className="bg-white p-6 text-black w-[297mm]">
@@ -1408,5 +1408,3 @@ export default function MemberProfilePage() {
     </div>
   );
 }
-
-    

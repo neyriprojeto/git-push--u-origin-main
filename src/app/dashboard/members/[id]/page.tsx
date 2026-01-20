@@ -86,7 +86,7 @@ const formatDate = (dateValue?: string | { seconds: number; nanoseconds: number 
     }
 };
 
-const renderElement = (currentMember: Member, id: string, el: ElementStyle, textColors: CardTemplateData['textColors'], getAvatarFn: (avatarId?: string) => { imageUrl: string } | undefined): React.ReactNode => {
+const renderElement = (currentMember: Member, id: string, el: ElementStyle, textColors: CardTemplateData['textColors'], qrCodeUrl: string): React.ReactNode => {
     if (!el) return null;
     const isImage = 'src' in el;
     const isText = 'text' in el;
@@ -109,47 +109,50 @@ const renderElement = (currentMember: Member, id: string, el: ElementStyle, text
         style.height = el.size.height ? `${el.size.height}px` : 'auto';
         let src = el.src;
         if (id === 'Foto do Membro') {
-            const memberAvatar = getAvatarFn(currentMember.avatar);
-            if (memberAvatar?.imageUrl) src = memberAvatar.imageUrl;
+            if (currentMember.avatar) src = currentMember.avatar;
+        }
+        if (id === 'QR Code') {
+            src = qrCodeUrl;
         }
         if (!src) {
             return <div key={id} style={{ ...style, border: '1px dashed #ccc' }} className="bg-gray-200/50 flex items-center justify-center text-xs text-gray-500">{id}</div>;
         } else {
             const objectFitStyle: React.CSSProperties = { objectFit: id === 'Foto do Membro' ? 'cover' : 'contain' };
             return (
-                <div key={id} style={style} className="relative">
-                    <Image src={src} alt={id} fill style={objectFitStyle} className={cn({ 'rounded-md': id !== 'Assinatura' })} />
+                <div key={id} style={style} className={cn("relative", {'rounded-md overflow-hidden': id !== 'Assinatura' })}>
+                    <img src={src} alt={id} style={{ width: '100%', height: '100%', objectFit: objectFitStyle.objectFit }} crossOrigin="anonymous"/>
                 </div>
             );
         }
     }
 
     if (isText) {
-        const dynamicTextMap: Record<string, string | undefined> = {
-            'Valor Nome': currentMember.nome ? `Nome: ${currentMember.nome}` : undefined,
-            'Valor Nº Reg.': currentMember.recordNumber ? `Nº Reg.: ${currentMember.recordNumber}` : undefined,
-            'Valor Nascimento': currentMember.dataNascimento ? `Nasc: ${formatDate(currentMember.dataNascimento, 'dd/MM/yyyy')}` : undefined,
-            'Valor RG': currentMember.rg ? `RG: ${currentMember.rg}` : undefined,
-            'Valor CPF': currentMember.cpf ? `CPF: ${currentMember.cpf}` : undefined,
-            'Valor Cargo': currentMember.cargo ? `Cargo: ${currentMember.cargo}` : undefined,
-            'Membro Desde': currentMember.dataMembro ? `Membro desde: ${formatDate(currentMember.dataMembro, 'dd/MM/yyyy')}` : undefined,
-            'Congregação': currentMember.congregacao,
-            'Validade': `Validade: ${format(new Date(new Date().setFullYear(new Date().getFullYear() + 1)), 'dd/MM/yyyy')}`
-        };
+        let textToRender: string | undefined;
 
-        let textToRender: string | undefined = el.text; // Default to template text
-
-        if (id in dynamicTextMap) {
-            textToRender = dynamicTextMap[id];
-        }
-
-        // For congregation, fall back to template if member has no congregation
-        if (id === 'Congregação' && !currentMember.congregacao) {
+        if (id === 'Valor Nome') {
+            textToRender = currentMember.nome ? `Nome: ${currentMember.nome}` : undefined;
+        } else if (id === 'Valor Nº Reg.') {
+            textToRender = currentMember.recordNumber ? `Nº Reg.: ${currentMember.recordNumber}` : undefined;
+        } else if (id === 'Valor Nascimento') {
+            textToRender = currentMember.dataNascimento ? `Nasc: ${formatDate(currentMember.dataNascimento, 'dd/MM/yyyy')}` : undefined;
+        } else if (id === 'Valor RG') {
+            textToRender = currentMember.rg ? `RG: ${currentMember.rg}` : undefined;
+        } else if (id === 'Valor CPF') {
+            textToRender = currentMember.cpf ? `CPF: ${currentMember.cpf}` : undefined;
+        } else if (id === 'Valor Cargo') {
+            textToRender = currentMember.cargo ? `Cargo: ${currentMember.cargo}` : undefined;
+        } else if (id === 'Membro Desde') {
+            textToRender = currentMember.dataMembro ? `Membro desde: ${formatDate(currentMember.dataMembro, 'dd/MM/yyyy')}` : undefined;
+        } else if (id === 'Validade') {
+            textToRender = `Validade: ${format(new Date(new Date().setFullYear(new Date().getFullYear() + 1)), 'dd/MM/yyyy')}`;
+        } else if (id === 'Congregação') {
+            textToRender = currentMember.congregacao || el.text;
+        } else {
             textToRender = el.text;
         }
         
         if (textToRender === undefined || textToRender === null) {
-            return null; // Don't render if dynamic data is missing and it's a dynamic field
+            return null;
         }
         
         style.fontSize = el.size.fontSize ? `${el.size.fontSize}px` : undefined;
@@ -157,11 +160,9 @@ const renderElement = (currentMember: Member, id: string, el: ElementStyle, text
         style.fontWeight = el.fontWeight;
         style.textAlign = el.textAlign;
         
-        // Apply 'nowrap' only to specific, short fields. Others will wrap by default.
-        if (id.includes('Nº Reg') || id.includes('Nascimento') || id.includes('RG') || id.includes('CPF') || id.includes('Validade') || id.includes('Membro Desde')) {
+        style.whiteSpace = 'pre-wrap';
+        if (id.includes('Título') || id.includes('Assinatura Pastor') || id.includes('Validade') || id.includes('Membro Desde') || id.includes('Nº Reg') || id.includes('Nascimento') || id.includes('RG') || id.includes('CPF')) {
             style.whiteSpace = 'nowrap';
-        } else {
-            style.whiteSpace = 'pre-wrap'; // Default for other text, allowing wrapping and respecting '\n'
         }
         
         return <p key={id} style={style}>{textToRender}</p>;
@@ -170,7 +171,16 @@ const renderElement = (currentMember: Member, id: string, el: ElementStyle, text
     return null;
 };
 
-const StudioCard = ({ isFront, currentMember, templateData, getAvatarFn }: { isFront: boolean, currentMember: Member | null, templateData: CardTemplateData | null, getAvatarFn: (avatarId?: string) => { imageUrl: string } | undefined }) => {
+const StudioCard = ({ isFront, currentMember, templateData }: { isFront: boolean, currentMember: Member | null, templateData: CardTemplateData | null }) => {
+    const [qrCodeUrl, setQrCodeUrl] = useState('');
+
+    useEffect(() => {
+        if (currentMember?.id && typeof window !== 'undefined') {
+            const verificationUrl = `${window.location.origin}/verify/${currentMember.id}`;
+            setQrCodeUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(verificationUrl)}`);
+        }
+    }, [currentMember?.id]);
+    
     if (!templateData || !currentMember) { return <div className="flex items-center justify-center h-full"><Loader2 className="animate-spin" /></div>; }
     const { elements = {}, cardStyles = { frontBackground: '#F3F4F6', backBackground: '#F3F4F6', frontBackgroundImage: '', backBackgroundImage: '' }, textColors = { title: '#000000', personalData: '#333333', backText: '#333333' } } = templateData;
     const backgroundStyle: React.CSSProperties = { backgroundColor: isFront ? cardStyles.frontBackground : cardStyles.backBackground, backgroundImage: `url(${isFront ? cardStyles.frontBackgroundImage : cardStyles.backBackgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center', };
@@ -179,9 +189,9 @@ const StudioCard = ({ isFront, currentMember, templateData, getAvatarFn }: { isF
     const signatureLineElement = elements['Assinatura Pastor'];
     return (
         <Card className="h-full w-full overflow-hidden shadow-lg relative" style={backgroundStyle}>
-            {isFront ? ( frontElements.map(id => elements[id] ? renderElement(currentMember, id, elements[id], textColors, getAvatarFn) : null) ) : (
+            {isFront ? ( frontElements.map(id => elements[id] ? renderElement(currentMember, id, elements[id], textColors, qrCodeUrl) : null) ) : (
                 <>
-                    {backElements.map(id => elements[id] ? renderElement(currentMember, id, elements[id], textColors, getAvatarFn) : null)}
+                    {backElements.map(id => elements[id] ? renderElement(currentMember, id, elements[id], textColors, qrCodeUrl) : null)}
                     {signatureLineElement && ( <div style={{ position: 'absolute', borderTop: '1px solid black', width: '40%', top: `calc(${signatureLineElement.position.top}% - 2px)`, left: `${signatureLineElement.position.left}%`, transform: 'translateX(-50%)' }} /> )}
                 </>
             )}
@@ -701,8 +711,8 @@ export default function MemberProfilePage() {
         <div className="flex justify-center items-center">
             <div className="w-full max-w-lg mx-auto flip-card-container cursor-pointer aspect-[85.6/54]" onClick={() => setIsCardFlipped(!isCardFlipped)}>
                 <div className={cn("flip-card w-full h-full", { 'flipped': isCardFlipped })}>
-                    <div className="flip-card-front"><StudioCard isFront={true} currentMember={member} templateData={templateData} getAvatarFn={getAvatar} /></div>
-                    <div className="flip-card-back"><StudioCard isFront={false} currentMember={member} templateData={templateData} getAvatarFn={getAvatar} /></div>
+                    <div className="flip-card-front"><StudioCard isFront={true} currentMember={member} templateData={templateData} /></div>
+                    <div className="flip-card-back"><StudioCard isFront={false} currentMember={member} templateData={templateData} /></div>
                 </div>
             </div>
         </div>

@@ -518,7 +518,7 @@ export default function CardStudioPage() {
             style.textAlign = el.textAlign;
             style.whiteSpace = 'pre-wrap';
 
-            if (id.includes('Título') || id.includes('Valor') || id.includes('Assinatura Pastor') || id.includes('Validade') || id.includes('Membro Desde')) {
+            if (id.includes('Título') || id === 'Assinatura Pastor' || id === 'Validade' || id === 'Membro Desde' || id.includes('Nº Reg') || id.includes('Nascimento') || id.includes('RG') || id.includes('CPF')) {
                 style.whiteSpace = 'nowrap';
             }
         } else { // isImage

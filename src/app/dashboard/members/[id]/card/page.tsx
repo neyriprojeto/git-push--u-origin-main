@@ -175,31 +175,33 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
                 );
             }
         } else if (isText) {
-            const dynamicTextMap: Record<string, string | undefined> = {
-                'Valor Nome': member.nome ? `Nome: ${member.nome}` : undefined,
-                'Valor Nº Reg.': member.recordNumber ? `Nº Reg.: ${member.recordNumber}` : undefined,
-                'Valor Nascimento': member.dataNascimento ? `Nasc: ${formatDate(member.dataNascimento, 'dd/MM/yyyy')}` : undefined,
-                'Valor RG': member.rg ? `RG: ${member.rg}` : undefined,
-                'Valor CPF': member.cpf ? `CPF: ${member.cpf}` : undefined,
-                'Valor Cargo': member.cargo ? `Cargo: ${member.cargo}` : undefined,
-                'Membro Desde': member.dataMembro ? `Membro desde: ${formatDate(member.dataMembro, 'dd/MM/yyyy')}` : undefined,
-                'Congregação': member.congregacao,
-                'Validade': `Validade: ${format(new Date(new Date().setFullYear(new Date().getFullYear() + 1)), 'dd/MM/yyyy')}`
-            };
+             let textToRender: string | undefined;
 
-            let textToRender: string | undefined = el.text; // Default to template text
-
-            if (id in dynamicTextMap) {
-                textToRender = dynamicTextMap[id];
-            }
-
-            // For congregation, fall back to template if member has no congregation
-            if (id === 'Congregação' && !member.congregacao) {
+            // Explicitly check and assign text for each dynamic field
+            if (id === 'Valor Nome') {
+                textToRender = member.nome ? `Nome: ${member.nome}` : undefined;
+            } else if (id === 'Valor Nº Reg.') {
+                textToRender = member.recordNumber ? `Nº Reg.: ${member.recordNumber}` : undefined;
+            } else if (id === 'Valor Nascimento') {
+                textToRender = member.dataNascimento ? `Nasc: ${formatDate(member.dataNascimento, 'dd/MM/yyyy')}` : undefined;
+            } else if (id === 'Valor RG') {
+                textToRender = member.rg ? `RG: ${member.rg}` : undefined;
+            } else if (id === 'Valor CPF') {
+                textToRender = member.cpf ? `CPF: ${member.cpf}` : undefined;
+            } else if (id === 'Valor Cargo') {
+                textToRender = member.cargo ? `Cargo: ${member.cargo}` : undefined;
+            } else if (id === 'Membro Desde') {
+                textToRender = member.dataMembro ? `Membro desde: ${formatDate(member.dataMembro, 'dd/MM/yyyy')}` : undefined;
+            } else if (id === 'Validade') {
+                textToRender = `Validade: ${format(new Date(new Date().setFullYear(new Date().getFullYear() + 1)), 'dd/MM/yyyy')}`;
+            } else if (id === 'Congregação') {
+                textToRender = member.congregacao || el.text;
+            } else {
                 textToRender = el.text;
             }
             
             if (textToRender === undefined || textToRender === null) {
-                return null; // Don't render if dynamic data is missing and it's a dynamic field
+                return null;
             }
             
             style.fontSize = el.size.fontSize ? `${el.size.fontSize}px` : undefined;
@@ -207,10 +209,9 @@ const CardView = React.forwardRef<HTMLDivElement, { member: Member; templateData
             style.fontWeight = el.fontWeight;
             style.textAlign = el.textAlign;
             
-            if (id.includes('Nº Reg') || id.includes('Nascimento') || id.includes('RG') || id.includes('CPF') || id.includes('Validade') || id.includes('Membro Desde')) {
+            style.whiteSpace = 'pre-wrap';
+            if (id.includes('Título') || id.includes('Assinatura Pastor') || id.includes('Validade') || id.includes('Membro Desde') || id.includes('Nº Reg') || id.includes('Nascimento') || id.includes('RG') || id.includes('CPF')) {
                 style.whiteSpace = 'nowrap';
-            } else {
-                style.whiteSpace = 'pre-wrap'; // Default for other text, allowing wrapping and respecting '\n'
             }
 
             elementContent = <p style={style}>{textToRender}</p>;

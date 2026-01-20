@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
@@ -347,7 +348,7 @@ export default function CardStudioPage() {
                 toast({ 
                     variant: 'destructive', 
                     title: 'Erro de Upload', 
-                    description: `Não foi possível enviar a imagem. Verifique se o 'Cloud Name' e 'Upload Preset' estão configurados corretamente em src/lib/cloudinary.ts. Erro: ${error.message}`
+                    description: `Não foi possível enviar a imagem. Verifique se o 'Cloud Name' e 'Upload Preset' estão configurados corretamente em src/lib/cloudinary.ts. Erro: ${'\'\'\''}${error.message}${'\'\'\''}`
                 });
             } finally {
                 setIsUploading(false);

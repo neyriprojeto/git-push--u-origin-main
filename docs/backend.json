@@ -91,7 +91,9 @@
         "bankPixKey": { "type": "string", "description": "PIX key for donations." },
         "contactPhone": { "type": "string", "description": "General contact phone number." },
         "contactEmail": { "type": "string", "format": "email", "description": "General contact email address." },
-        "churchAddress": { "type": "string", "description": "Main church address for display." }
+        "churchAddress": { "type": "string", "description": "Main church address for display." },
+        "confradeestoUrl": { "type": "string", "format": "uri", "description": "URL for the Confradeesto website." },
+        "cgadbUrl": { "type": "string", "format": "uri", "description": "URL for the CGADB website." }
       }
     },
     "Leader": {

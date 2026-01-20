@@ -65,6 +65,8 @@ type ChurchInfo = {
     contactPhone?: string;
     contactEmail?: string;
     churchAddress?: string;
+    confradeestoUrl?: string;
+    cgadbUrl?: string;
 }
 
 type Leader = {
@@ -709,6 +711,14 @@ export default function CongregationsPage() {
                              <div className="space-y-2">
                                 <Label htmlFor="radioPageUrl">Link da Página da Rádio (nova aba)</Label>
                                 <Input id="radioPageUrl" name="radioPageUrl" value={churchInfo.radioPageUrl || ''} onChange={handleChurchInfoChange} placeholder="https://link_da_pagina_da_radio" />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="confradeestoUrl">Link Obreiros Confradeesto</Label>
+                                <Input id="confradeestoUrl" name="confradeestoUrl" value={churchInfo.confradeestoUrl || ''} onChange={handleChurchInfoChange} placeholder="https://confradeesto.com.br" />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="cgadbUrl">Link Obreiros CGADB</Label>
+                                <Input id="cgadbUrl" name="cgadbUrl" value={churchInfo.cgadbUrl || ''} onChange={handleChurchInfoChange} placeholder="https://cgadb.org.br" />
                             </div>
                             <Button onClick={handleSaveChurchInfo} disabled={isSavingChurchInfo}>
                                 {isSavingChurchInfo ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : <Save className="h-4 w-4 mr-2" />}

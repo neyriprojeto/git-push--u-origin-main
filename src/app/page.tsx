@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from "next/image";
@@ -53,6 +54,8 @@ type ChurchInfo = {
   contactPhone?: string;
   contactEmail?: string;
   churchAddress?: string;
+  confradeestoUrl?: string;
+  cgadbUrl?: string;
 }
 
 type Leader = {
@@ -163,6 +166,8 @@ export default function Home() {
                     {youtubeUrl && <Button variant="ghost" className="justify-start" asChild><Link href={youtubeUrl} target="_blank"><Youtube className="mr-2 h-4 w-4"/>YouTube</Link></Button>}
                     {websiteUrl && <Button variant="ghost" className="justify-start" asChild><Link href={websiteUrl} target="_blank"><Globe className="mr-2 h-4 w-4"/>Site</Link></Button>}
                     {radioPageUrl && <Button variant="ghost" className="justify-start" asChild><Link href={radioPageUrl} target="_blank"><Radio className="mr-2 h-4 w-4"/>Rádio</Link></Button>}
+                    {churchInfo?.confradeestoUrl && <Button variant="ghost" className="justify-start" asChild><Link href={churchInfo.confradeestoUrl} target="_blank"><Users className="mr-2 h-4 w-4"/>Obreiros Confradeesto</Link></Button>}
+                    {churchInfo?.cgadbUrl && <Button variant="ghost" className="justify-start" asChild><Link href={churchInfo.cgadbUrl} target="_blank"><Users className="mr-2 h-4 w-4"/>Obreiros CGADB</Link></Button>}
                   </div>
                     {(churchInfo?.bankPixKey || churchInfo?.contactPhone) && (
                         <>
@@ -203,6 +208,8 @@ export default function Home() {
               {youtubeUrl && <Button variant="ghost" size="icon" asChild><Link href={youtubeUrl} target="_blank"><Youtube/><span className="sr-only">YouTube</span></Link></Button>}
               {websiteUrl && <Button variant="ghost" size="icon" asChild><Link href={websiteUrl} target="_blank"><Globe/><span className="sr-only">Site</span></Link></Button>}
               {radioPageUrl && <Button variant="ghost" size="icon" asChild><Link href={radioPageUrl} target="_blank"><Radio/><span className="sr-only">Rádio</span></Link></Button>}
+              {churchInfo?.confradeestoUrl && <Button variant="ghost" size="icon" asChild><Link href={churchInfo.confradeestoUrl} target="_blank"><Users/><span className="sr-only">Obreiros Confradeesto</span></Link></Button>}
+              {churchInfo?.cgadbUrl && <Button variant="ghost" size="icon" asChild><Link href={churchInfo.cgadbUrl} target="_blank"><Users/><span className="sr-only">Obreiros CGADB</span></Link></Button>}
             </nav>
             <Button asChild>
               <Link href="/login">Login</Link>
@@ -400,3 +407,5 @@ export default function Home() {
     </div>
   );
 }
+
+    

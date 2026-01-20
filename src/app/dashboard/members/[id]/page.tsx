@@ -860,11 +860,17 @@ export default function MemberProfilePage() {
 
   const CardView = () => (
     <ViewContainer title="Minha Carteirinha Digital">
-        <div className="flex justify-center items-center">
-            <div className="w-full max-w-lg mx-auto flip-card-container cursor-pointer aspect-[85.6/54]" onClick={() => setIsCardFlipped(!isCardFlipped)}>
-                <div className={cn("flip-card w-full h-full", { 'flipped': isCardFlipped })}>
-                    <div className="flip-card-front"><MemberCardFace isFront={true} currentMember={member} templateData={templateData} /></div>
-                    <div className="flip-card-back"><MemberCardFace isFront={false} currentMember={member} templateData={templateData} /></div>
+        <div className="w-full flex justify-center items-start overflow-x-auto">
+            <div className="origin-top transform scale-[0.8] sm:scale-100">
+                <div 
+                    className="flip-card-container cursor-pointer"
+                    style={{ width: '85.6mm', height: '54mm' }}
+                    onClick={() => setIsCardFlipped(!isCardFlipped)}
+                >
+                    <div className={cn("flip-card w-full h-full", { 'flipped': isCardFlipped })}>
+                        <div className="flip-card-front"><MemberCardFace isFront={true} currentMember={member} templateData={templateData} /></div>
+                        <div className="flip-card-back"><MemberCardFace isFront={false} currentMember={member} templateData={templateData} /></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1114,7 +1120,7 @@ export default function MemberProfilePage() {
 
   const PrintableReadingPlan = React.forwardRef<HTMLDivElement, {}>((props, ref) => {
     const { data: churchInfo } = useDoc<{ baptismCertLogoUrl?: string }>(useMemoFirebase(() => (firestore ? doc(firestore, 'churchInfo', 'main') : null), [firestore]));
-    const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+    const months = ["Janeiro", "Fevereiro", "Março", "Abril", Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
     
     return (
         <div ref={ref} className="bg-white p-6 text-black w-[297mm]">

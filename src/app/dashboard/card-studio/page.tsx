@@ -291,6 +291,9 @@ export default function CardStudioPage() {
           return;
         }
 
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
         const cropX = completedCrop.x * scaleX;
         const cropY = completedCrop.y * scaleY;
 

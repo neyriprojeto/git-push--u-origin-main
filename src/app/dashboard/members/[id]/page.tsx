@@ -496,7 +496,12 @@ export default function MemberProfilePage() {
       setIsUploading(false);
       return;
     }
+
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
     ctx.drawImage(image, crop.x * scaleX, crop.y * scaleY, crop.width * scaleX, crop.height * scaleY, 0, 0, canvas.width, canvas.height);
+    
     canvas.toBlob(async (blob) => {
       if (!blob || !currentFile) {
         toast({ variant: 'destructive', title: 'Erro', description: 'Could not create blob' });
@@ -1295,5 +1300,3 @@ export default function MemberProfilePage() {
     </div>
   );
 }
-
-    

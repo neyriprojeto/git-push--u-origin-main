@@ -2,16 +2,11 @@
 This is a NextJS starter in Firebase Studio.
 
 To get started, take a look at src/app/page.tsx.
-
-
 ## Como subir para o GitHub
-
-
 1.  **Inicialize o repositório Git:**
     ```bash
     git init
-    `
-``
+    ``
 
 2.  **Adicione todos os arquivos:**
     ```bash

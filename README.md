@@ -28,7 +28,7 @@ To get started, take a look at src/app/page.tsx.
 
 5.  **Conecte ao seu repositório remoto:**
     ```bash
-    git remote add origin https://github.com/neyriprojeto/ADKAIROS-CONNECT-.git
+    git remote add origin https://github.com/neyriprojeto/git-push--u-origin-main
     ```
 
 6.  **Envie as alterações para o GitHub:**

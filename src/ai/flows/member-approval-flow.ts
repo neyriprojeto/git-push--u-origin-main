@@ -6,7 +6,7 @@
  * email directly using nodemailer.
  */
 
-import onFlow from '@genkit-ai/next';
+import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { initializeApp, getApps } from 'firebase-admin/app';
 import * as nodemailer from 'nodemailer';
@@ -26,7 +26,7 @@ const MemberDataSchema = z.object({
   status: z.string(),
 });
 
-export const memberApprovalFlow = onFlow(
+export const memberApprovalFlow = ai.defineFlow(
   {
     name: 'memberApprovalFlow',
     // Define the trigger for the flow. This will be a Firestore document update.

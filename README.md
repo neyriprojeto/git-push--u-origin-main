@@ -3,9 +3,35 @@
 This is a NextJS starter in Firebase Studio.
 
 To get started, take a look at src/app/page.tsx.
-git init
-git add .
-git commit -m "Primeiro commit"
-git branch -M main
-git remote add origin https://github.com/neyriprojeto/ADKAIROS-CONNECT-.git
-git push -u origin main
+
+## Como subir para o GitHub
+
+1.  **Inicialize o repositório Git:**
+    ```bash
+    git init
+    ```
+
+2.  **Adicione todos os arquivos:**
+    ```bash
+    git add .
+    ```
+
+3.  **Faça o primeiro commit:**
+    ```bash
+    git commit -m "Primeiro commit"
+    ```
+
+4.  **Defina a branch principal como 'main':**
+    ```bash
+    git branch -M main
+    ```
+
+5.  **Conecte ao seu repositório remoto:**
+    ```bash
+    git remote add origin https://github.com/neyriprojeto/ADKAIROS-CONNECT-.git
+    ```
+
+6.  **Envie as alterações para o GitHub:**
+    ```bash
+    git push -u origin main
+    ```

@@ -6,7 +6,7 @@
  * email directly using nodemailer.
  */
 
-import { onFlow } from '@genkit-ai/next';
+import onFlow from '@genkit-ai/next';
 import { z } from 'zod';
 import { initializeApp, getApps } from 'firebase-admin/app';
 import * as nodemailer from 'nodemailer';

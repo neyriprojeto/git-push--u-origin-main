@@ -26,7 +26,7 @@ const MemberDataSchema = z.object({
   status: z.string(),
 });
 
-export const memberApprovalFlow = ai.defineFlow(
+ai.defineFlow(
   {
     name: 'memberApprovalFlow',
     // Define the trigger for the flow. This will be a Firestore document update.
